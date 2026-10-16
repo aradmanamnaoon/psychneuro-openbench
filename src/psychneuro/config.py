@@ -66,7 +66,9 @@ def _object(value: object, name: str, allowed: set[str]) -> dict[str, object]:
 
 
 def _matches(actual: object, expected: object) -> bool:
-    """Strict recursive comparison; booleans are NOT interchangeable with integers."""
+    """Strict recursive comparison except JSON's equivalent integer/float literals."""
+    if type(expected) is float and type(actual) in (int, float):
+        return actual == expected  # JSON 1 and 1.0 both represent C=1.0, not True
     if type(actual) is not type(expected):
         return False
     if isinstance(expected, dict) and isinstance(actual, dict):
