@@ -1,11 +1,11 @@
 """Authored acceptance tests; no execution result is implied by this file."""
 
-from dataclasses import replace
 import csv
 import hashlib
 import io
 import math
 import random
+from dataclasses import replace
 
 import pytest
 

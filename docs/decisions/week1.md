@@ -28,3 +28,14 @@
 
 ## Gate and next task
 **GO:** review standalone private issue list, code/document QA additions, and PM-02 API compatibility. **NO-GO:** mark PM-03 Verified Done or claim passing tests until a real GitHub Actions CPU job has been authorized, run and audited (commit SHA, run URL, job conclusion, failing assertions included). Subsequent branch integration into main requires human review/approval of PR/merge. After PM-03 evidence, proceed to a dependency-ready later research-software mission.
+
+## 2026-10-16 sync: preserve the current README and private-only release policy
+
+**Reconciled against main:** [19c053dc08451d58ee4a0c0ace1ae366740296c5](https://github.com/aradmanamnaoon/psychneuro-openbench/commit/19c053dc08451d58ee4a0c0ace1ae366740296c5).
+The comprehensive main-line [README](https://github.com/aradmanamnaoon/psychneuro-openbench/blob/main/README.md) is canonical. Do not overwrite it with an older PM-03 README. The [release gates](https://github.com/aradmanamnaoon/psychneuro-openbench/blob/main/docs/release-gates.md) require a completed end-to-end research workflow, quality, rights and scientific review, and fresh explicit owner approval before making the repository public.
+
+**Verified earlier PM-02 foundation checks:** [Actions run 38863471313](https://github.com/aradmanamnaoon/psychneuro-openbench/actions/runs/38863471313) recorded 31 pytest passes, Ruff all-checks-passed, and mypy no issues in two source files. This proof concerns the earlier PM-02 source/test revision, not the supplemental PM-03 tests.
+
+**Current integration rule:** Create this feature branch tip using the latest main tree, preserving the main README, generator/source fixes, specification and private-only release policy, and add only PM-03 tests, manual-only two-Python CPU workflow, and ledger.
+
+**Not done:** New PM-03 tests are NOT run. No hosted PM-03 job, PR/merge, public visibility change, external outreach, paid run or scientific/product release claimed. Human review and verified CI are outstanding.
