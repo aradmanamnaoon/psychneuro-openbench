@@ -21,9 +21,9 @@ Private GitHub commits, branches, issues, Notion evidence, rights research, inde
 
 - The validated main-line artifact is a bounded, wholly fictional trial generator/validator—not an end-to-end ML benchmark.
 - Hosted verification on 2026-10-16: [31 pytest passes + Ruff + strict mypy](https://github.com/aradmanamnaoon/psychneuro-openbench/actions/runs/38863471313) for the specific verified code state; this is not a release validation.
-- `pm-02/synthetic-foundation` is an alternate unmerged synthetic design with different schema/session choices; retain it pending informed review.
+- The former `pm-02/synthetic-foundation` conflicting API is **resolved for engineering**: [ADR-0001](decisions/pm02-reconciliation.md) adopts the CI-verified `main` v0 schema and preserves the alternate branch only as historical experimental code. It was not merged. Any later multi-session or congruency feature requires a versioned migration and hosted test evidence.
 - `pm03-quality-foundation` contains independent supplemental tests/documentation whose integration needs real verification.
-- No software-source license has been granted.
+- No software-source license has been granted. **Apache-2.0 is the documented preference, not a selected or granted license**; the owner still controls that decision. See [rights log](license-policy.md).
 - Private-repository GitHub Actions minutes can be limited or billable; never enable expensive recurring tasks or overages without the owner's approval.
 
 **Decision rule:** a schedule, a completed README, or a passing toy test suite cannot by itself flip the repository public. Only a completed quality review **plus explicit owner authorization** may do so.

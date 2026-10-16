@@ -157,7 +157,7 @@ The default-branch [Actions workflow](.github/workflows/ci.yml) is manual-only t
 └── README.md
 ```
 
-The tree above describes the **main branch at this README revision**; independent development branches may have additional material. In particular, a separate multi-session synthetic design was authored on `pm-02/synthetic-foundation` but has **not been substituted for the tested main-line API**.
+The tree above describes the **main** branch. An alternative multi-session design on `pm-02/synthetic-foundation` is **preserved for history, not merged**: [PM-02 ADR-0001](docs/decisions/pm02-reconciliation.md) selects the hosted-tested `main` API and documents the incompatible fields and versioning rules.
 
 ## Roadmap with real issue tracking
 
@@ -180,7 +180,7 @@ For reviewers with access to this **private** repository:
 
 1. Start with the [v0 scientific contract](docs/spec-v0.md), [schema](docs/data-schema.md), and [implementation decision ledger](docs/decisions/week1.md).
 2. Check the actual [generator implementation](src/psychneuro/synthetic.py), [base tests](tests/test_synthetic.py), [additional PM-03 tests](tests/test_synthetic_pm03.py), and the [verified two-version hosted run](https://github.com/aradmanamnaoon/psychneuro-openbench/actions/runs/38864568384).
-3. Inspect [rights decisions](docs/license-policy.md), the [development issues](https://github.com/aradmanamnaoon/psychneuro-openbench/issues), and the [release gates](docs/release-gates.md).
+3. Inspect the [PM-02 canonical schema decision](docs/decisions/pm02-reconciliation.md), [rights decisions](docs/license-policy.md), the [development issues](https://github.com/aradmanamnaoon/psychneuro-openbench/issues), and the [release gates](docs/release-gates.md).
 4. Treat a missing run, incomplete dataset permission, or missing split/metric evidence as **not verified**.
 
 No login-free interactive browser demo has been deployed. Browser inspection is a **review workflow**, not an actual web-based experiment runner.
