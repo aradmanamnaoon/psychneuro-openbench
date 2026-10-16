@@ -98,7 +98,7 @@ def validate_synthetic_dataset(
         raise ValueError("unsupported schema_version")
     for key in _REQUIRED_STRINGS:
         _required_string(card, key)
-    if card["synthetic"] is not True:
+    if card.get("synthetic") is not True:
         raise ValueError("only synthetic records are permitted in v0")
     if card["source_kind"] != "synthetic" or card["rights_basis"] != "synthetic-original":
         raise ValueError("unapproved source or missing synthetic rights basis")
