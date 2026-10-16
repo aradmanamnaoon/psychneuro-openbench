@@ -1,6 +1,6 @@
 # PM-02 decision ADR-0001 — canonical v0 synthetic foundation
 
-**Date:** 2026-10-16. **Decision:** accept the **already hosted-tested `main` implementation** as the canonical PM-02 v0 engineering foundation. Preserve the alternate implementation for reference, but **do not merge** it into v0. **Status:** technical reconciliation complete; owner licensing/publication approval is separate.
+**Date:** 2026-10-16. **Decision:** accept the **already hosted-tested `main` implementation** as the canonical PM-02 v0 engineering foundation. Preserve the alternate implementation for reference, but **do not merge** it into v0. **Status:** technical reconciliation complete; Apache-2.0 licensing decision recorded separately, while public publication approval is still required.
 
 ## Context and evidence
 
@@ -36,8 +36,8 @@
 
 ## Legal and approval gates
 
-Recommend **Apache License 2.0** as a *future licensing proposal* because it permits broad research reuse and includes an explicit patent license (see [Apache guidance](https://apache.org/legal/apply-license.html)). **This ADR does NOT grant that license.** The repository remains private, with **no `LICENSE` file**, pending the owner's express selection and review of contributor ownership, dependencies and redistribution conditions. Neither the AI's technical audit nor a prior test pass can substitute for legal or publication authorization.
+**Resolution (2026-10-16):** after reviewing the recommendation, the owner delegated the remaining PM-02 decisions. **Apache License 2.0 is now selected and present in [LICENSE](../../LICENSE), with [NOTICE](../../NOTICE) attribution.** It covers the original project's licensed source and documentation; third-party contributions, datasets, dependencies and other assets still need independent rights clearance before external distribution. **The repository remains PRIVATE**: no package, public release, PR, profile update, external contact, or visibility change was authorized. See the [licensing decision log](../license-policy.md).
 
-**GO:** continue private, synthetic-only PM-03+ software engineering using canonical `main` API and schema. **NO-GO:** license grant, public repository, public PR/release, real-human data, biomedical/scientific effect claims, or implying entire platform completeness. Owner may approve these separately after the appropriate evidence.
+**GO:** the Apache-2.0 license is adopted for the PM-02 code/documentation and private, synthetic-only PM-03+ development continues using canonical `main` API and schema. **NO-GO:** public repository, public PR/release, real-human data, biomedical/scientific effect claims, or implying entire platform completeness. Publication requires fresh, specific owner approval after all release gates pass.
 
-**Reviewer disposition:** technical reconciliation complete; owner licensing choice and eventual public release remain deliberately separate human decisions.
+**Reviewer disposition:** PM-02 technical reconciliation and software-license choice completed under the owner's delegated instruction. PM-02 foundation is accepted as a narrow software milestone; later PM missions and separate private-to-public approval remain outstanding.

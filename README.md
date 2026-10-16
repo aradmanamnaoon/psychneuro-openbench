@@ -201,7 +201,7 @@ No login-free interactive browser demo has been deployed. Browser inspection is 
 - **Synthetic only:** no real psychological-study participant data, clinical records, patient identifiers, diagnosis, treatment, or personalized neuroscience inference are processed in this milestone.
 - **No science claims from toy parameters:** accuracy and reaction-time distributions were chosen for software testing, not fitted to human cognitive behavior or externally validated.
 - **No claim of BIDS compatibility:** BIDS is an interoperability reference, not a certification of this initial CSV schema.
-- **No redistributable software license yet:** this private code remains without an open-source license grant. The rights decision is separate from the generated synthetic data's provenance.
+- **Apache-2.0 code license:** the original project source and documentation are licensed under [Apache License 2.0](LICENSE), with attribution in [NOTICE](NOTICE). **The repository remains private** until the entire platform passes the [release gates](docs/release-gates.md) and the owner separately authorizes publication. Software licensing does not grant rights to any third-party research dataset.
 - **No public release or publicity:** do not change repository visibility, publish a release/package/demo, recruit users, or update professional profiles without a finished technical review and explicit owner approval.
 
 See [the release gate checklist](docs/release-gates.md) and [rights policy](docs/license-policy.md).

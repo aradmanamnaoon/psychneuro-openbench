@@ -9,7 +9,7 @@
 - [ ] **Scientific integrity:** no empirical claims inferred from toy fixtures; split policy and uncertainty/undefined metrics are scrutinized; source/rights ledger and known limitations are clear.
 - [ ] **Data, security, privacy:** only licensed or original synthetic sources; no PHI or secrets; risk audit for ingestion/report rendering, dependency issues and artifact provenance.
 - [ ] **Documentation and usability:** comprehensive README, install/reviewer pathways, changelog, architecture, examples, reproducibility instructions and release notes match the ACTUAL implemented state; screenshots/demo only if really captured/hosted.
-- [ ] **Legal:** decide, review and add an explicit code license (if intending open source); review dependency and dataset licenses separately.
+- [ ] **Legal:** Apache-2.0 has been selected and added for project code. **Before public release**, finish dependency, asset, contribution, and third-party dataset-rights reviews separately.
 - [ ] **External review:** owner reviews exact links, tests, sample results and unresolved blockers. If outreach/feedback is desired, it needs specific approval; no invented reviewers or endorsements.
 - [ ] **Explicit publication authorization:** owner approves a specific action to switch repository visibility to public and any tag, release, website/profile update, package publication or external announcement separately.
 
@@ -23,7 +23,7 @@ Private GitHub commits, branches, issues, Notion evidence, rights research, inde
 - Hosted verification on 2026-10-16: [31 pytest passes + Ruff + strict mypy](https://github.com/aradmanamnaoon/psychneuro-openbench/actions/runs/38863471313) for the specific verified code state; this is not a release validation.
 - The former `pm-02/synthetic-foundation` conflicting API is **resolved for engineering**: [ADR-0001](decisions/pm02-reconciliation.md) adopts the CI-verified `main` v0 schema and preserves the alternate branch only as historical experimental code. It was not merged. Any later multi-session or congruency feature requires a versioned migration and hosted test evidence.
 - `pm03-quality-foundation` contains independent supplemental tests/documentation whose integration needs real verification.
-- No software-source license has been granted. **Apache-2.0 is the documented preference, not a selected or granted license**; the owner still controls that decision. See [rights log](license-policy.md).
+- **PM-02 software license selected:** Apache-2.0 applies to the original source and documentation; see [LICENSE](../LICENSE), [NOTICE](../NOTICE), and [rights log](license-policy.md). This does **not** complete the separate dependency/asset/real-dataset rights audit and **does not authorize publication**.
 - Private-repository GitHub Actions minutes can be limited or billable; never enable expensive recurring tasks or overages without the owner's approval.
 
 **Decision rule:** a schedule, a completed README, or a passing toy test suite cannot by itself flip the repository public. Only a completed quality review **plus explicit owner authorization** may do so.
