@@ -95,3 +95,19 @@ def test_false_safe_postresponse_declaration_rejected() -> None:
 def test_duplicate_predictor_rejected() -> None:
     with pytest.raises(ValueError, match="duplicate"):
         validate_predictor_columns(["difficulty", "difficulty"])
+
+
+def test_missing_synthetic_attestation_rejected() -> None:
+    records, card = _fixture()
+    del card["synthetic"]
+    with pytest.raises(ValueError, match="only synthetic"):
+        validate_synthetic_dataset(records, card)  # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize("field", ["difficulty", "response_time_ms"])
+def test_boolean_numeric_feature_rejected(field: str) -> None:
+    records, card = _fixture()
+    altered = list(records)
+    altered[0] = replace(altered[0], **{field: True})  # type: ignore[arg-type]
+    with pytest.raises(ValueError, match=field):
+        validate_synthetic_dataset(altered, card)  # type: ignore[arg-type]
