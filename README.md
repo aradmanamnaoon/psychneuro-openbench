@@ -58,7 +58,7 @@ These are **intended users**, not evidence of interviews, adoption or institutio
 | PM-06 data-quality tests and descriptive tooling | **Private branch source added; hosted tests/pilot NOT RUN** | [Tests](tests/test_loaders.py), [dataset card](docs/data-card.md), [evidence](docs/pm06-data-stage-changelog.md) |
 | PM-07 deterministic subject-held-out split | **Private review branch implementation, pytest/Ruff/mypy NOT RUN** — seeded participant partitions, duplicate/overlap/index/source-hash guards, prespecified evaluation protocol | [Split](src/psychneuro/split.py), [tests](tests/test_splits.py), [design](docs/split-design.md), [protocol](docs/evaluation-protocol.md) |
 | Engineering verification | **PM-03 verified:** 46 tests passed on both Python 3.11 and 3.12; **PM-04 final verified:** 80 tests passed on Python 3.11, Ruff passed and strict mypy passed on 4 source files | [PM-03 log](https://github.com/aradmanamnaoon/psychneuro-openbench/actions/runs/38864568384), [PM-04 final log](https://github.com/aradmanamnaoon/psychneuro-openbench/actions/runs/38874446677) |
-| Group-held-out baseline benchmarking | **Not implemented** | [Leakage issue #3](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/3), [baseline issue #4](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/4) |
+| PM-08 grouped baseline benchmarking | **Source code and regression tests committed on private review branch; execution, metrics, Ruff, mypy and CI NOT RUN.** Includes dummy prior, interpretable logistic model, participant-grouped CV, separate test holdout, JSON manifest | [Metrics](src/psychneuro/metrics.py), [baselines](src/psychneuro/baselines.py), [runner](src/psychneuro/experiments.py), [tests](tests/test_pm08_experiments.py), [protocol/evidence](docs/pm08-benchmark.md), [baseline issue #4](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/4) |
 | Real dataset **ingestion**, browser UI, third-party reproducibility study | **Not implemented / not validated** | [Rights issue #5](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/5), [manifest issue #6](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/6) |
 
 **Important distinction:** passing unit tests on invented records validates specific engineering behaviors, **not** research impact, statistical generalizability or brain/behavior modeling accuracy.
@@ -69,8 +69,8 @@ These are **intended users**, not evidence of interviews, adoption or institutio
 flowchart TD
     A["Synthetic-only trial source (implemented)"] --> B["Schema + provenance checks (implemented)"]
     B --> C["Participant-group split (code committed, CI pending)"]
-    C --> D["Training-only preprocessing (planned)"]
-    D --> E["Dummy vs logistic baseline (planned)"]
+    C --> D["Training-only preprocessing (PM-08 source committed; CI pending)"]
+    D --> E["Dummy vs logistic baseline (PM-08 source committed; CI pending)"]
     E --> F["Metrics, uncertainty + failure review (planned)"]
     F --> G["Versioned reproducibility manifest (planned)"]
 ```
