@@ -179,15 +179,15 @@ def validate_trials(records: Sequence[TrialRecord]) -> None:
             raise ValueError("correct must be binary integer")
         if row.correct != int(row.response == row.stimulus_condition):
             raise ValueError("response disagrees with correctness")
-        if not isinstance(row.difficulty, (float, int)) or not math.isfinite(
+        if type(row.difficulty) not in (float, int) or not math.isfinite(
             row.difficulty
         ) or not 0.0 <= row.difficulty <= 1.0:
             raise ValueError("difficulty must be finite in [0, 1]")
-        if not isinstance(row.response_time_ms, (float, int)) or not math.isfinite(
+        if type(row.response_time_ms) not in (float, int) or not math.isfinite(
             row.response_time_ms
         ) or row.response_time_ms <= 0.0:
             raise ValueError("response_time_ms must be positive finite milliseconds")
-        if type(row.generator_seed) is not int or row.generator_seed < 0:
+        if type(row.generator_seed) is not int or not 0 <= row.generator_seed <= 2**64 - 1:
             raise ValueError("invalid generator seed")
     if len(dataset_ids) != 1 or len(seeds) != 1:
         raise ValueError("a generated dataset must have one dataset_id and seed")
