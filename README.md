@@ -53,7 +53,7 @@ These are **intended users**, not evidence of interviews, adoption or institutio
 | Structural checks | **Implemented** — duplicate keys, trial order, finite values, binary labels and response consistency | [Tests](tests/test_synthetic.py) |
 | Portable tabular export | **Implemented** — stable-column UTF-8 CSV and SHA-256 of exact serialized bytes | [Schema](docs/data-schema.md) |
 | Dataset card | **Implemented** — synthetic origin, seed, rights declaration, row/group counts and feature availability | [Source](src/psychneuro/synthetic.py) |
-| Engineering verification | **Verified for the existing main-line generator:** 31 pytest cases passed; Ruff passed; strict mypy passed on two source files | [Actual Actions log](https://github.com/aradmanamnaoon/psychneuro-openbench/actions/runs/38863471313) |
+| Engineering verification | **Verified on Python 3.11 and 3.12:** 46 pytest cases passed per environment, with Ruff and strict mypy passing | [Actual two-version Actions log](https://github.com/aradmanamnaoon/psychneuro-openbench/actions/runs/38864568384) |
 | Group-held-out baseline benchmarking | **Not implemented** | [Leakage issue #3](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/3), [baseline issue #4](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/4) |
 | Real dataset registry, browser UI, third-party reproducibility study | **Not implemented / not validated** | [Rights issue #5](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/5), [manifest issue #6](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/6) |
 
@@ -129,7 +129,7 @@ A card records the dataset ID, schema/generator version, seed, row counts, right
 
 ## Reproducibility: what is demonstrated vs still to prove
 
-**Demonstrated in hosted CI for the current generator:** on Python 3.11, [run #38863471313](https://github.com/aradmanamnaoon/psychneuro-openbench/actions/runs/38863471313) reported `31 passed`, `All checks passed!` from Ruff, and `Success: no issues found in 2 source files` from mypy. The validated generator/test blobs were copied onto `main` in [commit `ee9eb00`](https://github.com/aradmanamnaoon/psychneuro-openbench/commit/ee9eb00f2579a95c404d0ba2f332e7a28d7d502d). That is a specific observed CI result, **not** a claim that every future change or every branch passed.
+**Demonstrated in hosted CI for the current generator and supplemental PM-03 tests:** [run #38864568384](https://github.com/aradmanamnaoon/psychneuro-openbench/actions/runs/38864568384) completed successfully on **Python 3.11 and 3.12**: **46 pytest cases passed per version**, Ruff passed, and strict mypy reported no issues in two source files. The audited test file was integrated onto `main` using its exact Git blob. The earlier [31-pass PM-02 run](https://github.com/aradmanamnaoon/psychneuro-openbench/actions/runs/38863471313) remains available as history. These are engineering test results, **not** evidence of ML benchmark validity.
 
 **Not yet demonstrated:** out-of-group ML generalization, train-only preprocessing, baseline score comparison, participant bootstrap intervals, cross-platform replay, real participant privacy controls, or the complete v0 reproducibility manifest. The planned contract calls for repeat runs, explicit input checksums, frozen folds and environment information before those claims become appropriate.
 
@@ -143,13 +143,15 @@ The default-branch [Actions workflow](.github/workflows/ci.yml) is manual-only t
 │   ├── spec-v0.md           # Scientific scope and acceptance gates
 │   ├── data-schema.md       # Trial-level fields, types, units and restrictions
 │   ├── license-policy.md    # Software vs dataset rights
-│   └── release-gates.md     # Privacy, verification and publication requirements
+│   ├── release-gates.md     # Privacy, verification and publication requirements
+│   └── decisions/week1.md   # Engineering choices and actual CI evidence
 ├── src/psychneuro/
 │   ├── __init__.py
 │   ├── synthetic.py         # RNG, validation, CSV and dataset card
 │   └── py.typed
 ├── tests/
-│   └── test_synthetic.py    # Implemented generator contract tests
+│   ├── test_synthetic.py    # Base generator contract tests
+│   └── test_synthetic_pm03.py # Additional validated edge cases
 ├── .github/workflows/ci.yml
 ├── pyproject.toml
 └── README.md
@@ -176,8 +178,8 @@ The full envisioned platform may later add an accessible browser workbench, real
 
 For reviewers with access to this **private** repository:
 
-1. Start with the [v0 scientific contract](docs/spec-v0.md) and [schema](docs/data-schema.md).
-2. Check the actual [generator implementation](src/psychneuro/synthetic.py), [tests](tests/test_synthetic.py) and the [verified hosted job](https://github.com/aradmanamnaoon/psychneuro-openbench/actions/runs/38863471313).
+1. Start with the [v0 scientific contract](docs/spec-v0.md), [schema](docs/data-schema.md), and [implementation decision ledger](docs/decisions/week1.md).
+2. Check the actual [generator implementation](src/psychneuro/synthetic.py), [base tests](tests/test_synthetic.py), [additional PM-03 tests](tests/test_synthetic_pm03.py), and the [verified two-version hosted run](https://github.com/aradmanamnaoon/psychneuro-openbench/actions/runs/38864568384).
 3. Inspect [rights decisions](docs/license-policy.md), the [development issues](https://github.com/aradmanamnaoon/psychneuro-openbench/issues), and the [release gates](docs/release-gates.md).
 4. Treat a missing run, incomplete dataset permission, or missing split/metric evidence as **not verified**.
 

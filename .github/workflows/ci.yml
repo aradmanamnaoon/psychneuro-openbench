@@ -1,4 +1,5 @@
-name: Synthetic contract checks (manual trigger only)
+# Manual-only. Avoid automatic private-runner spend. This is not a release workflow.
+name: Synthetic CPU quality gates (manual only)
 on:
   workflow_dispatch:
 
@@ -6,19 +7,23 @@ permissions:
   contents: read
 
 jobs:
-  test:
+  quality:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 8
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.11', '3.12']
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
-      - name: Install dev dependencies
-        run: python -m pip install -e '.[dev]'
-      - name: Validate tests
+          python-version: ${{ matrix.python-version }}
+      - name: Install development requirements
+        run: python -m pip install --disable-pip-version-check -e '.[dev]'
+      - name: Run generator tests
         run: python -m pytest -q
       - name: Lint
         run: python -m ruff check .
-      - name: Strict types
+      - name: Strict typing
         run: python -m mypy src
