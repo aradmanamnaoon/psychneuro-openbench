@@ -94,11 +94,14 @@ def _check_config(config: SyntheticConfig) -> None:
             raise ValueError(f"{field} must be a positive integer")
     if config.n_participants * config.trials_per_participant > MAX_TRIALS:
         raise ValueError(f"generated trial count may not exceed {MAX_TRIALS}")
-    for field, value in (("dataset_id", config.dataset_id), ("session_id", config.session_id)):
-        if not isinstance(value, str) or re.fullmatch(
-            r"[A-Za-z0-9][A-Za-z0-9._-]{0,79}", value
+    for identifier_name, identifier in (
+        ("dataset_id", config.dataset_id),
+        ("session_id", config.session_id),
+    ):
+        if not isinstance(identifier, str) or re.fullmatch(
+            r"[A-Za-z0-9][A-Za-z0-9._-]{0,79}", identifier
         ) is None:
-            raise ValueError(f"{field} must be a short nonempty ASCII identifier")
+            raise ValueError(f"{identifier_name} must be a short nonempty ASCII identifier")
 
 
 def generate_trials(config: SyntheticConfig | None = None) -> tuple[TrialRecord, ...]:
