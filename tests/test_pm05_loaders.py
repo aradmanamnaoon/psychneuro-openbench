@@ -136,6 +136,16 @@ def test_quality_rejects_missing_or_out_of_range(
     assert error.value.summary.errors
 
 
+
+def test_quality_summary_counts_missing_numeric_cell(config: SyntheticConfig) -> None:
+    records = list(generate_trials(config))
+    records[0] = replace(records[0], difficulty=None)
+    with pytest.raises(DataQualityError) as error:
+        validate_quality(records)
+    assert error.value.summary.missing_values == 1
+    assert error.value.summary.invalid_ranges_or_types >= 1
+
+
 def test_collision_quality_summary(config: SyntheticConfig) -> None:
     rows = list(generate_trials(config))
     rows[1] = rows[0]
