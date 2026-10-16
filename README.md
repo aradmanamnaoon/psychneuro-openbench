@@ -8,7 +8,7 @@ PsychNeuro OpenBench aims to make nonclinical behavioral trial-level ML benchmar
 
 - A typed, bounded Python standard-library generator of entirely invented two-choice trials (response, correctness, reaction time in milliseconds).
 - A strict structural validator for its output, a canonical CSV exporter, and a synthetic dataset card with source-byte SHA-256.
-- Authored tests for deterministic generation, schema validation, missingness/edge cases, and serialization. **No test run is claimed by the README.**
+- Verified GitHub-hosted tests for deterministic generation, schema validation, invalid inputs/edge cases, and serialization: **31 passed**. Ruff lint and strict mypy source checks also passed; [successful CI run](https://github.com/aradmanamnaoon/psychneuro-openbench/actions/runs/38863471313) used the exact source/test blob content now on `main`.
 - A proposed benchmark reproducibility specification in [docs/spec-v0.md](docs/spec-v0.md).
 
 A subject-group-aware ML benchmarking engine, real dataset adapters, a hosted interface, and a verified reproducibility release are **not implemented**.
@@ -24,7 +24,7 @@ python -m ruff check .
 python -m mypy src
 ```
 
-The staged GitHub Actions workflow uses `workflow_dispatch` only to avoid automatically consuming private-repository runner minutes before costs and permissions are reviewed.
+The default-branch workflow remains **manual-only** (`workflow_dispatch`) to avoid recurring private-repository runner usage. A separate branch, `ci/pm02-verification`, was used for limited hosted checks. This is **engineering validation of the synthetic fixture**, not a scientific benchmark or clinical verification.
 
 ## Source example
 
