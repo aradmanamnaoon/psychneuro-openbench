@@ -1,5 +1,5 @@
 # Manual-only to avoid unattended use of private GitHub Actions minutes.
-# Never claim PM-06 validation before reviewing a run for the exact commit.
+# PM-06 through PM-09 code is NOT validated until the exact branch and run logs are inspected.
 name: Synthetic and loader CPU quality gates (manual only)
 on:
   workflow_dispatch:
@@ -33,10 +33,10 @@ jobs:
           python -m psychneuro.explore --seed 73 --participants 12 --trials-per-participant 20 --registry data/registry.json --output-dir artifacts/pm06
       - name: Execute PM-08 grouped synthetic benchmark
         run: |
-          python -m psychneuro.experiments --seed 73 --participants 24 --trials-per-participant 20 --split-seed 42 --registry data/registry.json --output-dir artifacts/pm08
-      - name: Display PM-08 deterministic manifest evidence
+          python -m psychneuro.experiments --config configs/baseline.json --registry data/registry.json --output-dir artifacts/pm08
+      - name: Display PM-09 versioned configuration and manifest evidence
         run: |
-          sha256sum artifacts/pm08/manifest.json
+          sha256sum configs/baseline.json artifacts/pm08/manifest.json
           cat artifacts/pm08/manifest.json
       - name: Archive synthetic-only PM-08 experiment manifest
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
