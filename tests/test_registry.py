@@ -94,3 +94,24 @@ def test_nonboolean_permission_denied() -> None:
 def test_missing_registry_file_is_not_silent(tmp_path: Path) -> None:
     with pytest.raises(FileNotFoundError):
         load_registry(tmp_path / "absent.json")
+
+
+def test_snapshot_mismatched_version_rejected() -> None:
+    payload = deepcopy(_registry())
+    payload["entries"][1]["source_version"] = "invalid-version"
+    with pytest.raises(ValueError, match="disabled"):
+        validate_registry(payload)
+
+
+def test_snapshot_wrong_domain_rejected() -> None:
+    payload = deepcopy(_registry())
+    payload["entries"][1]["source_url"] = "https://example.org/datasets/ds000001/versions/1.0.0"
+    with pytest.raises(ValueError, match="disabled"):
+        validate_registry(payload)
+
+
+def test_internal_source_url_tampering_rejected() -> None:
+    payload = deepcopy(_registry())
+    payload["entries"][0]["source_url"] = "https://example.org/generator.py"
+    with pytest.raises(ValueError, match="unrecognized"):
+        validate_registry(payload)
