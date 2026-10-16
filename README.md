@@ -55,6 +55,8 @@ These are **intended users**, not evidence of interviews, adoption or institutio
 | Dataset card | **Implemented** — synthetic origin, seed, rights declaration, row/group counts and feature availability | [Source](src/psychneuro/synthetic.py) |
 | Fail-closed synthetic registry and rights-aware validation | **Implemented** — only synthetic source enabled; six public-study entries disabled, with versioned metadata, loader provenance checks, source SHA-256 and feature-timing safeguards | [Schema](src/psychneuro/schema.py), [registry loader](src/psychneuro/registry.py), [registry metadata](data/registry.json) |
 | PM-05 local CSV / optional Parquet ingestion | **Code added, CI not yet run on PM-05 commit** — only exact replays of original synthetic fixtures, fail-closed quality diagnostics and machine-readable raw/canonical SHA-256 provenance | [Loader](src/psychneuro/loaders.py), [quality gate](src/psychneuro/quality.py), [negative tests](tests/test_pm05_loaders.py), [scope & limitations](docs/pm05-data-ingestion.md) |
+| PM-06 data-quality tests and descriptive tooling | **Private branch source added; hosted tests/pilot NOT RUN** | [Tests](tests/test_loaders.py), [dataset card](docs/data-card.md), [evidence](docs/pm06-data-stage-changelog.md) |
+| PM-07 deterministic subject-held-out split | **Private review branch implementation, pytest/Ruff/mypy NOT RUN** — seeded participant partitions, duplicate/overlap/index/source-hash guards, prespecified evaluation protocol | [Split](src/psychneuro/split.py), [tests](tests/test_splits.py), [design](docs/split-design.md), [protocol](docs/evaluation-protocol.md) |
 | Engineering verification | **PM-03 verified:** 46 tests passed on both Python 3.11 and 3.12; **PM-04 final verified:** 80 tests passed on Python 3.11, Ruff passed and strict mypy passed on 4 source files | [PM-03 log](https://github.com/aradmanamnaoon/psychneuro-openbench/actions/runs/38864568384), [PM-04 final log](https://github.com/aradmanamnaoon/psychneuro-openbench/actions/runs/38874446677) |
 | Group-held-out baseline benchmarking | **Not implemented** | [Leakage issue #3](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/3), [baseline issue #4](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/4) |
 | Real dataset **ingestion**, browser UI, third-party reproducibility study | **Not implemented / not validated** | [Rights issue #5](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/5), [manifest issue #6](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/6) |
@@ -66,7 +68,7 @@ These are **intended users**, not evidence of interviews, adoption or institutio
 ```mermaid
 flowchart TD
     A["Synthetic-only trial source (implemented)"] --> B["Schema + provenance checks (implemented)"]
-    B --> C["Participant-group split (planned)"]
+    B --> C["Participant-group split (code committed, CI pending)"]
     C --> D["Training-only preprocessing (planned)"]
     D --> E["Dummy vs logistic baseline (planned)"]
     E --> F["Metrics, uncertainty + failure review (planned)"]
