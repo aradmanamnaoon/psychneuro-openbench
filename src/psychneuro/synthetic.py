@@ -13,8 +13,9 @@ import io
 import math
 import random
 import re
+from collections.abc import Sequence
 from dataclasses import asdict, dataclass
-from typing import Literal, Sequence, TypedDict
+from typing import Literal, TypedDict
 
 Side = Literal["left", "right"]
 
@@ -100,8 +101,10 @@ def _check_config(config: SyntheticConfig) -> None:
             raise ValueError(f"{field} must be a short nonempty ASCII identifier")
 
 
-def generate_trials(config: SyntheticConfig = SyntheticConfig()) -> tuple[TrialRecord, ...]:
+def generate_trials(config: SyntheticConfig | None = None) -> tuple[TrialRecord, ...]:
     """Create repeatable toy choices using a local RNG, without global RNG state."""
+    if config is None:
+        config = SyntheticConfig()
     _check_config(config)
     rng = random.Random(config.seed)
     trials: list[TrialRecord] = []

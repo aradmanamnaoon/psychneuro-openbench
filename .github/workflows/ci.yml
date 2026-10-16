@@ -33,6 +33,7 @@ jobs:
       - name: Lint source and tests
         run: python -m ruff check .
       - name: Strict static typing
+        if: always()
         run: python -m mypy src
       - name: Publish exact commit status for connected reviewer
         if: always()
