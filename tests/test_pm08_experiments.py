@@ -12,7 +12,6 @@ import pytest
 
 from psychneuro.baselines import features_from_trials, make_estimator, predict_binary
 from psychneuro.experiments import ExperimentConfig, run_experiment
-from psychneuro.loaders import load_dataset
 from psychneuro.metrics import score_binary
 from psychneuro.synthetic import SyntheticConfig, generate_trials
 
