@@ -1,0 +1,46 @@
+{
+  "config_version": "psychneuro-baseline-v1",
+  "source": "synthetic-original",
+  "dataset": {
+    "generator_seed": 73,
+    "n_participants": 24,
+    "trials_per_participant": 20
+  },
+  "split": {
+    "method": "participant-shuffle-v1",
+    "seed": 42,
+    "cv_folds": 5
+  },
+  "task": {
+    "target": "correct",
+    "predictors": [
+      "difficulty",
+      "stimulus_condition"
+    ]
+  },
+  "models": {
+    "dummy_prior": {
+      "strategy": "prior"
+    },
+    "logistic_regression": {
+      "solver": "lbfgs",
+      "C": 1,
+      "max_iter": 1000,
+      "random_state": 42
+    }
+  },
+  "metrics": {
+    "primary": "balanced_accuracy",
+    "secondary": "macro_f1",
+    "labels": [
+      0,
+      1
+    ]
+  },
+  "selection": {
+    "method": "training_cv_mean_balanced_accuracy",
+    "tie_break": "dummy_prior",
+    "final_fit": "train_only",
+    "test_use": "audit_once_each"
+  }
+}
