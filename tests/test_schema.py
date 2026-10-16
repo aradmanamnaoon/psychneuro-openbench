@@ -111,3 +111,12 @@ def test_boolean_numeric_feature_rejected(field: str) -> None:
     altered[0] = replace(altered[0], **{field: True})  # type: ignore[arg-type]
     with pytest.raises(ValueError, match=field):
         validate_synthetic_dataset(altered, card)  # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize("field", ["difficulty", "response_time_ms"])
+def test_integer_instead_of_float_feature_rejected(field: str) -> None:
+    records, card = _fixture()
+    altered = list(records)
+    altered[0] = replace(altered[0], **{field: 1})  # type: ignore[arg-type]
+    with pytest.raises(ValueError, match=field):
+        validate_synthetic_dataset(altered, card)  # type: ignore[arg-type]
