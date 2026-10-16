@@ -137,22 +137,22 @@ def _read_parquet(path: Path) -> tuple[TrialRecord, ...]:
         arrow = importlib.import_module("pyarrow")
     except ImportError as exc:
         raise RuntimeError("Parquet requires optional dependency: pip install '.[parquet]'") from exc
-    metadata = parquet.read_metadata(path)
+    metadata = getattr(parquet, "read_metadata")(path)
     if metadata.num_rows > MAX_TRIALS:
         raise ValueError("too many parquet trial records")
-    table = parquet.read_table(path)
+    table = getattr(parquet, "read_table")(path)
     if table.column_names != list(CSV_COLUMNS):
         raise ValueError("Parquet columns must exactly match the v0 column order")
     for field in table.schema:
         name: str = field.name
         kind = field.type
         if name in _STRINGS and not (
-            arrow.types.is_string(kind) or arrow.types.is_large_string(kind)
+            getattr(arrow, "types").is_string(kind) or getattr(arrow, "types").is_large_string(kind)
         ):
             raise ValueError(f"Parquet column type mismatch: {name}")
-        if name in _INTEGERS and not arrow.types.is_integer(kind):
+        if name in _INTEGERS and not getattr(arrow, "types").is_integer(kind):
             raise ValueError(f"Parquet column type mismatch: {name}")
-        if name in _FLOATS and not arrow.types.is_floating(kind):
+        if name in _FLOATS and not getattr(arrow, "types").is_floating(kind):
             raise ValueError(f"Parquet column type mismatch: {name}")
     rows = table.to_pylist()
     if len(rows) > MAX_TRIALS:
