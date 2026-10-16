@@ -19,7 +19,7 @@
 
 | Original task | Artifact / action | Observed status |
 | --- | --- | --- |
-| [P1-035](https://app.notion.com/p/3fa977a963b281369920d38225dcc152) | [Frozen config](../../configs/baseline.json), [strict parser](../../src/psychneuro/config.py), [runner integration](../../src/psychneuro/experiments.py) | COMMITTED; source read-back pending/follow-up |
+| [P1-035](https://app.notion.com/p/3fa977a963b281369920d38225dcc152) | [Frozen config](../../configs/baseline.json), [strict parser](../../src/psychneuro/config.py), [runner integration](../../src/psychneuro/experiments.py) | COMMITTED; source presence read back using connected GitHub |
 | [P1-036](https://app.notion.com/p/3fa977a963b281b4a6e7d21e3923530c) | [Integration tests](../../tests/test_experiments.py) and inherited PM-08 regressions | COMMITTED; **pytest NOT RUN** |
 | [P1-037](https://app.notion.com/p/3fa977a963b281efa4e6ce411e092fdd) | [Manual workflow](../../.github/workflows/ci.yml) and GitHub commit-check inspection | **BLOCKED** — no authorized dispatch, no verified logs |
 | [P1-038](https://app.notion.com/p/3fa977a963b28122b05fc0f66a234518) | [Honest model card](../model-card.md) | COMMITTED; no invented empirical scores |
@@ -42,7 +42,13 @@ GitHub Actions private runners consume the owner's included allowance and may in
 ## Next-stage handoff
 
 1. With explicit user permission and verified no-spend or approved budget, run the existing private [Actions workflow](https://github.com/aradmanamnaoon/psychneuro-openbench/actions/workflows/ci.yml) on branch `pm09/versioned-config-integration-qa`; record **run URL, run ID, exact SHA, Python versions, job step logs, test counts, failures and artifact digests**. Fix observed failures via GitHub source commits, repeat verified hosted checks, preserve original failing logs. This step remains **BLOCKED**, not delegated as a coding task.
-2. Only after the exact PM-06/07/08/09 dependency and verification evidence is available, evaluate [PM-10](https://app.notion.com/p/cc9f19deffdf4adebb43a831b8e7d7f1) scope in the consolidated project queue; the next mission is not yet treated as dependency-ready.
+2. Only after the exact PM-06/07/08/09 dependency and verification evidence is available, evaluate [PM-10 — Statistical pipeline, repeated runs & uncertainty evaluation](https://app.notion.com/p/3fa977a963b2815bb650e5e6dac5b40e) scope in the consolidated project queue; the next mission is not yet treated as dependency-ready.
 3. Keep rights and scientific restrictions unchanged. No public release or profile/website changes without separate authorization.
 
 **Conclusion:** Source and reviewer-facing documentation are ready for examination; engineering and research outcomes remain unverified until real hosted logs exist.
+
+## Read-back correction / static review note — 2026-10-16
+
+- Reading back the frozen JSON exposed that `C=1.0` serializes as a numeric JSON literal `1`. The first strict validator would have rejected this **valid default** because Python parses `1` as an integer. This discrepancy was corrected on the review branch: `C=1` and `C=1.0` are treated as the same allowed model hyperparameter, but `true`, changed numerical values and schema drift remain rejected. **This fix was committed but not runtime-tested**.
+- The README was corrected to acknowledge **committed, unexecuted** model code rather than assert no model code exists. This is a source/documentation consistency fix, not benchmark execution proof.
+- Original links above refer to reachable private GitHub paths for an authorized repository reviewer; unauthenticated viewers may see a 404 because the repo is private.
