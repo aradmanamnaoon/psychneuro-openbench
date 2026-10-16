@@ -4,6 +4,25 @@
 IMPLEMENTED / hosted CI **BLOCKED** / descriptive artifacts **NOT RUN**.
 This ledger distinguishes committed source from observed execution.
 
+## Addendum — execution-ready metadata and improved CI evidence
+
+- [Machine-readable synthetic pilot source plan](../data/pm06-pilot-plan.json)
+  explicitly distinguishes expected configuration (12 invented participants x
+  20 invented trials, seed 73) from **UNEXECUTED** source hashes, test status,
+  observed trial counts and artifact digests (`null` in the plan, not invented).
+- Manual-only [Actions workflow](../.github/workflows/ci.yml) now uses
+  Node 24-capable `checkout@v6` and `setup-python@v6` actions,
+  saves pilot artifacts, prints the exact Git commit, Python version,
+  dependency list, generated provenance JSON and artifact SHA-256 values
+  when a real hosted run is authorized and completed.
+- **NOT RUN remains unchanged** for this PM-06 branch. Private Actions can
+  consume billable minutes above the repository owner's plan allowance;
+  neither account remaining quota nor a zero-spend budget was verifiable
+  through the available repository connector. No workflow trigger was
+  used, and no new login, spending, PR or public release occurred.
+  See [GitHub's billing policy](https://docs.github.com/en/billing/concepts/product-billing/github-actions)
+  and [included quotas](https://docs.github.com/en/billing/reference/product-usage-included).
+
 ## Base and preserved dependencies
 
 - Base: [PM-05 main commit 944559a](https://github.com/aradmanamnaoon/psychneuro-openbench/commit/944559a98386dd7c40ea9511ec9857d0714d3ca2).
