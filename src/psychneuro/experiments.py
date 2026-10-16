@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import cast
 
 from .baselines import ModelName, features_from_trials, make_estimator, predict_binary
+from .config import load_baseline_config
 from .loaders import LoadedDataset, load_dataset
 from .metrics import BinaryMetrics, score_binary
 from .split import GroupSplit, create_group_split, validate_group_split
@@ -34,6 +35,8 @@ class ExperimentConfig:
     trials_per_participant: int = 20
     split_seed: int = 42
     cv_folds: int = 5
+    config_version: str | None = None
+    config_sha256: str | None = None
 
 
 def _digest(obj: object) -> str:
@@ -226,19 +229,43 @@ def run_experiment(
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Synthetic-only grouped ML benchmark")
-    parser.add_argument("--seed", type=int, default=73)
-    parser.add_argument("--participants", type=int, default=24)
-    parser.add_argument("--trials-per-participant", type=int, default=20)
-    parser.add_argument("--split-seed", type=int, default=42)
+    parser.add_argument(
+        "--config", type=Path, default=None,
+        help="strict versioned JSON config (for example configs/baseline.json)",
+    )
+    parser.add_argument("--seed", type=int, default=None)
+    parser.add_argument("--participants", type=int, default=None)
+    parser.add_argument("--trials-per-participant", type=int, default=None)
+    parser.add_argument("--split-seed", type=int, default=None)
     parser.add_argument("--registry", type=Path, default=Path("data/registry.json"))
     parser.add_argument("--output-dir", type=Path, required=True)
     args = parser.parse_args()
-    config = ExperimentConfig(
-        generator_seed=args.seed,
-        n_participants=args.participants,
-        trials_per_participant=args.trials_per_participant,
-        split_seed=args.split_seed,
-    )
+    if args.config is not None:
+        if any(
+            value is not None
+            for value in (
+                args.seed, args.participants, args.trials_per_participant, args.split_seed,
+            )
+        ):
+            parser.error("do not mix --config with command-line model or seed overrides")
+        frozen = load_baseline_config(args.config)
+        config = ExperimentConfig(
+            generator_seed=frozen.generator_seed,
+            n_participants=frozen.n_participants,
+            trials_per_participant=frozen.trials_per_participant,
+            split_seed=frozen.split_seed,
+            cv_folds=frozen.cv_folds,
+            config_version=frozen.config_version,
+            config_sha256=frozen.config_sha256,
+        )
+    else:
+        config = ExperimentConfig(
+            generator_seed=73 if args.seed is None else args.seed,
+            n_participants=24 if args.participants is None else args.participants,
+            trials_per_participant=20
+            if args.trials_per_participant is None else args.trials_per_participant,
+            split_seed=42 if args.split_seed is None else args.split_seed,
+        )
     result = run_experiment(config, args.registry)
     output: Path = args.output_dir
     output.mkdir(parents=True, exist_ok=True)
