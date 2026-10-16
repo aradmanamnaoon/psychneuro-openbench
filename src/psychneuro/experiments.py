@@ -13,7 +13,7 @@ import platform
 from dataclasses import asdict, dataclass
 from importlib import import_module
 from pathlib import Path
-from typing import Any, cast
+from typing import cast
 
 from .baselines import ModelName, features_from_trials, make_estimator, predict_binary
 from .loaders import LoadedDataset, load_dataset
@@ -126,7 +126,7 @@ def run_experiment(
     folds = _cv_folds(dataset, split, config.cv_folds)
     versions = {
         "python": platform.python_version(),
-        "scikit_learn": str(import_module("sklearn").__version__),
+        "scikit_learn": str(getattr(import_module("sklearn"), "__version__", "unavailable")),
     }
     source: dict[str, object] = {
         "dataset_id": dataset.schema.dataset_id,
