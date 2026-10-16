@@ -53,10 +53,10 @@ These are **intended users**, not evidence of interviews, adoption or institutio
 | Structural checks | **Implemented** — duplicate keys, trial order, finite values, binary labels and response consistency | [Tests](tests/test_synthetic.py) |
 | Portable tabular export | **Implemented** — stable-column UTF-8 CSV and SHA-256 of exact serialized bytes | [Schema](docs/data-schema.md) |
 | Dataset card | **Implemented** — synthetic origin, seed, rights declaration, row/group counts and feature availability | [Source](src/psychneuro/synthetic.py) |
-| Fail-closed synthetic registry and rights-aware validation | **Implemented** — only synthetic sources permitted, card/checksum and predictor timing checked | [Schema validator](src/psychneuro/schema.py), [registry](data/registry.json) |
-| Engineering verification | **PM-03 verified:** 46 tests passed on both Python 3.11 and 3.12; **PM-04 verified:** 60 tests passed on Python 3.11 (plus Ruff and strict mypy) | [PM-03 log](https://github.com/aradmanamnaoon/psychneuro-openbench/actions/runs/38864568384), [PM-04 log](https://github.com/aradmanamnaoon/psychneuro-openbench/actions/runs/38865440963) |
+| Fail-closed synthetic registry and rights-aware validation | **Implemented** — only synthetic source enabled; six public-study entries disabled, with versioned metadata, loader provenance checks, source SHA-256 and feature-timing safeguards | [Schema](src/psychneuro/schema.py), [registry loader](src/psychneuro/registry.py), [registry metadata](data/registry.json) |
+| Engineering verification | **PM-03 verified:** 46 tests passed on both Python 3.11 and 3.12; **PM-04 final verified:** 80 tests passed on Python 3.11, Ruff passed and strict mypy passed on 4 source files | [PM-03 log](https://github.com/aradmanamnaoon/psychneuro-openbench/actions/runs/38864568384), [PM-04 final log](https://github.com/aradmanamnaoon/psychneuro-openbench/actions/runs/38874446677) |
 | Group-held-out baseline benchmarking | **Not implemented** | [Leakage issue #3](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/3), [baseline issue #4](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/4) |
-| Real dataset registry, browser UI, third-party reproducibility study | **Not implemented / not validated** | [Rights issue #5](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/5), [manifest issue #6](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/6) |
+| Real dataset **ingestion**, browser UI, third-party reproducibility study | **Not implemented / not validated** | [Rights issue #5](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/5), [manifest issue #6](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/6) |
 
 **Important distinction:** passing unit tests on invented records validates specific engineering behaviors, **not** research impact, statistical generalizability or brain/behavior modeling accuracy.
 
@@ -151,11 +151,13 @@ The default-branch [Actions workflow](.github/workflows/ci.yml) is manual-only t
 │   ├── __init__.py
 │   ├── synthetic.py         # RNG, validation, CSV and dataset card
 │   ├── schema.py            # Fail-closed rights and predictor validation
+│   ├── registry.py          # Typed source registry and synthetic-only safe loader
 │   └── py.typed
 ├── tests/
 │   ├── test_synthetic.py    # Base generator contract tests
 │   ├── test_synthetic_pm03.py # Additional validated edge cases
-│   └── test_schema.py       # Synthetic provenance and leakage-field gates
+│   ├── test_schema.py       # Synthetic provenance and leakage-field gates
+│   └── test_registry.py     # Source-rights deny-by-default regression tests
 ├── data/registry.json      # Only the synthetic generator is enabled
 ├── .github/workflows/ci.yml
 ├── pyproject.toml
@@ -168,7 +170,7 @@ The tree above describes the **main** branch. An alternative multi-session desig
 
 Six actual public neuroscience/behavioral dataset candidates have been documented in the [PM-04 primary-source rights and suitability audit](docs/dataset-candidate-audit.md), including fixed version links, published licenses, reported participant counts, modality differences and exclusions. **None has been loaded or approved for v0.** Open licensing does not by itself establish complete ethical, privacy, model-feature, or task-suitability clearance.
 
-The new [synthetic-only registry](data/registry.json) permits **only** the project's original invented trial generator; [`validate_synthetic_dataset`](src/psychneuro/schema.py) rejects external/unauthorized cards, bad checksums, incompatible generator metadata, inconsistent counts, and missing feature-timing declarations. [`validate_predictor_columns`](src/psychneuro/schema.py) permits only `difficulty` and `stimulus_condition` as pre-response predictors. The [hosted PM-04 audit](https://github.com/aradmanamnaoon/psychneuro-openbench/actions/runs/38865440963) recorded **60 passing tests**, Ruff success and strict mypy success on Python 3.11. This is engineering evidence, **not approval for real research data ingestion**.
+The [typed fail-closed registry loader](src/psychneuro/registry.py) and [synthetic-only registry](data/registry.json) permit **only** the project's original invented trial generator; [`validate_synthetic_dataset`](src/psychneuro/schema.py) rejects external/unauthorized cards, bad checksums, incompatible generator metadata, inconsistent counts, and missing feature-timing declarations. [`validate_predictor_columns`](src/psychneuro/schema.py) permits only `difficulty` and `stimulus_condition` as pre-response predictors. The [final hosted PM-04 CI](https://github.com/aradmanamnaoon/psychneuro-openbench/actions/runs/38874446677) recorded **80 passing tests**, Ruff success and strict mypy success on Python 3.11. This is engineering evidence, **not approval for real research data ingestion**.
 
 ## Roadmap with real issue tracking
 
