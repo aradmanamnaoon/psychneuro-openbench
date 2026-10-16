@@ -179,11 +179,11 @@ def validate_trials(records: Sequence[TrialRecord]) -> None:
             raise ValueError("correct must be binary integer")
         if row.correct != int(row.response == row.stimulus_condition):
             raise ValueError("response disagrees with correctness")
-        if type(row.difficulty) not in (float, int) or not math.isfinite(
+        if type(row.difficulty) is not float or not math.isfinite(
             row.difficulty
         ) or not 0.0 <= row.difficulty <= 1.0:
             raise ValueError("difficulty must be finite in [0, 1]")
-        if type(row.response_time_ms) not in (float, int) or not math.isfinite(
+        if type(row.response_time_ms) is not float or not math.isfinite(
             row.response_time_ms
         ) or row.response_time_ms <= 0.0:
             raise ValueError("response_time_ms must be positive finite milliseconds")
