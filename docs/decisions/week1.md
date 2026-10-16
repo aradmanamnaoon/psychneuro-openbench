@@ -42,3 +42,10 @@ After supplemental quality checks genuinely pass: place compatible tests and thi
 - **Python 3.12:** 46 pytest passed in 0.08s, Ruff all checks passed, mypy no issues in 2 source files.
 - The same audited PM-03 supplemental-test blob was promoted to `main`; the main branch's workflow stays **manual-only**. The test counts do **not** imply a group-aware ML benchmark, a real dataset or a browser application exists.
 - Existing six GitHub issues and the old PM-03 draft branch remain preserved. Neither alternate PM-02 code nor stale PM-03 README was blindly merged. Repository is still PRIVATE and release remains gated by `docs/release-gates.md`.
+
+## PM-04 provenance, source-rights, and schema check — 2026-10-16
+
+- [Dataset candidate research](../dataset-candidate-audit.md) inspects six fixed-version OpenNeuro task datasets, including license/participant counts and explicit unknowns; all six are **not enabled**, and a clinical-context candidate is excluded. No downloads, human record operations, or clinical inference were performed.
+- [Source validation](../../src/psychneuro/schema.py) and [synthetic registry](../../data/registry.json) implement a fail-closed synthetic-only gate. [Additional negative tests](../../tests/test_schema.py) cover rejected external rights, tampered source hashes, bad counts and illegal post-response predictors.
+- Actual one-off private [PM-04 GitHub Actions run 38865440963](https://github.com/aradmanamnaoon/psychneuro-openbench/actions/runs/38865440963): `completed/success`, **60 pytest passed in 0.15s**, Ruff passed, mypy no issues in **3 source files** on GitHub-hosted Python 3.11; logs fetched and checked. The actual audited branch was [`ci/pm04-schema-audit`](https://github.com/aradmanamnaoon/psychneuro-openbench/tree/ci/pm04-schema-audit), commit [6d513f7](https://github.com/aradmanamnaoon/psychneuro-openbench/commit/6d513f7e7f670b6fedd00da0bc06e4043dd6913d).
+- Only verified source/test/artifact blob content is promoted to `main`; the default workflow remains manual-only. Source-rights vetting for actual study-level data and participant confidentiality remains future work.

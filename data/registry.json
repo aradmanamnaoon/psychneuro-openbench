@@ -1,0 +1,23 @@
+{
+  "registry_schema_version": "0.1.0",
+  "policy": "deny_external_sources_by_default",
+  "description": "Private pre-release registry. Only original synthetic fixtures can be loaded by v0.",
+  "entries": [
+    {
+      "dataset_id": "psychneuro-synthetic-v0",
+      "enabled": true,
+      "modality": "synthetic_behavioral_trials",
+      "source_kind": "synthetic",
+      "source_identifier": "psychneuro.synthetic.generate_trials",
+      "schema_version": "0.1.0",
+      "generator_revision": "0.1.0",
+      "rights_basis": "synthetic-original",
+      "consent_boundary": "no_real_participants",
+      "privacy": "invented_subject_ids_only",
+      "download_allowed": false,
+      "participant_data_ingestion_allowed": false,
+      "source_sha256": "computed_per_export_not_static",
+      "usage_limitations": "not empirical cognitive/neuroscience or clinical observations"
+    }
+  ]
+}

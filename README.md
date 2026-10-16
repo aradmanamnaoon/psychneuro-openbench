@@ -53,7 +53,8 @@ These are **intended users**, not evidence of interviews, adoption or institutio
 | Structural checks | **Implemented** — duplicate keys, trial order, finite values, binary labels and response consistency | [Tests](tests/test_synthetic.py) |
 | Portable tabular export | **Implemented** — stable-column UTF-8 CSV and SHA-256 of exact serialized bytes | [Schema](docs/data-schema.md) |
 | Dataset card | **Implemented** — synthetic origin, seed, rights declaration, row/group counts and feature availability | [Source](src/psychneuro/synthetic.py) |
-| Engineering verification | **Verified on Python 3.11 and 3.12:** 46 pytest cases passed per environment, with Ruff and strict mypy passing | [Actual two-version Actions log](https://github.com/aradmanamnaoon/psychneuro-openbench/actions/runs/38864568384) |
+| Fail-closed synthetic registry and rights-aware validation | **Implemented** — only synthetic sources permitted, card/checksum and predictor timing checked | [Schema validator](src/psychneuro/schema.py), [registry](data/registry.json) |
+| Engineering verification | **PM-03 verified:** 46 tests passed on both Python 3.11 and 3.12; **PM-04 verified:** 60 tests passed on Python 3.11 (plus Ruff and strict mypy) | [PM-03 log](https://github.com/aradmanamnaoon/psychneuro-openbench/actions/runs/38864568384), [PM-04 log](https://github.com/aradmanamnaoon/psychneuro-openbench/actions/runs/38865440963) |
 | Group-held-out baseline benchmarking | **Not implemented** | [Leakage issue #3](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/3), [baseline issue #4](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/4) |
 | Real dataset registry, browser UI, third-party reproducibility study | **Not implemented / not validated** | [Rights issue #5](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/5), [manifest issue #6](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/6) |
 
@@ -142,22 +143,32 @@ The default-branch [Actions workflow](.github/workflows/ci.yml) is manual-only t
 ├── docs/
 │   ├── spec-v0.md           # Scientific scope and acceptance gates
 │   ├── data-schema.md       # Trial-level fields, types, units and restrictions
+│   ├── dataset-candidate-audit.md # Six real-source candidates, none enabled
 │   ├── license-policy.md    # Software vs dataset rights
 │   ├── release-gates.md     # Privacy, verification and publication requirements
 │   └── decisions/week1.md   # Engineering choices and actual CI evidence
 ├── src/psychneuro/
 │   ├── __init__.py
 │   ├── synthetic.py         # RNG, validation, CSV and dataset card
+│   ├── schema.py            # Fail-closed rights and predictor validation
 │   └── py.typed
 ├── tests/
 │   ├── test_synthetic.py    # Base generator contract tests
-│   └── test_synthetic_pm03.py # Additional validated edge cases
+│   ├── test_synthetic_pm03.py # Additional validated edge cases
+│   └── test_schema.py       # Synthetic provenance and leakage-field gates
+├── data/registry.json      # Only the synthetic generator is enabled
 ├── .github/workflows/ci.yml
 ├── pyproject.toml
 └── README.md
 ```
 
 The tree above describes the **main** branch. An alternative multi-session design on `pm-02/synthetic-foundation` is **preserved for history, not merged**: [PM-02 ADR-0001](docs/decisions/pm02-reconciliation.md) selects the hosted-tested `main` API and documents the incompatible fields and versioning rules.
+
+## Data-source selection: synthetic first, rights before ingestion
+
+Six actual public neuroscience/behavioral dataset candidates have been documented in the [PM-04 primary-source rights and suitability audit](docs/dataset-candidate-audit.md), including fixed version links, published licenses, reported participant counts, modality differences and exclusions. **None has been loaded or approved for v0.** Open licensing does not by itself establish complete ethical, privacy, model-feature, or task-suitability clearance.
+
+The new [synthetic-only registry](data/registry.json) permits **only** the project's original invented trial generator; [`validate_synthetic_dataset`](src/psychneuro/schema.py) rejects external/unauthorized cards, bad checksums, incompatible generator metadata, inconsistent counts, and missing feature-timing declarations. [`validate_predictor_columns`](src/psychneuro/schema.py) permits only `difficulty` and `stimulus_condition` as pre-response predictors. The [hosted PM-04 audit](https://github.com/aradmanamnaoon/psychneuro-openbench/actions/runs/38865440963) recorded **60 passing tests**, Ruff success and strict mypy success on Python 3.11. This is engineering evidence, **not approval for real research data ingestion**.
 
 ## Roadmap with real issue tracking
 
