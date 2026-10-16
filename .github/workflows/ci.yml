@@ -1,4 +1,5 @@
-# Manual-only. Avoid automatic private-runner spend. This is not a release workflow.
+# Manual-only to avoid unattended use of private GitHub Actions minutes.
+# Never claim PM-06 validation before reviewing a run for the exact commit.
 name: Synthetic and loader CPU quality gates (manual only)
 on:
   workflow_dispatch:
@@ -27,3 +28,13 @@ jobs:
         run: python -m ruff check .
       - name: Strict typing
         run: python -m mypy src
+      - name: Execute synthetic-only PM-06 exploration
+        run: |
+          python -m psychneuro.explore --seed 73 --participants 12 --trials-per-participant 20 --registry data/registry.json --output-dir artifacts/pm06
+      - name: Save PM-06 exploration and provenance evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: pm06-synthetic-pilot-${{ matrix.python-version }}
+          path: artifacts/pm06/
+          retention-days: 7
+          if-no-files-found: error
