@@ -1,24 +1,54 @@
-name: Synthetic contract checks (manual trigger only)
+name: PM-02 one-off hosted verification
+
 on:
+  push:
+    branches:
+      - ci/pm02-verification
   workflow_dispatch:
 
 permissions:
   contents: read
+  statuses: write
+
+concurrency:
+  group: pm02-one-off-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  test:
+  verify:
+    if: github.ref == 'refs/heads/ci/pm02-verification'
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 6
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Install dev dependencies
+          cache: 'pip'
+          cache-dependency-path: pyproject.toml
+      - name: Install development dependencies
         run: python -m pip install -e '.[dev]'
-      - name: Validate tests
+      - name: Run authored pytest assertions
         run: python -m pytest -q
-      - name: Lint
+      - name: Lint source and tests
         run: python -m ruff check .
-      - name: Strict types
+      - name: Strict static typing
         run: python -m mypy src
+      - name: Publish exact commit status for connected reviewer
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RESULT: ${{ job.status }}
+          TARGET_SHA: ${{ github.sha }}
+          RUN_ID: ${{ github.run_id }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          if [ "$RESULT" = "success" ]; then state=success; else state=failure; fi
+          target="https://github.com/$REPOSITORY/actions/runs/$RUN_ID"
+          payload=$(printf '{"state":"%s","context":"pm02/hosted-verify","description":"Checks: pytest, ruff, mypy. Result: %s","target_url":"%s"}' "$state" "$RESULT" "$target")
+          curl --fail-with-body --silent --show-error --retry 2 \
+            -X POST \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            --data "$payload" "https://api.github.com/repos/$REPOSITORY/statuses/$TARGET_SHA"
