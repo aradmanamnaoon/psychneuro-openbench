@@ -108,13 +108,14 @@ def _indices(
     test: tuple[str, ...],
 ) -> tuple[tuple[int, ...], tuple[int, ...], tuple[int, ...]]:
     by_subject: dict[str, SplitName] = {}
-    for name, subject_ids in (
+    partitions: tuple[tuple[SplitName, tuple[str, ...]], ...] = (
         ("train", train), ("validation", validation), ("test", test)
-    ):
+    )
+    for name, subject_ids in partitions:
         for subject_id in subject_ids:
             if subject_id in by_subject:
                 raise ValueError("participant leakage: group assigned twice")
-            by_subject[subject_id] = name  # type: ignore[assignment]
+            by_subject[subject_id] = name
     output: dict[SplitName, list[int]] = {"train": [], "validation": [], "test": []}
     for index, row in enumerate(data.records):
         name = by_subject.get(row.participant_id)
