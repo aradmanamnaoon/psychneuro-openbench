@@ -93,7 +93,7 @@ def validate_registry(payload: Mapping[str, object]) -> tuple[RegistryEntry, ...
     seen: set[str] = set()
     for source in source_entries:
         if not isinstance(source, dict):
-            raise ValueError("registry entry must be an object")
+            raise TypeError("registry entry must be an object")
         entry = RegistryEntry(
             dataset_id=_string(source, "dataset_id"),
             source_kind=_string(source, "source_kind"),
@@ -156,7 +156,7 @@ def load_registry(path: Path) -> tuple[RegistryEntry, ...]:
     """Read versioned metadata locally; never fetch source URLs."""
     document: object = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(document, dict):
-        raise ValueError("registry JSON must contain an object")
+        raise TypeError("registry JSON must contain an object")
     return validate_registry(document)
 
 
