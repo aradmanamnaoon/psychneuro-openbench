@@ -28,7 +28,7 @@
 
 ## Scientific boundaries
 
-Synthetic data only. No human participant records, real-life validity, clinical claims or independent adoption. The **group-held-out benchmarking engine has not been built**; baseline scores/uncertainty are not measured. Source-code license is undecided, and a future real dataset requires explicit rights and privacy checks.
+Synthetic data only. No human participant records, real-life validity, clinical claims or independent adoption. The **group-held-out benchmarking engine has not been built**; baseline scores/uncertainty are not measured. Original source code has an Apache-2.0 license, distinct from dataset licenses, and a future real dataset requires explicit rights and privacy checks.
 
 ## Next actions / release gate
 
@@ -49,3 +49,13 @@ After supplemental quality checks genuinely pass: place compatible tests and thi
 - [Source validation](../../src/psychneuro/schema.py) and [synthetic registry](../../data/registry.json) implement a fail-closed synthetic-only gate. [Additional negative tests](../../tests/test_schema.py) cover rejected external rights, tampered source hashes, bad counts and illegal post-response predictors.
 - Actual one-off private [PM-04 GitHub Actions run 38865440963](https://github.com/aradmanamnaoon/psychneuro-openbench/actions/runs/38865440963): `completed/success`, **60 pytest passed in 0.15s**, Ruff passed, mypy no issues in **3 source files** on GitHub-hosted Python 3.11; logs fetched and checked. The actual audited branch was [`ci/pm04-schema-audit`](https://github.com/aradmanamnaoon/psychneuro-openbench/tree/ci/pm04-schema-audit), commit [6d513f7](https://github.com/aradmanamnaoon/psychneuro-openbench/commit/6d513f7e7f670b6fedd00da0bc06e4043dd6913d).
 - Only verified source/test/artifact blob content is promoted to `main`; the default workflow remains manual-only. Source-rights vetting for actual study-level data and participant confidentiality remains future work.
+
+
+## Final PM-04 rights/schema/registry verification and private-main integration (2026-10-16)
+
+- **Implementation:** [private `main` integration commit](https://github.com/aradmanamnaoon/psychneuro-openbench/commit/1a02163fb474bee0cdd2f418d304c22dc4dff392) includes source and tests for the verified synthetic-only v0 provenance registry, six disabled published-source metadata records, strict numerical feature validation, source origin/snapshot checks, documentation and rejected-import test cases. All real study datasets remain unapproved for ingestion.
+- **Initial explicitly authorized 4-minute-capped GitHub Actions run:** [#38874202366](https://github.com/aradmanamnaoon/psychneuro-openbench/actions/runs/38874202366) passed **80 pytest tests**, then failed on two Ruff `TRY004` invalid-exception-type findings. Mypy did not execute in that failed attempt. The defects were corrected using `TypeError` in `registry.py`; no failing test result was concealed or described as success.
+- **Corrective hosted verification:** [#38874446677](https://github.com/aradmanamnaoon/psychneuro-openbench/actions/runs/38874446677), GitHub runner job `116885991972`, commit `6f63804b5c476a689085b0ce8080452f2181d572`, Python 3.11: **80 pytest passed in 0.13s; Ruff: all checks passed; strict mypy: no issues in 4 source files.** Full logs retrieved and inspected.
+- **Immutable-code identity:** The eight changed source/test/registry/research files have matching Git blob SHA values on `pm-04/rights-registry-validation` and the successful `ci/pm04-final-verification` run. The CI branch differs only in its one-off workflow file; `main` preserves the original manual-dispatch-only workflow and received a **fast-forward** to the verified source branch.
+- **Legal/consent boundary:** Software is Apache-2.0; that does not license any third-party dataset. Synthetic fixture records are invented; their data license has not been separately declared. All six real study datasets remain disabled without participant consent/ethics and snapshot event-file suitability reviews. No human data, clinical claims, external communications, new public release or website/profile changes.
+- **Review status:** PM-04 complete for its narrow P1-014 through P1-017 acceptance requirements. This does **not** prove empirical benchmark validity, full-product completion, or readiness to publicly release. PM-05 (source-aware CSV/Parquet and validation pipeline) can move to Ready for private engineering only, with its own future CI and rights gates.
