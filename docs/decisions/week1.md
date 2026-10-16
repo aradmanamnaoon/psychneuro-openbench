@@ -1,35 +1,30 @@
-# PM-03 / P1 engineering evidence ledger
+# PM-03 evidence and decision ledger — 2026-10-16
 
-**As of 2026-10-16:** review-only draft on branch `pm03-quality-foundation`. PM-03 files have been authored as an isolated GitHub change; they have NOT been reviewed, merged or run in hosted CI. No public release was made.
+**Status: private implementation branch; review required; no hosted execution result.** This is an actual GitHub file, not the historical Notion-only draft. The mission is not yet Verified Done.
 
-## Existing prerequisite evidence
-- **Real private project repository:** [psychneuro-openbench](https://github.com/aradmanamnaoon/psychneuro-openbench) (GitHub metadata verified; owner has push access).
-- **PM-01 draft science contract:** [docs/spec-v0.md](https://github.com/aradmanamnaoon/psychneuro-openbench/blob/main/docs/spec-v0.md) committed on `main` at [2103ef2](https://github.com/aradmanamnaoon/psychneuro-openbench/commit/2103ef2e638257dd85518e6bceacf53722dd849b); author labels it **proposed, under review**.
-- **PM-02 generator:** [Notion pre-repository source artifacts](https://app.notion.com/p/3fb977a963b2812a86dbd97a5012c9f8), NOT committed or tested. No verified `pyproject.toml`, generator module, package installation or v0 synthetic CSV on main as checked.
-- **PM-03 mission:** [Notion record](https://app.notion.com/p/3fa977a963b2813583a9e497e2ef0519); existing staged attachments preserved.
+## Changes verified in GitHub
+- Main repository [psychneuro-openbench](https://github.com/aradmanamnaoon/psychneuro-openbench) exists and is **private**.
+- PM-01 [docs/spec-v0.md](https://github.com/aradmanamnaoon/psychneuro-openbench/blob/main/docs/spec-v0.md) was committed in [2103ef2](https://github.com/aradmanamnaoon/psychneuro-openbench/commit/2103ef2e638257dd85518e6bceacf53722dd849b). Spec expressly says proposed and under human review.
+- PM-02 actual typed [generator](https://github.com/aradmanamnaoon/psychneuro-openbench/blob/main/src/psychneuro/synthetic.py), [tests](https://github.com/aradmanamnaoon/psychneuro-openbench/blob/main/tests/test_synthetic.py), [pyproject](https://github.com/aradmanamnaoon/psychneuro-openbench/blob/main/pyproject.toml), [schema](https://github.com/aradmanamnaoon/psychneuro-openbench/blob/main/docs/data-schema.md) and manual [CI workflow](https://github.com/aradmanamnaoon/psychneuro-openbench/blob/main/.github/workflows/ci.yml) now exist on main after PM-02 commits.
+- PM-03 first private branch commit: [29055e2](https://github.com/aradmanamnaoon/psychneuro-openbench/commit/29055e2aca4224bbeba1a6f41981f50b8a2c53df). It was authored **before** PM-02's generator landed, using provisional interfaces and is preserved only as history.
+- PM-03 updated integration branch [pm03-quality-foundation](https://github.com/aradmanamnaoon/psychneuro-openbench/tree/pm03-quality-foundation) now incorporates PM-02 main without modifying main. It *preserves* PM-02's existing `tests/test_synthetic.py` and replaces the provisional test with `tests/test_synthetic_pm03.py` using the verified `generate_trials(SyntheticConfig(...))` API.
+- Updated [README](https://github.com/aradmanamnaoon/psychneuro-openbench/blob/pm03-quality-foundation/README.md) adds browser-only *review* navigation, real issue links, seed scientific caveats, installation-free demo plan and release boundary.
+- Updated [CI workflow](https://github.com/aradmanamnaoon/psychneuro-openbench/blob/pm03-quality-foundation/.github/workflows/ci.yml) preserves PM-02 manual-only, pytest/Ruff/mypy gates and extends the CPU Python matrix to 3.11/3.12. Previous duplicate `cpu-tests.yml` draft is absent from updated branch tip.
+- [PM-03 supplemental tests](https://github.com/aradmanamnaoon/psychneuro-openbench/blob/pm03-quality-foundation/tests/test_synthetic_pm03.py): field order/CSV, seeds/digests, dataset-card provenance, mutation and validation error paths, generated latency/feature timing, safe identifier constraints.
 
-## Actual independent GitHub changes in PM-03
-- [README.md](https://github.com/aradmanamnaoon/psychneuro-openbench/blob/pm03-quality-foundation/README.md): clear audience, proposed workflow and nonclinical caveats, no falsely claimed live demo.
-- [tests/test_synthetic.py](https://github.com/aradmanamnaoon/psychneuro-openbench/blob/pm03-quality-foundation/tests/test_synthetic.py): real proposed assertions for seed, schema, identity, types, inputs and RNG isolation, but the adapter is **not yet reconciled with PM-02**. Do not mark tests passing.
-- [.github/workflows/cpu-tests.yml](https://github.com/aradmanamnaoon/psychneuro-openbench/blob/pm03-quality-foundation/.github/workflows/cpu-tests.yml): restricted CPU GitHub Actions workflow. No automatic branch push trigger or authorized PR and no CI run evidenced.
-- [docs/decisions/week1.md](https://github.com/aradmanamnaoon/psychneuro-openbench/blob/pm03-quality-foundation/docs/decisions/week1.md): this ledger.
+## Six REAL GitHub issues
+1. [#1 Schema and card](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/1)
+2. [#2 Seeded generator](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/2)
+3. [#3 Leakage](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/3)
+4. [#4 Transparent baselines](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/4)
+5. [#5 Rights](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/5)
+6. [#6 Replay and CI](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/6)
 
-## Real engineering issue links
-1. [#1 Schema and dataset-card validation](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/1)
-2. [#2 Generator seeded/edge-case validation](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/2)
-3. [#3 Participant leakage defenses](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/3)
-4. [#4 Dummy and logistic baselines](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/4)
-5. [#5 Provenance and rights gate](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/5)
-6. [#6 Replay manifest and CI evidence](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/6)
+## Tests, CI and scientific rights
+- **Tests authored, NOT run.** No pytest assertion-count/pass claim and no real GitHub Actions job ID or logs. GitHub combined commit status may be empty even if a workflow is defined; inspect actual run jobs after execution.
+- CI remains `workflow_dispatch`-only because private Actions quota and possible billing have not been authorized. The feature-branch changes are **not merged to main**, and a PR has not been opened.
+- **Synthetic-only.** No external participants/PHI, dataset download, clinical evaluation, benchmark results, scientific adoption or open-source license claim. Distinguish synthetic data rights from undecided software source-license policy.
+- Repo self-commit SHA cannot be placed inside the same commit without changing it; the current exact integrated commit SHA and readback belong in the Notion PM-03 mission evidence field after write.
 
-## Verification and blockers
-- Commit: actual feature-branch SHA visible in GitHub branch history (this ledger cannot self-embed its own commit SHA; record separately after write).
-- Python tests: **NOT RUN**; generator/API dependency missing. Generator function name/arguments in test adapter are provisional, not PM-02's verified interface.
-- Hosted CPU CI: **NOT RUN**, no job ID/log/pass conclusion; private repo Actions runner entitlement and integration stage to be verified before triggering.
-- Source/data rights: **synthetic-only plan**. No human records, clinical data, external datasets, model scores, downloaded data or license grant created by this mission.
-- Original five requirements: P1-009 provisional committed tests; P1-010 workflow authored but hosted verification blocked; P1-011 README staged; P1-012 six real GitHub issues; P1-013 ledger committed, not final verification.
-
-## Release / GO-NO-GO
-**GO:** independent issue backlog and private branch preparation.
-**NO-GO:** claims of functioning package, deterministic result, passing tests, completed PM-03, clinical/scientific reliability or public release.
-**Next:** PM-02 integrates the actual typed generator on main; reconcile test adapter and README, review and merge change only with author approval for PR/merge, then run hosted CI when free usage/permissions confirmed. Record links to real run jobs before marking PM-03 Verified Done.
+## Gate and next task
+**GO:** review standalone private issue list, code/document QA additions, and PM-02 API compatibility. **NO-GO:** mark PM-03 Verified Done or claim passing tests until a real GitHub Actions CPU job has been authorized, run and audited (commit SHA, run URL, job conclusion, failing assertions included). Subsequent branch integration into main requires human review/approval of PR/merge. After PM-03 evidence, proceed to a dependency-ready later research-software mission.

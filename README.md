@@ -1,58 +1,67 @@
 # PsychNeuro OpenBench
 
-**Status: unreleased research-software prototype; main branch currently contains a proposed scientific contract, not a working benchmark.** This README is staged on `pm03-quality-foundation` for review. Do not cite, benchmark, or reuse as an evaluated research tool yet.
+**Status: private, pre-release nonclinical research-software prototype; implementation and tests are not yet hosted-CI verified.**
 
-PsychNeuro OpenBench aims to help psychology-methods students, behavioral research assistants, computational neuroscience analysts, and ML reproducibility reviewers reproduce **nonclinical, synthetic-only** behavioral-trial classification workflows. The v0 focus is leakage-safe evaluation, provenance, auditable baselines, and transparent failures—not model accuracy or diagnosis.
+PsychNeuro OpenBench aims to support reproducible behavioral trial-level machine-learning methods, with subject-held-out splits, provenance checks, transparent baselines, and audit-ready reports. Intended readers: psychology methods students, research assistants, computational neuroscience analysts, and ML reproducibility reviewers. The first engineering slice is synthetic only.
 
-## Scope and scientific contract
+## Implemented candidate foundation (PM-02)
+- A typed Python standard-library generator of invented left/right trials with `SyntheticConfig`, `TrialRecord`, `generate_trials`.
+- Local seeded RNG, bounded record count, schema validation, canonical CSV, and a synthetic dataset card with source-byte SHA-256.
+- Existing PM-02 [generator tests](tests/test_synthetic.py) plus [PM-03 supplemental checks](tests/test_synthetic_pm03.py) for edge cases and replay invariants. **Test files have been authored; a passing CI run is not yet evidenced.**
+- [Scientific v0 contract](docs/spec-v0.md), [field schema](docs/data-schema.md), and [software/data rights policy](docs/license-policy.md).
 
-Read [docs/spec-v0.md](docs/spec-v0.md) before implementation. The proposed v0 vertical slice is:
+**Not implemented:** group-respecting ML evaluation, real-data ingestion, hosted interactive experiment interface, benchmark accuracy metrics, external validation, released package or clinical assessment.
 
-1. Generate an explicitly synthetic binary trial-correctness dataset with participant/session/trial identifiers, pre-response task features and a documented seed.
-2. Validate trial keys, values, synthetic rights/provenance, and immutable dataset-card metadata.
-3. Hold out entire **participants**, not random trial rows. Fit preprocessing on training folds only.
-4. Compare a configured DummyClassifier with LogisticRegression using identical group assignments.
-5. Export group-level evaluation evidence, explicit undefined-metric states and a stable replay manifest.
+## Generated trial example (developer-facing)
 
-**No real participant data, diagnosis, treatment claims, medical images, EEG, fMRI, live studies or public release are in v0.** All simulated effect sizes are illustrative, not calibrated to human research.
+```python
+from psychneuro.synthetic import SyntheticConfig, dataset_card, generate_trials, to_csv_text
 
-## Reproducibility and seeds
+config = SyntheticConfig(seed=42, n_participants=24, trials_per_participant=20)
+records = generate_trials(config)
+csv_text = to_csv_text(records)
+card = dataset_card(config, records)
+assert card["n_trials"] == len(records)
+```
 
-In the proposed generator, the seed controls a private pseudorandom number generator. Reproducing exact rows requires the **same seed, generation settings, generator implementation and pinned environment**. Different seeds usually differ on a sufficiently large random sample but no individual output is guaranteed to change. A seed is not evidence of scientific validity. Generator and dataset-card format remain subject to PM-02 integration.
+This synthetic fixture has **no empirical human-behavior calibration**. `response`, `response_time_ms`, IDs and `correct` (the target) cannot be predictors of the same-trial pre-response correctness.
 
-The v0 predictive target is binary `correct`. Only pre-response stimulus/task settings are candidate predictors. In particular, response latency (even if the generator produces it for QC) and participant identifiers must **never** be predictors of the same-trial correctness outcome.
+## Seed / reproducibility contract
 
-## Zero-install browser review
+`SyntheticConfig.seed` controls a local `random.Random` instance. A pinned Python environment, equal implementation/configuration, and the same seed should reproduce the same records, CSV and source digest. Cross-version or cross-platform bitwise identity is **not** guaranteed. Synthetic samples demonstrate software mechanics, not inferential or clinical validity.
 
-No local tools are needed to **review** source and evidence:
-1. Open the [v0 contract](docs/spec-v0.md) and verify nonclinical scope and required columns.
-2. Inspect [the staged synthetic tests](tests/test_synthetic.py) and their provisional generator API assumptions.
-3. Review the [CPU workflow](.github/workflows/cpu-tests.yml), then visit the repository's [Actions tab](https://github.com/aradmanamnaoon/psychneuro-openbench/actions) for a **real** run, commit SHA, logs and outcome.
-4. Inspect the [decision/evidence ledger](docs/decisions/week1.md) and the linked [engineering issues](https://github.com/aradmanamnaoon/psychneuro-openbench/issues).
+## Installation-free reviewer workflow in a browser
 
-**Important:** This is a browser-only *review path*, not a browser-hosted runnable app. There is currently **no verified live demo**, benchmark metric, passing generator test, released dataset, or CI run to link. Do not mistake workflow YAML or issue creation for execution. A future installation-free end-to-end demo would require separate implementation, hosting and verification.
+No local development setup is required for **review**:
+1. Review [v0 scope](docs/spec-v0.md), [schema](docs/data-schema.md) and [license policy](docs/license-policy.md).
+2. Inspect the [seeded/schema tests](tests/test_synthetic.py) and [supplemental PM-03 regression tests](tests/test_synthetic_pm03.py).
+3. Open the [manual CPU workflow](.github/workflows/ci.yml) and the [GitHub Actions page](https://github.com/aradmanamnaoon/psychneuro-openbench/actions). Only a real completed run/log tied to a specific SHA counts as evidence; none is claimed here.
+4. Check the [evidence ledger](docs/decisions/week1.md) and [six development issues](https://github.com/aradmanamnaoon/psychneuro-openbench/issues).
 
-## Tests and contributor setup (once PM-02 package is merged)
+This is **browser-only inspection**, not a browser-executable simulation or benchmark. A zero-install public demo is planned for a later milestone and is **not deployed**.
 
-The proposed CPU check installs the editable package with pytest and runs `python -m pytest -q`. These commands are for the future GitHub-hosted runner, not instructions for the human reviewer. The tests currently define a provisional `psychneuro.synthetic.generate_trials` adapter and must be reconciled with PM-02's actual API before treating outcomes as valid.
+## Hosted test workflow, pending authorized run
 
-**CI cost gate:** This feature branch uses nonautomatic workflow triggers; private-repository runner quota/billing must be checked and authorized before triggering a paid run.
+The [CPU test workflow](.github/workflows/ci.yml) is `workflow_dispatch`-only and uses Python 3.11 and 3.12. It installs the editable package + development dependencies, then executes pytest, Ruff and strict mypy. This avoids silently consuming private-repository runner minutes before Action availability and cost authorization are verified. Manual local commands shown for future contributors (not requested of the human reviewer):
 
-## Scientific limitations and data rights
+```sh
+python -m pip install -e '.[dev]'
+python -m pytest -q
+python -m ruff check .
+python -m mypy src
+```
 
-- Synthetic data are not actual observations, cannot validate neurocognitive mechanisms, and do not demonstrate out-of-sample generalization to humans.
-- Subject-held-out results only address synthetic subjects under the stated data-generation process; external validation remains absent.
-- Real datasets require per-source license, consent/ethics and privacy approval. Package/source-code licensing is separate from data rights; **no package license has been approved here**.
-- Never ingest PHI, identifiable patient records or clinical labels for diagnosis.
-- Undefined metrics, insufficient groups, class imbalance and provenance errors must be surfaced explicitly, not replaced by attractive numbers.
+No passing results or CI log URLs exist in this README.
 
-## Development backlog (real private issues)
+## Engineering backlog (actual private GitHub issues)
 
-- [#1 Schema and card invariants](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/1)
-- [#2 Seeded generator testing](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/2)
-- [#3 Participant-level leakage prevention](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/3)
-- [#4 Dummy and logistic baselines](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/4)
-- [#5 Provenance and permitted sources](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/5)
-- [#6 Replay manifest and CI evidence](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/6)
+- [#1 Trial schema and dataset-card validation](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/1)
+- [#2 Seeded generator reproducibility and edge cases](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/2)
+- [#3 Participant leakage prevention](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/3)
+- [#4 Dummy/logistic comparison](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/4)
+- [#5 Provenance/rights fail-closed registry](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/5)
+- [#6 Stable manifest and CI evidence](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/6)
 
-PM-01 is completing the scientific contract, PM-02 owns the typed package and seeded generator, and PM-03 owns testing, hosted checks, docs and the backlog. Do not merge or advertise the project until actual evidence and human approval.
+## Rights, privacy and scientific limits
+
+All identities and outcomes are invented. No PHI, identifiable participants, EEG, fMRI, clinical diagnosis, intervention or medical-performance assertions. New real datasets require independent consent/ethics/privacy and per-dataset license verification. No software license has yet been chosen: `rights_basis=synthetic-original` refers to the synthetic data, **not** a code redistribution license. No release, outreach, website/profile update or external collaboration has been authorized.
