@@ -1,24 +1,35 @@
-name: Synthetic contract checks (manual trigger only)
+name: PM-03 private quality audit (one-off branch)
+
 on:
-  workflow_dispatch:
+  push:
+    branches: [ci/pm03-quality-audit]
 
 permissions:
   contents: read
 
+concurrency:
+  group: pm03-quality-audit
+  cancel-in-progress: true
+
 jobs:
   test:
+    if: github.ref == 'refs/heads/ci/pm03-quality-audit'
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 4
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.11', '3.12']
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
-      - name: Install dev dependencies
-        run: python -m pip install -e '.[dev]'
-      - name: Validate tests
+          python-version: ${{ matrix.python-version }}
+      - name: Install checks
+        run: python -m pip install --disable-pip-version-check -e '.[dev]'
+      - name: Run all generator assertions
         run: python -m pytest -q
-      - name: Lint
+      - name: Lint source and tests
         run: python -m ruff check .
-      - name: Strict types
+      - name: Strict type checking
         run: python -m mypy src
