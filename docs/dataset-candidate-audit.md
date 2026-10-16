@@ -1,40 +1,38 @@
-# PM-04 — Dataset source rights and suitability audit
+# PM-04 — Versioned research dataset rights and suitability audit
 
-**Audit date:** 2026-10-16. **Decision:** v0 remains **synthetic-only**. This is a desktop review of primary *published dataset metadata*, NOT a download, integrity check of individual event files, human-subject ethical approval, or grant of permission to process participant records. Sources must be reconfirmed at the exact version before any real adapter work.
+**Reviewed:** 2026-10-16 (official landing-page metadata; not raw files). **Decision:** only original, reproducibly generated synthetic data may enter the v0 benchmark. The six sources below are *candidates for future adapters*, not six approved ingested datasets. The rights observations do not establish ethics approval for this project, a safe target variable, or participant-level data cleanliness.
 
-## Six specific public research data candidates
+## Six concrete sources — published metadata, not permission to ingest
 
-| Source / fixed version | Modality and task | Public metadata participant count | Size reported by source | Posted rights | Suitability for synthetic tabular v0 |
+| Dataset and fixed snapshot | Modality / known task | Participants; published size | Snapshot's posted data license | Verified variables vs unknown event fields | Restrictions / decision |
 | --- | --- | --- | --- | --- | --- |
-| [OpenNeuro ds000001 v1.0.0](https://openneuro.org/datasets/ds000001/versions/1.0.0) | MRI; Balloon Analog Risk-taking | 16 | 2.25 GB | CC0; historical README additionally mentions Open Data Commons PDDL 1.0 | **Not activated**; real participant fMRI, would require version-pinned trial/event extraction and feature-availability audit |
-| [OpenNeuro ds000003 v1.0.0](https://openneuro.org/datasets/ds000003/versions/1.0.0) | MRI; rhyme judgment | 13 | 391.09 MB | CC0 | **Not activated**; incompatible imaging collection, event columns not verified |
-| [OpenNeuro ds000005 archived snapshot](https://openneuro.org/datasets/ds000005/versions/57fed2b8cce88d000bc17596/metadata) | MRI; mixed gambles | 16 | **Unverified** | Historical README PDDL 1.0 (archive metadata) | **Not activated**; event schema and current snapshot status unverified |
-| [OpenNeuro ds000007 archived snapshot](https://openneuro.org/datasets/ds000007/versions/00001) | MRI; spoken/manual stop-signal | 20 | 3.26 GB | PDDL 1.0 | **Not activated**; modality mismatch and per-event response fields need inspection |
-| [OpenNeuro ds000008 archived snapshot](https://openneuro.org/datasets/ds000008/versions/00001) | MRI; unconditional/conditional stop-signal | 14 | 2.01 GB | PDDL 1.0 | **Not activated**; real data, no full column audit yet |
-| [OpenNeuro ds000117 v1.0.4](https://openneuro.org/datasets/ds000117/versions/1.0.4) | MRI + MEG; face processing | 16; two sessions | **Unverified** | CC0 | **Not activated**; substantial electrophysiological data and imaging outside initial tabular scope |
+| [ds000001 v1.0.0](https://openneuro.org/datasets/ds000001/versions/1.0.0) | fMRI / balloon analogue risk task | 16; 133 files, 2.25 GB | CC0 on snapshot; older README mentions PDDL | Published task and `participants.tsv` filename; **trial response/onset column names not inspected** | Full fMRI dataset, rights metadata only; exclude real-subject ingestion |
+| [ds000003 v1.0.0](https://openneuro.org/datasets/ds000003/versions/1.0.0) | fMRI / rhyme judgment | 13; 57 files, 391.09 MB | CC0 on snapshot, older README PDDL | Published task and `participants.tsv`; **event columns unverified** | Snapshot reports BIDS validation error; require event/label audit |
+| [ds000005 historical snapshot](https://openneuro.org/datasets/ds000005/versions/57fed2b8cce88d000bc17596/metadata) | MRI/BOLD / mixed gambles | 16; **snapshot size not established** | Historical snapshot reports PDDL 1.0 | Gain/loss choice task described in [OpenfMRI](https://openfmri.org/dataset/ds000005/); **exact per-trial columns not inspected** | Snapshot has no minted DOI in displayed record; cannot safely map task labels without file review |
+| [ds000007 snapshot 00001](https://openneuro.org/datasets/ds000007/versions/00001) | MRI / Stop Manual, Stop Vocal, Stop Word | 20; 442 files, 3.26 GB | PDDL 1.0 | Published task names and `participants.tsv`; **stop-signal trial/response columns unverified** | Snapshot BIDS error; discussions mention item identifiers missing; reject for immediate tabular benchmark |
+| [ds000008 snapshot 00001](https://openneuro.org/datasets/ds000008/versions/00001) | MRI / conditional/unconditional stopping | 14; 192 files, 2.01 GB | PDDL 1.0 | Published task names and `participants.tsv`; **event columns unverified** | Snapshot BIDS error, historical missing-onset correction; no ingest |
+| [ds000117 v1.0.4](https://openneuro.org/datasets/ds000117/versions/1.0.4) | MRI + MEG / face recognition | 16, two sessions; **snapshot size not established** | CC0 on snapshot | Published face-recognition task; **event columns unverified** | Multimodal source vastly exceeds v0 tabular scope; no ingest |
 
-**Observed source metadata** for these values is on each linked dataset page. Most sources are fMRI studies with behavioral tasks, not ready-to-use correctness-labelled synthetic CSVs. No direct claim is made about specific event-file variables before downloading/inspecting a *permission-cleared* small event file in a subsequent approved milestone. Terms, subject-level privacy considerations, event labels, quality and BIDS warnings require dataset-by-dataset review despite public listing.
+**Meaning of "variables":** the table records observable task labels and published file *names* only. It intentionally does not assert that any `events.tsv` contains fields `response`, `correct`, `difficulty` or `response_time_ms`. Those are *our synthetic schema columns*, not established columns from these six real datasets. Participant counts are OpenNeuro metadata, not verified usable sample sizes after missing-data exclusions. Sizes reflect the version's landing page where available; an unspecified size is **unknown**, not zero.
 
-### Explicit exclusions and hazards
+## Actual rights and consent boundary
 
-- [OpenNeuro ds000030 v1.0.0](https://openneuro.org/datasets/ds000030/versions/1.0.0) reports 272 participants and behavioral task modalities with clinical-neuropsychiatric context. **Excluded from the nonclinical v0** regardless of CC0 metadata.
-- A publication, DOI, CC0/PDDL label or OpenNeuro hosting is **not proof** that a given export is scientifically suitable for a new ML task, free of identifying details, or fully compliant with institutional ethics requirements.
-- Software dependencies' licenses and dataset source rights are separate. Do not infer universal license grants; record rights per dataset version.
-- No real dataset was downloaded, transformed, placed in GitHub, processed in CI, or added as `enabled` to the data registry.
+1. Public OpenNeuro snapshot rights are stated as CC0 or historical Open Data Commons PDDL. These labels generally support broad copyright/database use, but are **not** a statement about consent, privacy, institutional research authorization, suitability, completeness, or a waiver of ethical responsibilities. CC0 is not a blanket permission to republish identifiable data or to attempt re-identification.
+2. The [OpenNeuro FAQ](https://docs.openneuro.org/faq), [public dataset guide](https://docs.openneuro.org/user-guide/), and [dataset portal](https://openneuro.org/) state versioned snapshot and licensing rules. The sign-in terms include an undertaking to have appropriate institutional permissions for secondary analysis and not to re-identify participants. These have **not** been attested to for this project; no download or real-data transformation took place.
+3. Older README text may say PDDL while later version-specific metadata says CC0 (e.g. ds000001/ds000003). This is recorded as a **version-history rights discrepancy**, not silently merged into a single global license.
+4. Reuse must preserve provenance, source-version citation, any requested scholarly acknowledgements, and applicable privacy/consent and institutional rules. A paper citation, DOI, or a public license **does not** verify the event-file semantics or grant permission to claim clinical/behavioral validity.
+5. [ds000030](https://openneuro.org/datasets/ds000030/versions/1.0.0) has neuropsychiatric context; explicitly excluded from the nonclinical initial scope.
 
-## Selection decision
+## Decision record for P1-015
 
-**Selected for v0:** original deterministic **`psychneuro-synthetic-v0`** generator, no patient/real participants, original synthetic records with declared rights basis and exact CSV bytes SHA-256. It is the only enabled source in [data/registry.json](../data/registry.json).
+**ACCEPT as sole enabled v0 source:** `psychneuro-synthetic-v0`, an internally generated toy task with invented subjects and responses. `source_kind=synthetic`, `rights_basis=synthetic-original`; the external candidate entries are registered only as **disabled metadata**. Synthetic records are not from real participants, so participant consent is **not applicable to this generated dataset**. This does not confer a separate public dataset license: `license=not-separately-specified`. Code is Apache-2.0, but original generated records do not automatically inherit that software license. A SHA-256 of the exported CSV bytes is included in each generated dataset card, not in the static catalog.
 
-Why: supports subject-key and target-leakage engineering tests without real participant privacy risks or uncertain BIDS-event semantics. The v0 research specification requires no actual human performance claims. Public datasets are valuable later *only* after a separate rights/privacy/feature-timing/subject grouping gate.
+**NO-GO for real data:** no downloading, auto-fetch, CSV parsing, external feature mapping, redistribution, participant outcome modeling, scientific estimation, medical research inference or publicity on any of the six sources. The [registry](../data/registry.json) is a discovery ledger, not an approval manifest. The code-level [registry loader](../src/psychneuro/registry.py) fails closed on attempts to enable human-source entries.
 
-**Next rights gate before real-source selection:** inspect the fixed snapshot's `dataset_description.json`, `participants.tsv`, representative `events.tsv` (without copying identifiable rows into repo), uploader terms, task response definitions, consent/ethics requirements, and transformations required for schema mapping; record a content checksum. If any of these are unknown, reject ingestion by default.
+**Next real-data admission gate:** choose one versioned source *after* explicitly documenting applicable secondary-analysis authorization, consent/ethics conditions, snapshot-specific license/terms, privacy review, BIDS validity, task event columns including missing values and response timing, leakage hazard, participant grouping, transformation recipe, a safe, version-pinned source checksum and any required citation. Perform a separate authorization review before ingesting even one real row.
 
-### Primary sources
+## Evidence and limitations
 
-- [Official OpenNeuro API and snapshot documentation](https://docs.openneuro.org/api.html)
-- [OpenNeuro user guide on public datasets and versioned snapshots](https://docs.openneuro.org/user-guide/)
-- [OpenNeuro FAQ and legal/privacy notes](https://docs.openneuro.org/faq)
-- [BIDS specification](https://bids-specification.readthedocs.io/)
+Primary source: the six versioned [OpenNeuro](https://openneuro.org/) pages above, plus [OpenNeuro access documentation](https://docs.openneuro.org/api.html) and [BIDS specification](https://bids-specification.readthedocs.io/). Snapshot page figures were independently checked, but event files, sample-level consent attestations and exact downloaded bytes were **not** reviewed. No human participant records are stored in the repo. CI of these new registry changes is not implied by older PM-02/PM-03 runs.
 
-**No clinical diagnosis, treatment advice, patient records or public-release claim.**
+**Review gate:** synthetic-only development is authorized in the private repository; external data, clinical applicability and public release remain NO-GO.
