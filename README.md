@@ -23,14 +23,14 @@ human behavior, clinical efficacy, psychology effect sizes or patient diagnosis.
 
 ### Example (only after an authorized Python installation)
 
-\`\`\`python
+```python
 from psychneuro import generate_reaction_times, make_dataset_card, to_csv_bytes
 
 trials = generate_reaction_times(seed=42)
 assert len(trials) == 480
 card = make_dataset_card(trials)
 csv_data = to_csv_bytes(trials)
-\`\`\`
+```
 
 No real participant or patient data should be processed in this v0 milestone.
 The model/evaluation pipeline, group split validator, real-data adapters and
