@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 from pathlib import Path
+from urllib.parse import urlsplit
 from collections.abc import Mapping
 
 from .schema import ValidatedDataset, validate_synthetic_dataset
@@ -23,6 +24,10 @@ from .synthetic import (
 
 _SYNTHETIC_ID = "psychneuro-synthetic-v0"
 _GENERATOR = "psychneuro.synthetic.generate_trials"
+_SYNTHETIC_URL = (
+    "https://github.com/aradmanamnaoon/psychneuro-openbench/"
+    "blob/main/src/psychneuro/synthetic.py"
+)
 _PUBLIC_LICENSES = frozenset({"CC0-1.0", "PDDL-1.0"})
 
 
@@ -58,6 +63,20 @@ def _boolean(entry: Mapping[str, object], key: str) -> bool:
     if type(value) is not bool:
         raise ValueError(f"missing or invalid boolean registry field: {key}")
     return value
+
+
+def _matches_external_snapshot(entry: RegistryEntry) -> bool:
+    """Prevent mismatching a candidate identifier and its cited fixed snapshot."""
+    parsed = urlsplit(entry.source_url)
+    expected = f"/datasets/{entry.dataset_id}/versions/{entry.source_version}"
+    return (
+        parsed.scheme == "https"
+        and parsed.netloc == "openneuro.org"
+        and parsed.path in (expected, expected + "/metadata")
+        and not parsed.query
+        and not parsed.fragment
+        and entry.source_ref == entry.dataset_id
+    )
 
 
 def validate_registry(payload: Mapping[str, object]) -> tuple[RegistryEntry, ...]:
@@ -100,6 +119,7 @@ def validate_registry(payload: Mapping[str, object]) -> tuple[RegistryEntry, ...
             if (
                 entry.dataset_id != _SYNTHETIC_ID
                 or entry.source_ref != _GENERATOR
+                or entry.source_url != _SYNTHETIC_URL
                 or entry.modality != "synthetic_behavioral_trials"
                 or entry.source_version != SCHEMA_VERSION
                 or entry.rights_basis != "synthetic-original"
@@ -116,7 +136,7 @@ def validate_registry(payload: Mapping[str, object]) -> tuple[RegistryEntry, ...
                 entry.enabled
                 or entry.download_allowed
                 or entry.participant_data_ingestion_allowed
-                or not entry.source_url.startswith("https://")
+                or not _matches_external_snapshot(entry)
                 or entry.license not in _PUBLIC_LICENSES
                 or entry.rights_basis != "published-license-metadata-only"
                 or entry.consent_boundary != "secondary_use_not_cleared"
