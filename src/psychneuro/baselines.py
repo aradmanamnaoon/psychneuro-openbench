@@ -26,6 +26,33 @@ def features_from_trials(records: Sequence[TrialRecord]) -> list[Features]:
     return [(row.difficulty, row.stimulus_condition) for row in records]
 
 
+class _Backend(Protocol):
+    def fit(self, x: object, y: object) -> object: ...
+    def predict(self, x: object) -> object: ...
+
+
+class _ArrayAdapter:
+    """Ensure ColumnTransformer receives a proper 2-D NumPy array."""
+
+    def __init__(self, backend: object, *, dummy: bool) -> None:
+        self._backend = cast(_Backend, backend)
+        self._dummy = dummy
+
+    def _array(self, x: Sequence[Features]) -> object:
+        numpy = import_module("numpy")
+        if self._dummy:
+            return numpy.zeros((len(x), 1), dtype=float)
+        return numpy.asarray(x, dtype=object)
+
+    def fit(self, x: Sequence[Features], y: Sequence[int]) -> object:
+        self._backend.fit(self._array(x), list(y))
+        return self
+
+    def predict(self, x: Sequence[Features]) -> Sequence[int]:
+        raw = cast(Sequence[int], self._backend.predict(self._array(x)))
+        return tuple(int(value) for value in raw)
+
+
 def make_estimator(name: ModelName) -> Estimator:
     """Construct a FRESH model for each training fold.
 
@@ -42,7 +69,7 @@ def make_estimator(name: ModelName) -> Estimator:
     except ImportError as exc:
         raise RuntimeError("Install optional benchmark dependencies: .[benchmark]") from exc
     if name == "dummy_prior":
-        return cast(Estimator, dummy.DummyClassifier(strategy="prior"))
+        return _ArrayAdapter(dummy.DummyClassifier(strategy="prior"), dummy=True)
     if name == "logistic_regression":
         preprocessor = compose.ColumnTransformer(
             transformers=[
@@ -51,8 +78,7 @@ def make_estimator(name: ModelName) -> Estimator:
             ],
             remainder="drop",
         )
-        return cast(
-            Estimator,
+        return _ArrayAdapter(
             pipeline.Pipeline(
                 steps=[
                     ("preprocess", preprocessor),
@@ -67,6 +93,7 @@ def make_estimator(name: ModelName) -> Estimator:
                     ),
                 ]
             ),
+            dummy=False,
         )
     raise ValueError(f"unknown model: {name}")
 
