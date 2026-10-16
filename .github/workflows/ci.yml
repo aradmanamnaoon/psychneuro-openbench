@@ -1,29 +1,30 @@
-# Manual-only. Avoid automatic private-runner spend. This is not a release workflow.
-name: Synthetic CPU quality gates (manual only)
+# One-off run, explicitly authorized by owner on 2026-10-16.
+# A single CPU job, GitHub Actions hard timeout of four runner minutes.
+# Only this temporary verification branch can trigger it.
+name: PM-04 final private verification
 on:
-  workflow_dispatch:
-
+  push:
+    branches: [ci/pm04-final-verification]
 permissions:
   contents: read
-
+concurrency:
+  group: pm04-final-one-off
+  cancel-in-progress: true
 jobs:
-  quality:
+  verify:
+    if: github.ref == 'refs/heads/ci/pm04-final-verification'
     runs-on: ubuntu-latest
-    timeout-minutes: 8
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ['3.11', '3.12']
+    timeout-minutes: 4
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
-      - name: Install development requirements
+          python-version: '3.11'
+      - name: Install package and development dependencies
         run: python -m pip install --disable-pip-version-check -e '.[dev]'
-      - name: Run generator tests
+      - name: Run complete tests
         run: python -m pytest -q
-      - name: Lint
+      - name: Enforce Ruff
         run: python -m ruff check .
-      - name: Strict typing
+      - name: Enforce strict mypy
         run: python -m mypy src
