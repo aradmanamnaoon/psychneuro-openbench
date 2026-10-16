@@ -44,3 +44,14 @@ No real dataset ingestion, participant uploads, PHI or clinical outcomes; `right
 Use the `main` API and schema above for all PM-03+ examples until a separately versioned and tested migration is approved. Do **not** combine the alternate `congruent/incongruent` trial schema or `reaction_time_ms` field with the canonical `left/right` / `response_time_ms` contract. See [ADR-0001](decisions/pm02-reconciliation.md).
 
 [Hosted CI run #38864568384](https://github.com/aradmanamnaoon/psychneuro-openbench/actions/runs/38864568384) confirmed 46 passing tests on both Python 3.11 and Python 3.12, plus Ruff and strict mypy, for matching main-line generator and test blobs. This evidence covers synthetic code only; it does not validate a scientific model, a group-held-out benchmark, an external CSV reader, or rights to use third-party data.
+
+
+## PM-04 dataset registry and strict loader boundary
+
+The [v0 registry](../data/registry.json) now lists **one enabled internal generator** plus six *disabled public metadata candidates*. The `source_kind`, `source_url`, `source_version`, `source_ref`, `license`, `rights_basis`, `consent_boundary`, `modality`, `review_state` and explicit ingest/download flags are checked by [`registry.py`](../src/psychneuro/registry.py). External data cannot be enabled merely by editing a URL or switching a flag. The synthetic output is generated internally from `SyntheticConfig`; the loader does not parse user CSVs or fetch URLs.
+
+`load_registered_synthetic(config, registry_path)` returns generated trial records, dataset card, validated summary, and source registry metadata. The card's per-export SHA-256 is checked against the serialized dataset, and post-response fields remain excluded by `validate_predictor_columns`. `validate_trials` now rejects boolean values mistakenly passed as numeric difficulty/latency. A missing `synthetic` attestation returns a validation error, rather than an uncaught `KeyError`.
+
+The registry is not a cryptographic signature, consent verification engine or firewall for malicious code. The six external entries represent reviewed *source metadata*, NOT reviewed actual event columns. Source records must not be downloaded, transformed, or modeled using this code. The existing v0 schema's synthetic column names are **not assumed** to match any real research dataset.
+
+[Six-source rights audit](dataset-candidate-audit.md). **Hosted CI status for new PM-04 branch:** not yet confirmed; earlier passing workflows do not test these new commits.
