@@ -114,7 +114,7 @@ def load_baseline_config(path: Path) -> BaselineConfig:
         if not _matches(root[key], expected):
             raise ValueError(f"{key}: unsupported or changed benchmark protocol")
     split = _object(root["split"], "split", {"method", "seed", "cv_folds"})
-    for key, expected in _FIXED["split"].items():
+    for key, expected in cast(dict[str, object], _FIXED["split"]).items():
         if not _matches(split[key], expected):
             raise ValueError(f"split.{key}: unsupported protocol")
     dataset = _object(
