@@ -1,29 +1,27 @@
-# Manual-only. Avoid automatic private-runner spend. This is not a release workflow.
-name: Synthetic CPU quality gates (manual only)
+name: PM-04 one-off private schema audit
 on:
-  workflow_dispatch:
-
+  push:
+    branches: [ci/pm04-schema-audit]
 permissions:
   contents: read
-
+concurrency:
+  group: pm04-one-off
+  cancel-in-progress: true
 jobs:
-  quality:
+  test:
+    if: github.ref == 'refs/heads/ci/pm04-schema-audit'
     runs-on: ubuntu-latest
-    timeout-minutes: 8
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ['3.11', '3.12']
+    timeout-minutes: 4
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
-      - name: Install development requirements
+          python-version: '3.11'
+      - name: Install test and analysis dependencies
         run: python -m pip install --disable-pip-version-check -e '.[dev]'
-      - name: Run generator tests
+      - name: Run all source validation tests
         run: python -m pytest -q
-      - name: Lint
+      - name: Ruff
         run: python -m ruff check .
-      - name: Strict typing
+      - name: Mypy
         run: python -m mypy src
