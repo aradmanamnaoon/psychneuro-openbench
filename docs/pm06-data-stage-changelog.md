@@ -4,6 +4,14 @@
 IMPLEMENTED / hosted CI **BLOCKED** / descriptive artifacts **NOT RUN**.
 This ledger distinguishes committed source from observed execution.
 
+## PM-06 final static CI-hardening checkpoint — 2026-10-16
+
+- Verified official GitHub tag refs and pinned source-control actions to exact upstream commit SHAs in the [manual-only workflow](../.github/workflows/ci.yml): [actions/checkout v6](https://github.com/actions/checkout/tree/d23441a48e516b6c34aea4fa41551a30e30af803), [actions/setup-python v6](https://github.com/actions/setup-python/tree/ece7cb06caefa5fff74198d8649806c4678c61a1), and [actions/upload-artifact v4](https://github.com/actions/upload-artifact/tree/ea165f8d65b6e75b540449e92b4886f43607fa02). Tag resolution was a real GitHub API read; it does not verify runtime compatibility.
+- **Existing first-party GitHub app cannot start new workflow runs:** available Actions tools permit reading run/jobs/logs and *re-running* existing jobs but provide no dispatch-new-workflow operation. Current review branch has **zero** hosted runs.
+- GitHub Actions has not executed on this updated branch. Pytest, Ruff, strict mypy, Parquet integration, source-manifest exports, synthetic summary, and figure results remain **NOT RUN**. This is an explicit blocker, not a failed test.
+- For user-authorized **manual** run: visit the [CI workflow](https://github.com/aradmanamnaoon/psychneuro-openbench/actions/workflows/ci.yml), choose **Run workflow** and select branch `pm06/data-quality-provenance`. Before triggering, verify that the owner's GitHub Actions budget/available included minutes avoids unauthorized billing. Once dispatched, the connected GitHub app can retrieve the actual job logs and stored artifacts.
+- The private-repo, no-publication, no-PR, no-real-data boundaries remain enforced. The next mission PM-07 is not marked Verified Done while this gate is unresolved.
+
 ## Addendum — execution-ready metadata and improved CI evidence
 
 - [Machine-readable synthetic pilot source plan](../data/pm06-pilot-plan.json)
