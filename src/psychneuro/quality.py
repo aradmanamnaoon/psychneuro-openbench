@@ -51,10 +51,15 @@ def validate_quality(records: Sequence[TrialRecord]) -> QualitySummary:
     missing = duplicates = duplicate_orders = invalid_rt = invalid_values = invalid_ids = 0
     if not records or len(records) > MAX_TRIALS:
         errors.append("row count must be 1..100000")
-    for index, row in enumerate(records, start=1):
+    for row in records:
         identifiers = (row.dataset_id, row.participant_id, row.session_id, row.trial_id)
-        if any(not isinstance(v, str) or not v.strip() for v in identifiers):
-            missing += 1
+        values = (*identifiers, row.trial_order, row.stimulus_condition,
+                  row.difficulty, row.correct, row.response,
+                  row.response_time_ms, row.generator_seed)
+        missing += sum(
+            value is None or (isinstance(value, str) and not value.strip())
+            for value in values
+        )
         if any(not isinstance(v, str) or _ID.fullmatch(v) is None for v in identifiers):
             invalid_ids += 1
         if all(isinstance(v, str) for v in identifiers):
