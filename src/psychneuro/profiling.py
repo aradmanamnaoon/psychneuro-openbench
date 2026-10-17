@@ -27,8 +27,10 @@ def measure_small_synthetic_run(project_root: Path) -> dict[str, Any]:
     and CPU timings fluctuate with runner load; not promises or benchmarks
     without exact hosted logs and repetition.
     """
-    scenario = Scenario(generator_seed=73, n_participants=24, trials_per_participant=20,
-                        repeats=1)
+    scenario = Scenario(
+        generator_seed=73, n_participants=24,
+        trials_per_participant=20, repeats=1,
+    )
     baseline = 0
     peak_rss: int | None = None
     if platform.system() == "Linux":
@@ -53,7 +55,7 @@ def measure_small_synthetic_run(project_root: Path) -> dict[str, Any]:
         peak_rss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
     return {
         "measurement_protocol": PROFILE_PROTOCOL,
-        "measurement_state": "actual_execution_required",
+        "measurement_state": "measured_in_current_process_not_externally_verified",
         "source_policy": "synthetic-original",
         "python_version": platform.python_version(),
         "scenario": {
