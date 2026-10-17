@@ -138,7 +138,15 @@ def run_pipeline(config: PipelineConfig, registry_path: Path) -> dict[str, objec
                 for metric in _METRICS:
                     kept[name][metric].append(metrics[metric])
             record["test_metrics"] = scored
-            record["test_slice_errors"] = result.get("test_slice_errors")
+            # Public run dictionaries must already contain JSON-native types.
+            # BinaryMetrics uses tuple-of-tuples for confusion counts; Python's
+            # JSON encoder silently converts those tuples to lists otherwise,
+            # breaking in-memory-versus-export read-back equality and risking
+            # inconsistent provenance inspection across API boundaries.
+            raw_slices = result.get("test_slice_errors")
+            record["test_slice_errors"] = json.loads(
+                json.dumps(raw_slices, allow_nan=False)
+            )
         runs.append(record)
     eligible = len(kept["cv_selected_policy"]["balanced_accuracy"])
     report: dict[str, object] = {
