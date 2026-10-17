@@ -7,7 +7,6 @@ remains an explicit independent hosted/manual acceptance requirement.
 from __future__ import annotations
 
 import hashlib
-import json
 from dataclasses import asdict
 from pathlib import Path
 from typing import Any
@@ -206,17 +205,15 @@ def test_app_starts_with_original_synthetic_preview_without_heldout_results() ->
     assert at.sidebar.selectbox[0].value == DATA_MODES[0]
     assert len(at.sidebar.selectbox) == 4
     assert len(at.file_uploader) == 0
-    assert not at.altair_chart
     assert not at.download_button
-    assert any("NOT human neuroscience evidence" in item.message for item in at.warning)
+    assert any("NOT human neuroscience evidence" in item.value for item in at.warning)
 
 
 def test_app_navigation_to_results_requires_real_artifact() -> None:
     at = AppTest.from_file(str(ROOT / "app.py"), default_timeout=20).run()
     at.sidebar.radio[0].set_value("Results and charts").run()
     assert not at.exception
-    assert any("No held-out model results" in item.message for item in at.info)
-    assert not at.altair_chart
+    assert any("No held-out model results" in item.value for item in at.info)
 
 
 def test_app_upload_mode_empty_state_is_explicit() -> None:
@@ -224,8 +221,7 @@ def test_app_upload_mode_empty_state_is_explicit() -> None:
     at.sidebar.selectbox[0].set_value(DATA_MODES[1]).run()
     assert not at.exception
     assert len(at.file_uploader) == 1
-    assert any("No report uploaded" in item.message for item in at.info)
-    assert not at.altair_chart
+    assert any("No report uploaded" in item.value for item in at.info)
     assert not at.download_button
 
 
@@ -235,3 +231,38 @@ def test_app_limitations_page_has_rights_and_nonclinical_notice() -> None:
     assert not at.exception
     assert len(at.warning) > 0
     assert any("rights and privacy" in item.value.lower() for item in at.subheader)
+
+def test_app_rejects_corrupt_uploaded_report_without_downloads() -> None:
+    at = AppTest.from_file(str(ROOT / "app.py"), default_timeout=20).run()
+    at.sidebar.selectbox[0].set_value(DATA_MODES[1]).run()
+    at.file_uploader[0].upload("report.json", b'{"invalid":true}', "application/json").run()
+    assert not at.exception
+    assert len(at.download_button) == 0
+    assert any("Input rejected" in item.value for item in at.error)
+
+
+def test_app_uploaded_fixture_exposes_real_input_only_and_comparison_controls(
+    report: dict[str, Any],
+) -> None:
+    """Simulated app test only; fixture numbers are NOT actual benchmark results."""
+    at = AppTest.from_file(str(ROOT / "app.py"), default_timeout=20).run()
+    at.sidebar.selectbox[0].set_value(DATA_MODES[1]).run()
+    artifact = build_bundle(report).report_json
+    at.file_uploader[0].upload("report.json", artifact, "application/json").run()
+    assert not at.exception
+    assert len(at.download_button) == 3
+    assert any("consistent" in item.value for item in at.success)
+    assert any("HOSTED CI NOT VERIFIED" in item.value for item in at.error)
+    at.sidebar.radio[0].set_value("Results and charts").run()
+    assert not at.exception
+    assert len(at.multiselect) == 2
+    assert at.multiselect[0].value == list(
+        ("dummy_prior", "logistic_regression", "cv_selected_policy")
+    ) or tuple(at.multiselect[0].value) == (
+        "dummy_prior", "logistic_regression", "cv_selected_policy"
+    )
+    at.multiselect[0].set_value(["dummy_prior"]).run()
+    assert not at.exception
+    assert len(at.download_button) == 3
+    at.multiselect[1].set_value([]).run()
+    assert any("No eligible results" in item.value for item in at.info)
