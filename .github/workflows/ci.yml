@@ -1,8 +1,14 @@
 # Manual-only to avoid unattended use of private GitHub Actions minutes.
-# PM-06 through PM-13 code is NOT validated until the exact branch and run logs are inspected.
+# PM-06 through PM-14 code is NOT validated until the exact branch and run logs are inspected.
 name: Synthetic and loader CPU quality gates (manual only)
 on:
   workflow_dispatch:
+    inputs:
+      profile_small_synthetic:
+        description: "Explicit opt-in: profile one 480-row synthetic run (extra CI usage)"
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -22,7 +28,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install development requirements
         run: python -m pip install --disable-pip-version-check -e '.[dev,parquet,benchmark,ui]'
-      - name: Run all pytest including PM-13 live synthetic integration and UI smoke
+      - name: Run all pytest including PM-14 safe errors and accessible table AppTest
         run: python -m pytest -q
       - name: Lint
         run: python -m ruff check .
@@ -70,6 +76,19 @@ jobs:
           cmp artifacts/pm11/artifact-manifest.json artifacts/pm13/artifact-manifest.json
           sha256sum artifacts/pm13/*.json artifacts/pm13/*.md
           cat artifacts/pm13/artifact-manifest.json
+      - name: PM-14 optional real hosted CPU/memory single-repeat measurement
+        if: ${{ inputs.profile_small_synthetic && matrix.python-version == '3.11' }}
+        run: |
+          python -m psychneuro.profiling --output artifacts/pm14/profile-small.json
+          cat artifacts/pm14/profile-small.json
+      - name: Archive PM-14 measurement ONLY if explicitly opted in
+        if: ${{ inputs.profile_small_synthetic && matrix.python-version == '3.11' }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: pm14-private-480-synthetic-profiler
+          path: artifacts/pm14/profile-small.json
+          retention-days: 7
+          if-no-files-found: error
       - name: Archive PM-13 genuine computed synthetic results (if run succeeds)
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
