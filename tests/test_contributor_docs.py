@@ -96,8 +96,6 @@ def test_existing_workflow_remains_manual_only_and_owner_spend_gated() -> None:
 
 def test_first_issue_is_real_and_documented_without_public_invitation() -> None:
     contributor = (ROOT / "CONTRIBUTING.md").read_text(encoding="utf-8")
-    assert "repository remains private" in contributor.lower() or "repository private" in (
-        contributor.lower()
-    )
+    assert "The repo must stay PRIVATE" in contributor
     # This asserts source policy only. Exact live issue labels/URL are verified
     # separately through GitHub, not faked by this offline source check.
