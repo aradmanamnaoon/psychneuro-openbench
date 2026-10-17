@@ -136,7 +136,9 @@ def _read_parquet(path: Path) -> tuple[TrialRecord, ...]:
         parquet = importlib.import_module("pyarrow.parquet")
         arrow = importlib.import_module("pyarrow")
     except ImportError as exc:
-        raise RuntimeError("Parquet requires optional dependency: pip install '.[parquet]'") from exc
+        raise RuntimeError(
+            "Parquet requires optional dependency: pip install '.[parquet]'"
+        ) from exc
     metadata = getattr(parquet, "read_metadata")(path)
     if metadata.num_rows > MAX_TRIALS:
         raise ValueError("too many parquet trial records")
