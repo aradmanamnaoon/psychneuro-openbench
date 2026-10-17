@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import asdict
+from pathlib import Path
 
 import altair as alt
 import streamlit as st
@@ -21,6 +22,15 @@ from psychneuro.explorer import (
     prepare_synthetic_preview,
 )
 from psychneuro.reporting import METRICS, MODELS, ReportValidationError, build_bundle, parse_report
+from psychneuro.workflow import (
+    SCENARIO_GENERATOR_SEEDS,
+    SCENARIO_PARTICIPANTS,
+    SCENARIO_REPEATS,
+    SCENARIO_TRIALS,
+    Scenario,
+    ScenarioError,
+    run_scenario,
+)
 
 st.set_page_config(page_title="PsychNeuro OpenBench — private review", layout="wide")
 st.title("PsychNeuro OpenBench")
@@ -109,41 +119,119 @@ if source_mode == DATA_MODES[0]:
     st.stop()
 
 st.divider()
-st.subheader("Review a separately executed PM-10 synthetic report")
-st.caption(
-    "Upload ONLY a report.json from an authorized completed private PM-10 run "
-    "(maximum 2 MB). No raw human data, datasets or unapproved sources. "
-    "Uploaded report is parsed for structural consistency, NOT authenticated to CI."
-)
-uploaded = st.file_uploader(
-    "Original PM-10 report.json",
-    type=["json"],
-    accept_multiple_files=False,
-    max_upload_size=2,
-)
-if uploaded is None:
-    st.info("No report uploaded; genuine result selectors, charts and exports unavailable.")
-    st.stop()
+report = None
+is_live = source_mode == DATA_MODES[2]
+if is_live:
+    st.subheader("Execute a new fictional grouped-benchmark scenario")
+    st.caption(
+        "Explicit opt-in, synchronous computation using the project's ORIGINAL "
+        "synthetic generator, rights-checked loader, participant-grouped baseline "
+        "runner and repeated PM-10 report generator. Not an externally validated "
+        "result or evidence about people. No hidden background jobs."
+    )
+    with st.sidebar.form("run_synthetic_scenario"):
+        st.subheader("Run controls — synthetic only")
+        run_seed = st.selectbox(
+            "First fictional generator seed", SCENARIO_GENERATOR_SEEDS
+        )
+        run_participants = st.selectbox(
+            "Fictional participants per cohort", SCENARIO_PARTICIPANTS
+        )
+        run_trials = st.selectbox(
+            "Trials per fictional participant", SCENARIO_TRIALS
+        )
+        run_repeats = st.selectbox(
+            "Predetermined seeded cohorts", SCENARIO_REPEATS, index=2
+        )
+        submitted = st.form_submit_button("Run synthetic benchmark", type="primary")
+    st.sidebar.caption(
+        "At most 3,000 fictional trials total. Models/features/CV selection, "
+        "held-out group split and seed schedule are locked."
+    )
+    if submitted:
+        # Remove old session evidence BEFORE a new run so exceptions cannot
+        # accidentally leave old scores associated with updated controls.
+        st.session_state.pop("pm13_last_report", None)
+        st.session_state.pop("pm13_last_scenario", None)
+        selected = Scenario(
+            generator_seed=run_seed,
+            n_participants=run_participants,
+            trials_per_participant=run_trials,
+            repeats=run_repeats,
+        )
+        try:
+            with st.spinner("Computing the requested synthetic-only benchmark…"):
+                result = run_scenario(selected, Path(__file__).resolve().parent)
+        except (ScenarioError, ValueError) as exc:
+            st.error(f"Synthetic benchmark rejected or failed: {exc}")
+            st.stop()
+        st.session_state["pm13_last_report"] = result
+        st.session_state["pm13_last_scenario"] = asdict(selected)
+    if st.sidebar.button("Discard session benchmark results"):
+        st.session_state.pop("pm13_last_report", None)
+        st.session_state.pop("pm13_last_scenario", None)
+    candidate = st.session_state.get("pm13_last_report")
+    if candidate is None:
+        st.info(
+            "No in-app run yet. Submit a bounded scenario to compute real "
+            "synthetic-only baseline scores, optional uncertainty and downloads."
+        )
+        st.stop()
+    try:
+        report = parse_report(build_bundle(candidate).report_json)
+        bundle = build_bundle(report)
+    except (ValueError, TypeError) as exc:
+        st.session_state.pop("pm13_last_report", None)
+        st.error(f"Saved session artifact was invalid and cleared: {exc}")
+        st.stop()
+    st.success(
+        "In-app execution completed using the rights-checked synthetic pipeline. "
+        "This is a local-to-app computation, NOT verified hosted CI evidence."
+    )
+    st.write(
+        "Last SUBMITTED scenario (not the currently edited form):",
+        st.session_state.get("pm13_last_scenario"),
+    )
+else:
+    st.subheader("Review a separately executed PM-10 synthetic report")
+    st.caption(
+        "Upload ONLY a report.json from an authorized completed private PM-10 run "
+        "(maximum 2 MB). No raw human data, datasets or unapproved sources. "
+        "Uploaded report is parsed for structural consistency, NOT authenticated to CI."
+    )
+    uploaded = st.file_uploader(
+        "Original PM-10 report.json",
+        type=["json"],
+        accept_multiple_files=False,
+        max_upload_size=2,
+    )
+    if uploaded is None:
+        st.info("No report uploaded; genuine result selectors, charts and exports unavailable.")
+        st.stop()
+    try:
+        report = parse_report(uploaded.getvalue())
+        bundle = build_bundle(report)
+    except (ReportValidationError, ValueError) as exc:
+        st.error(f"Input rejected without plotting or exporting: {exc}")
+        st.stop()
+    st.success(
+        "Source policy, protocol, seed order, score summary and internal hash are consistent."
+    )
 
-try:
-    report = parse_report(uploaded.getvalue())
-    bundle = build_bundle(report)
-except (ReportValidationError, ValueError) as exc:
-    st.error(f"Input rejected without plotting or exporting: {exc}")
-    st.stop()
-
-st.success("Source policy, protocol, seed order, score summary and internal hash are consistent.")
 st.error(
-    "HOSTED CI NOT VERIFIED HERE. This reader cannot prove that the uploaded file "
-    "came from the exact GitHub commit, workflow or a successful run. Confirm "
-    "archived hashes and logs independently before reviewing benchmark evidence."
+    "INDEPENDENT HOSTED CI NOT VERIFIED BY THIS UI. Compare exact commit, "
+    "workflow run logs and archived artifacts before reporting scientific or "
+    "reproducibility evidence."
 )
 st.caption(
     f"PM-10 input SHA-256: {report['report_sha256']} · status: {report['status']} · "
     f"eligible fictional cohorts: {report['n_eligible']}/{report['n_requested']}"
 )
 if report["status"] != "complete":
-    st.warning("Some synthetic repeats are ineligible; scores are NEVER imputed.")
+    st.warning(
+        "One or more predetermined synthetic repeats are INELIGIBLE. "
+        "No zero imputation, selective replacement or hidden failure."
+    )
 
 if page in ("Overview", "Results and charts"):
     st.subheader("Held-out model scores — originally recorded synthetic repeats")
