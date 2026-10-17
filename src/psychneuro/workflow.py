@@ -6,6 +6,7 @@ function only after an explicit click; no training on page load/rerun.
 """
 from __future__ import annotations
 
+import argparse
 import hashlib
 import json
 from dataclasses import dataclass
@@ -116,6 +117,40 @@ def run_scenario(scenario: Scenario, project_root: Path) -> dict[str, Any]:
         bundle = build_bundle(validated)
     except (ValueError, RuntimeError, OSError, KeyError, TypeError) as exc:
         raise ScenarioError("synthetic workflow failed; no report is available") from exc
-    if bundle.report_json is None:
-        raise ScenarioError("no validated report")
     return cast(dict[str, Any], validated)
+
+
+def main() -> int:
+    """Strictly bounded hosted-CI proof path; not run in this conversation."""
+    parser = argparse.ArgumentParser(description="Synthetic-only in-app runner CI equivalent")
+    parser.add_argument("--output-dir", type=Path, required=True)
+    parser.add_argument("--generator-seed", type=int, default=73)
+    parser.add_argument("--participants", type=int, default=24)
+    parser.add_argument("--trials", type=int, default=20)
+    parser.add_argument("--repeats", type=int, default=5)
+    args = parser.parse_args()
+    scenario = Scenario(
+        generator_seed=args.generator_seed,
+        n_participants=args.participants,
+        trials_per_participant=args.trials,
+        repeats=args.repeats,
+    )
+    try:
+        report = run_scenario(scenario, Path(__file__).resolve().parents[2])
+        bundle = build_bundle(report)
+    except (ValueError, OSError) as exc:
+        parser.error(str(exc))
+    output: Path = args.output_dir
+    output.mkdir(parents=True, exist_ok=True)
+    for name, content in (
+        ("report.json", bundle.report_json),
+        ("report.md", bundle.report_markdown),
+        ("artifact-manifest.json", bundle.artifact_manifest),
+    ):
+        (output / name).write_bytes(content)
+    print(f"status={report['status']} report_sha256={report['report_sha256']}")
+    return 0 if report["status"] == "complete" else 2
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
