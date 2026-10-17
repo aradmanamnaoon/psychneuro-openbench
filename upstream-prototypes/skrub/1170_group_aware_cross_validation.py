@@ -1,0 +1,90 @@
+"""
+Grouped cross-validation for repeated observations
+==================================================
+
+A reproducible, **synthetic-only** skrub DataOps example for situations in
+which each person, device, or other group contributes multiple rows. Standard
+row-wise splitting can put observations from the same group in both train
+and validation partitions, inflating apparent generalization.
+
+This example addresses *group overlap only*. It does not prevent target,
+future-information, temporal, or site-related leakage and is not a model of
+human behavior. The numbers are fictional and have no scientific meaning.
+
+Upstream proposal: https://github.com/skrub-data/skrub/issues/2340
+Status: draft, not run or approved by maintainers.
+"""
+
+# %%
+# Create 32 fictional participants with four rows each. Everything is
+# generated locally; no datasets are fetched and no individual is real.
+import numpy as np
+import pandas as pd
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import GroupKFold
+
+import skrub
+
+rng = np.random.default_rng(73)
+participant_id = np.repeat(np.arange(32), 4)
+condition = np.tile(["left", "right", "left", "right"], 32)
+difficulty = rng.uniform(0.1, 0.9, size=participant_id.size)
+linear = 0.7 * (condition == "right") + 0.6 * difficulty - 0.5
+probability = 1.0 / (1.0 + np.exp(-linear))
+outcome = rng.binomial(1, probability)
+
+table = pd.DataFrame(
+    {
+        "participant_id": participant_id,
+        "condition": condition,
+        "difficulty": difficulty,
+        "correct": outcome,
+    }
+)
+
+# %%
+# Assert the essential split invariant independently of the DataOps graph.
+# The group ID is used *only* for partitioning, never as a predictor.
+cv = GroupKFold(n_splits=4)
+for train_idx, validation_idx in cv.split(
+    table[["condition", "difficulty"]],
+    table["correct"],
+    groups=table["participant_id"],
+):
+    train_groups = set(table["participant_id"].iloc[train_idx])
+    validation_groups = set(table["participant_id"].iloc[validation_idx])
+    assert train_groups.isdisjoint(validation_groups)
+
+# %%
+# Skrub computes the group vector from the original table as a DataOp. The
+# predictor matrix excludes both the group ID and the observed outcome.
+data = skrub.var("data", table)
+groups = data["participant_id"]
+X = data[["condition", "difficulty"]].skb.mark_as_X(
+    cv=GroupKFold(n_splits=4),
+    split_kwargs={"groups": groups},
+)
+y = data["correct"].skb.mark_as_y()
+
+# %%
+# Keep preprocessing in the training plan so that encoding is re-fitted
+# inside the relevant folds. Do not tune the model using validation labels.
+predictions = (
+    X.skb.apply(skrub.TableVectorizer())
+    .skb.apply(LogisticRegression(max_iter=1000), y=y)
+)
+
+# %%
+# Use the documented with_scoring interface to request ROC AUC. These are
+# illustrative simulator-fold scores, not estimates of human generalization.
+scores = predictions.skb.with_scoring("roc_auc").skb.cross_validate()
+scores
+
+# %%
+# Limitations
+# -----------
+# GroupKFold prevents one important repeat-observation leakage mechanism.
+# It does not prevent temporally unavailable predictors, target-derived
+# features, drift between recording sites or unintended preprocessing outside
+# CV. No model comparison, clinical claim or external participant dataset is
+# justified by this synthetic example.
