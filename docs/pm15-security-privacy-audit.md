@@ -1,0 +1,47 @@
+# PM-15 — Verified source facts vs blocked security, license, package and privacy gates
+
+**Date:** 2026-10-17. **Assessment:** SOURCE-LEVEL PRE-RELEASE AUDIT ONLY; **NO PUBLIC OR HOSTED RELEASE APPROVED**. Repository is currently PRIVATE. No current PM-10–15 real hosted test run, deploy screenshot, complete dependency inventory/SBOM, vulnerability scan, runtime penetration test, host permission grant, hosted privacy DPIA or public demo is claimed.
+
+## Inspection boundary and terminology
+
+- **SOURCE VERIFIED:** exact file content was read from connected GitHub at the private parent/ref; a code path and policy text are present. This does not mean the feature passed testing.
+- **EXTERNAL VERIFIED:** a provider's official documentation/PyPI package page was consulted as of 2026-10-17. It does not authenticate installed runtime versions.
+- **BLOCKED / NOT TESTED:** no access/owner authorization, hosted run, real artifact or audit capability. These gaps remain release blockers.
+- This is not a formal security certification, regulatory/medical compliance report, legal opinion, or independent dependency audit.
+
+| Audit item | Evidence inspected or independent authority | Status / material risk |
+| --- | --- | --- |
+| Repository access / public gate | Connected GitHub repository metadata shows private and owner/editor permission; [release-gates](release-gates.md) explicitly forbids publication absent fresh owner approval | **SOURCE VERIFIED** private; public/PR/deployment permission **NOT GIVEN** |
+| Hosted CI | PM-14 predecessor branch has 0 new Actions runs; manual-only [quality workflow](../.github/workflows/ci.yml), previous PM-04 runs are for older code | **BLOCKED**: no current SHA pytest/Ruff/mypy, dependency check, experimental artifact or reproducibility logs |
+| Third-party host | [Official Community Cloud private GitHub/OAuth rules](https://docs.streamlit.io/deploy/streamlit-community-cloud/status) require broad `repo` OAuth access and a GitHub deploy key; one private app/workspace, size/hibernation limits | **EXTERNAL VERIFIED** docs; no hosting account, OAuth grant, bill/quota consent, deployment, app access list or live URL **VERIFIED** |
+| Deployment dependencies | [requirements.txt](../requirements.txt) pins Python direct runtime packages: Streamlit 1.58.0 (Apache-2.0), Altair 5.5.0 (BSD-3-Clause), scikit-learn 1.8.0 (BSD-3-Clause); root package `.` | **SOURCE + PyPI VERSION EXISTENCE VERIFIED**; full resolver/install, ABI, transitive dependency versions, vulnerability scanning and combined license graph **BLOCKED**; NOT a hashed lockfile |
+| Python interpreter | Cloud's [deploy UI](https://docs.streamlit.io/deploy/streamlit-community-cloud/deploy-your-app/deploy) allows selecting Python 3.12 in Advanced settings | **EXTERNAL VERIFIED** ability, Python runtime not actually selected/used |
+| Project license and NOTICE | Repo [LICENSE](../LICENSE) contains the Apache License Version 2.0; [NOTICE](../NOTICE) gives author notice; [policy](license-policy.md) expressly separates synthetic-data provenance from code license | **SOURCE VERIFIED**; full asset/trademark/contributor & transitive licenses still to review; do not interpret as permission to publish |
+| Data rights / consent | [registry](../data/registry.json) policy `deny_external_sources_by_default`, original synthetic enabled; six human neuroscience metadata entries disabled (false download/ingest flags); model code uses synthetic-only path | **SOURCE VERIFIED**; live rights enforcement and external secondary-use ethics **NOT TESTED**; no real/human/clinical data permitted |
+| No post-response predictor leakage | Fixed predictors documented as synthetic `difficulty`, `stimulus_condition`; later outcomes/reaction time not intended pre-response predictors | **SOURCE VERIFIED**; complete current-commit hosted leakage and split partition evidence **BLOCKED** |
+| Upload limits / untrusted JSON | [app.py](../app.py) uses only JSON report uploader (max 2MB); [reporting.py](../src/psychneuro/reporting.py) strict version, rights, model, seed, checksum, fields/metric/schema; friendly errors [ux](../src/psychneuro/ux.py) avoid echoing private strings | **SOURCE VERIFIED**, no fuzz/live upload/size and denial-of-service test log; uploaded data must still enter third-party host memory before validation |
+| Host default protections | [.streamlit/config.toml](../.streamlit/config.toml) declares CORS and XSRF enabled, static serving disabled, error details hidden, 2MB max upload, no secrets | **SOURCE ONLY**; exact Streamlit configuration compatibility/build security NOT TESTED |
+| User identities / private host access | Intended private app requires provider-authenticated admin/viewer access; no app authorization or user-specific server roles implemented in the app | **HOSTING BLOCKED**: actual cross-session separation, authentication, access revocation and logs must be inspected before use |
+| Secrets / credential hygiene | No deployment token/secret provided or used; [.gitignore](../.gitignore) planned to exclude `.env`, `.streamlit/secrets.toml`, keys and generated outputs | **SOURCE POLICY**, not a historical secret scan; commit history inspection and GitHub Secret Scanning/Dependabot status NOT VERIFIED |
+| Report export provenance | [reporting.py](../src/psychneuro/reporting.py) produces JSON, Markdown, artifact manifest with synthetic source/split/run hashes; hosted commit and CI IDs remain null without attestation | **SOURCE VERIFIED**; a self-hash can be recomputed by an attacker, not an authenticated signature, and no current SHA export validated |
+| Raw user data handling | UI cannot run a raw external human dataset; report upload *could* contain unauthorized text even though validator rejects it | **RISK**: treat arbitrary user uploads as not permitted; provider may process file contents in memory/logs and Cloud privacy terms must be reviewed; no PHI/privacy-certification claim |
+| Benchmark execution threat model | Explicit Run button with at most 3,000 synthetic rows, 1/3/5 fixed seeded cohorts; no background job on page render | **SOURCE VERIFIED**, CPU cost, repeated-click denial-of-service, per-session/server concurrency and resource exhaustion **NOT VERIFIED** |
+| Performance budgets | PM-14 source-only optional single 480-row benchmark profiler default OFF | **UNMEASURED** wall/CPU/RSS, no resource guarantee, no caching optimization approved |
+| Security/static tooling | Manual-only workflow includes pytest/Ruff/mypy; PM-15 adds static packaging/config checks & pip dependency consistency in CI | **NOT RUN**; no SAST, software composition analysis, CVE inventory, SBOM or production runtime scan |
+| CI and Actions quota | [GitHub Actions billing](https://docs.github.com/en/billing/concepts/product-billing/github-actions) provides allowance for private repos, but account's current quota/overages unknown | **BLOCKED**: no new private runner minute/spending approval; nothing dispatched |
+| Publication, package distribution, web/privacy notice | Project release rules require separate owner approval of PR, public visibility, deploy, packages and announcements | **NOT AUTHORIZED**; no package uploaded, DOI/release created, public app or announcement |
+
+### Immediate risks requiring independent hosted action
+
+1. **P0 — No exact-commit hosted test proof:** A correct-looking source is not scientifically trustworthy or release ready. Stop until all actual CI jobs, dependencies, raw manifests, rights, group splits, and report SHA reconcile.
+2. **P0 — Third-party host permissions/privacy not authorized:** Community Cloud private repo `repo` OAuth scope is broad. Do not approve or create a deployment without review of GitHub OAuth scopes and host visibility, analytics, secrets, viewer email access and use terms.
+3. **P0 — Uploaded files can be sent accidentally to a third-party server:** UI rejects unauthorized formats after receipt; never solicit human, patient or identifiable data uploads. Add external-upload/retention/privacy policy if product ever evolves beyond synthetic-only.
+4. **P1 — Supply chain and licensing:** The project license/NOTICE is real Apache-2.0 but does not prove transitive dependencies, binaries, externally sourced art assets or datasets are cleared. Exact direct pins still need resolution, vulnerability/license checks and a hash-locked export.
+5. **P1 — No browser/mobile/a11y measurements or provenance:** 20-case smoke script remains 0/20 executed. Do not publish screenshots, URL or accessibility compliance claims.
+6. **P1 — Resource and abuse budget:** Tiny synthetic batches can still be expensive on free shared compute with simultaneous users; record hosted time/memory, repeated-click behavior and rate limitation before any public sharing.
+
+### Security decision
+
+**GO:** Private review of source, architecture, pinned direct dependencies and legal/data-provenance policy. **NO-GO:** Live private deployment until separate explicit authorization, public release, user uploads, sharing, publication, PR/outreach, or claims of tested/safe performance. No code-level defense is a substitute for a real host access/privacy test.
+
+The one required next dependency is a **passing exact-SHA private CI run (including PM-10–14)** plus owner security and cloud OAuth approval. Do not create new marketing links. See [host runbook](pm15-host-runbook.md), [browser script](pm15-browser-smoke.md), [daily changelog](pm15-changelog.md) and [release gates](release-gates.md).
