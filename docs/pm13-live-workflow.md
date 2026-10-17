@@ -31,6 +31,22 @@ PsychNeuro OpenBench is a nonclinical behavioral ML benchmarking workbench for p
 - `tests/test_workflow.py`: unit/edge tests for exact default configuration digest, distinct scenario digests, invalid/bool/out-of-budget inputs, missing rights-gated registry, null CIs for 0..4 repeats, selected/missing-repeat chart rows, export no raw sensitive fields, and **one true unmocked integration test** of the original grouped synthetic pipeline. Mock scores in *other tests* are test fixtures, NOT measured results. **All tests NOT RUN.**
 - `.github/workflows/ci.yml`: still MANUAL ONLY, per Python 3.11/3.12 runs complete pytest, Ruff, strict mypy, original PM-10 pipeline report, PM-11 export, then the PM-13 real original-synthetic UI-equivalent runner; checks report JSON/Markdown/manifest byte-for-byte with `cmp` and archives results for seven days if successful. **No PM-13 CI run or artifact exists at this time.**
 
+## Extra PM-13 upload/export boundary
+
+The inherited PM-11 uploaded-report pathway now additionally rejects unknown
+top-level keys, baseline configuration fields, repeat fields, slice fields and
+slice metrics, and refuses injected interpretation strings or malformed/unsafe
+repeat reason text before any JSON/Markdown/manifest export. This avoids
+preserving arbitrary unexpected metadata such as a `patient_email` field even
+when an attacker recomputes a self-checksum. It is an allowlist boundary, **not
+proof of input authenticity or a complete PII/content audit**. In-app generation
+does not use personal input data, raw participant records or response latencies.
+
+An adversarial regression in `tests/test_workflow.py` rehashes a malicious
+uploaded-looking report and expects a hard validation error. This regression
+is **written but NOT RUN**, and further actual browser and security checks
+remain required before hosting or public release.
+
 ## GO / NO-GO QA checklist
 
 - [x] New branch derived directly from exact PM-12 private head and original source intact.
