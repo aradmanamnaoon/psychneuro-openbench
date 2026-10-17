@@ -201,6 +201,14 @@ def test_suppressed_slice_must_not_expose_numbers(sample: dict[str, Any]) -> Non
         validate_report(broken)
 
 
+def test_missing_slice_is_not_silently_accepted(sample: dict[str, Any]) -> None:
+    broken = copy.deepcopy(sample)
+    broken["runs"][0]["test_slice_errors"] = None
+    _rehash(broken)
+    with pytest.raises(ReportValidationError, match="missing guarded slices"):
+        validate_report(broken)
+
+
 def test_invalid_parser_cases_fail_closed(sample: dict[str, Any]) -> None:
     with pytest.raises(ReportValidationError, match="empty"):
         parse_report(b"")
