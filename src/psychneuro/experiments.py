@@ -20,6 +20,7 @@ from .config import load_baseline_config
 from .loaders import LoadedDataset, load_dataset
 from .metrics import BinaryMetrics, score_binary
 from .split import GroupSplit, create_group_split, validate_group_split
+from .slices import guarded_slice_metrics
 from .synthetic import SyntheticConfig, TrialRecord
 
 _MODELS: tuple[ModelName, ...] = ("dummy_prior", "logistic_regression")
@@ -48,10 +49,10 @@ def _rows(data: LoadedDataset, indices: tuple[int, ...]) -> tuple[TrialRecord, .
     return tuple(data.records[i] for i in indices)
 
 
-def _fit_evaluate(
+def _fit_evaluate_with_predictions(
     name: ModelName, data: LoadedDataset, fit: tuple[int, ...], evaluate: tuple[int, ...]
-) -> BinaryMetrics:
-    """No leakage: fresh estimator fits ONLY on the designated training rows."""
+) -> tuple[BinaryMetrics, tuple[int, ...]]:
+    """Fit on training ONLY, score evaluation ONCE and reuse predictions for slices."""
     fit_rows = _rows(data, fit)
     eval_rows = _rows(data, evaluate)
     y_train = [row.correct for row in fit_rows]
@@ -60,7 +61,13 @@ def _fit_evaluate(
     estimator = make_estimator(name)
     estimator.fit(features_from_trials(fit_rows), y_train)
     predictions = predict_binary(estimator, features_from_trials(eval_rows))
-    return score_binary([row.correct for row in eval_rows], predictions)
+    return score_binary([row.correct for row in eval_rows], predictions), predictions
+
+
+def _fit_evaluate(
+    name: ModelName, data: LoadedDataset, fit: tuple[int, ...], evaluate: tuple[int, ...]
+) -> BinaryMetrics:
+    return _fit_evaluate_with_predictions(name, data, fit, evaluate)[0]
 
 
 def _cv_folds(
@@ -190,6 +197,7 @@ def run_experiment(
             "selected_model": None,
             "validation_metrics": None,
             "test_metrics": None,
+            "test_slice_errors": None,
         })
     else:
         chosen = max(_MODELS, key=lambda name: (
@@ -205,10 +213,14 @@ def run_experiment(
         base["validation_metrics"] = validation
         # Held-out test is accessed only here, once selection is frozen.
         test: dict[str, dict[str, object]] = {}
+        selected_predictions: tuple[int, ...] | None = None
         for name in _MODELS:
-            test[name] = _metric_dict(
-                _fit_evaluate(name, dataset, split.train_indices, split.test_indices)
+            measured, predictions = _fit_evaluate_with_predictions(
+                name, dataset, split.train_indices, split.test_indices
             )
+            test[name] = _metric_dict(measured)
+            if name == chosen:
+                selected_predictions = predictions
         base["test_metrics"] = test
         base["status"] = (
             "ok"
@@ -221,6 +233,15 @@ def run_experiment(
             for name, metric in models.items()
             if metric["status"] != "ok"
         ]
+        base["test_slice_errors"] = None
+        if base["status"] == "ok" and selected_predictions is not None:
+            test_rows = _rows(dataset, split.test_indices)
+            base["test_slice_errors"] = guarded_slice_metrics(
+                [row.correct for row in test_rows],
+                selected_predictions,
+                [row.participant_id for row in test_rows],
+                [row.stimulus_condition for row in test_rows],
+            )
     base["uncertainty_status"] = "unavailable"
     base["uncertainty_reason"] = "small independent synthetic holdout; no CI claimed"
     base["manifest_sha256"] = _digest(base)
