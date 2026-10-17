@@ -15,7 +15,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, cast
 
-from .config import CONFIG_VERSION
+from .config import CONFIG_VERSION, baseline_from_manifest
 from .synthetic import SCHEMA_VERSION
 from .uncertainty import summary_dict
 
@@ -152,6 +152,12 @@ def validate_report(value: object) -> dict[str, Any]:
     if baseline.get("config_version") != CONFIG_VERSION:
         raise ReportValidationError("unexpected versioned baseline protocol")
     _sha(baseline.get("config_sha256"), "baseline config_sha256")
+    try:
+        baseline_from_manifest(baseline)
+    except ValueError as exc:
+        raise ReportValidationError(
+            "embedded baseline checksum is inconsistent with the frozen protocol"
+        ) from exc
     requested = _integer(data.get("n_requested"), "n_requested", minimum=1)
     if requested > 20 or _integer(config.get("repeats"), "config.repeats") != requested:
         raise ReportValidationError("mismatched or excessive repeats")
