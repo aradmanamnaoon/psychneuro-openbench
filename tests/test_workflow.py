@@ -270,3 +270,24 @@ def test_exports_are_not_subsetted_by_graph_selection(
     assert len(subset) == 1
     full_export = build_bundle(report)
     assert len(parse_report(full_export.report_json)["runs"]) == 3
+
+
+def test_live_app_mode_does_not_train_on_page_load(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Streamlit simulated shell must not start any model work without a click."""
+    from streamlit.testing.v1 import AppTest
+    from psychneuro.explorer import DATA_MODES
+    from psychneuro import workflow
+
+    def forbidden_run(scenario: Scenario, root: Path) -> dict[str, Any]:
+        raise AssertionError("model execution happened without explicit scenario submission")
+
+    monkeypatch.setattr(workflow, "run_scenario", forbidden_run)
+    at = AppTest.from_file(str(ROOT / "app.py"), default_timeout=20).run()
+    assert not at.exception
+    at.sidebar.selectbox[0].set_value(DATA_MODES[2]).run()
+    assert not at.exception
+    assert any("No in-app run yet" in item.value for item in at.info)
+    assert len(at.file_uploader) == 0
+    assert len(at.download_button) == 0
