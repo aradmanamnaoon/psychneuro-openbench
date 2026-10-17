@@ -1,5 +1,5 @@
 # Manual-only to avoid unattended use of private GitHub Actions minutes.
-# PM-06 through PM-15 code is NOT validated until the exact branch and run logs are inspected.
+# PM-05 through PM-16 exact-branch validation awaits a real, approved hosted run.
 name: Synthetic and loader CPU quality gates (manual only)
 on:
   workflow_dispatch:
@@ -81,6 +81,19 @@ jobs:
           cmp artifacts/pm11/artifact-manifest.json artifacts/pm13/artifact-manifest.json
           sha256sum artifacts/pm13/*.json artifacts/pm13/*.md
           cat artifacts/pm13/artifact-manifest.json
+      - name: PM-05 through PM-16 private synthetic CI provenance sidecar
+        run: |
+          mkdir -p artifacts/verification
+          python -m pip freeze --disable-pip-version-check > artifacts/verification/resolved-dependencies.txt
+          python -m psychneuro.attestation --output artifacts/verification/ci-evidence.json
+          cat artifacts/verification/ci-evidence.json
+      - name: Archive exact-commit, dependency and artifact evidence for private review
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: psychneuro-private-ci-evidence-${{ matrix.python-version }}
+          path: artifacts/verification/
+          retention-days: 7
+          if-no-files-found: error
       - name: PM-14 optional real hosted CPU/memory single-repeat measurement
         if: ${{ inputs.profile_small_synthetic && matrix.python-version == '3.11' }}
         run: |
