@@ -18,7 +18,18 @@
 
 PsychNeuro OpenBench is an emerging **nonclinical, reproducibility-first benchmarking workbench** for behavioral psychology and computational neuroscience research. It is being built for people who want to move from trial tables to defensible model comparisons—without leaking the same participant across training and test data, mistaking post-response measurements for predictors, or losing track of dataset rights.
 
-**Current stage: private engineering preview, not a finished benchmark, published package, or validated/deployed browser app.** The available code generates and validates wholly fictional behavioral trials and now includes **unexecuted private-review** grouped baseline training/evaluation source. Model training, test metrics and complete hosted verification for this branch remain **NOT RUN**; no research performance is claimed.
+**Current stage: private engineering preview, not a finished benchmark, published package, or validated/deployed browser app.**
+**PM-15 deployment gate: BLOCKED. No hosted demo URL exists.** A private-host
+configuration and directly pinned Python requirements have been committed
+for a later owner-approved review; their installation and compatibility are
+**NOT VERIFIED**. The preceding PM-10–14 exact-branch CI and browser checks
+are **NOT RUN**. No public release, app deployment, private GitHub OAuth
+grant, paid runner use, or visitor invitation has been authorized.
+[Private-host runbook](docs/pm15-host-runbook.md) ·
+[20-case browser acceptance script](docs/pm15-browser-smoke.md) ·
+[Source-level security/privacy/license audit](docs/pm15-security-privacy-audit.md) ·
+[Daily honest change log](docs/pm15-changelog.md).
+ The available code generates and validates wholly fictional behavioral trials and now includes **unexecuted private-review** grouped baseline training/evaluation source. Model training, test metrics and complete hosted verification for this branch remain **NOT RUN**; no research performance is claimed.
 
 [Start with the synthetic example](#try-the-current-synthetic-foundation) · [What works today](#what-works-today) · [Scientific contract](docs/spec-v0.md) · [Research and engineering roadmap](#roadmap-with-real-issue-tracking) · [Release requirements](docs/release-gates.md)
 
@@ -65,6 +76,7 @@ These are **intended users**, not evidence of interviews, adoption or institutio
 | PM-12 synthetic explorer controls and smoke matrix | **Source-only private preview; no PM-12 hosted CI run, actual benchmark report, browser deployment, or verified metrics.** Fixed rights-cleared preview; artifact-only model filters; streamlit AppTest specifications; release NO-GO | [Explorer](src/psychneuro/explorer.py), [UI controls](app.py), [UI tests](tests/test_app.py), [Day-4 acceptance matrix](docs/pm12-explorer-smoke.md) |
 | PM-13 integrated in-app synthetic benchmark | **Source implemented on private branch; no run, UI QA, CI logs or measured output verified.** The browser can submit bounded fictional scenarios to the existing provenance-gated grouped pipeline, plot genuine computed values/nullable nominal repeat uncertainty, and export rights-constrained JSON/Markdown/lineage files | [Workflow runner](src/psychneuro/workflow.py), [UI](app.py), [tests](tests/test_workflow.py), [PM-13 methods and release gate](docs/pm13-live-workflow.md) |
 | PM-14 first-user UX, accessible chart alternatives, resilient errors, optional performance profiling | **Source-only, not verified in a real browser or hosted CI.** Adds a screenshot-free tutorial, labeled navigation guidance, static score tables, privacy-safe error messages, missing/invalid/restricted data test specifications and disabled-by-default 480-row hosted CPU/memory profiling. **No performance measurements exist.** | [Tutorial](docs/tutorial.md), [UX errors](src/psychneuro/ux.py), [tests](tests/test_pm14.py), [accessibility/errors/performance ledger](docs/pm14-a11y-errors-performance.md), [profiling](src/psychneuro/profiling.py) |
+| PM-15 hosted release-candidate and legal/security gates | **SOURCE-ONLY. NOT DEPLOYED; current branch CI, private-host build, browser/mobile smoke and performance UNVERIFIED.** Direct requirements pinned as candidates, no full transitive lock or vulnerability scan; Apache-2.0/NOTICE present, release/public permission withheld | [Host configuration](.streamlit/config.toml), [direct pins](requirements.txt), [preflight tests](tests/test_deployment.py), [private host/approval runbook](docs/pm15-host-runbook.md), [20-case browser script](docs/pm15-browser-smoke.md), [security and rights audit](docs/pm15-security-privacy-audit.md), [changelog](docs/pm15-changelog.md) |
 | Real dataset **ingestion**, browser UI, third-party reproducibility study | **Not implemented / not validated** | [Rights issue #5](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/5), [manifest issue #6](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/6) |
 
 **Important distinction:** passing unit tests on invented records validates specific engineering behaviors, **not** research impact, statistical generalizability or brain/behavior modeling accuracy.
