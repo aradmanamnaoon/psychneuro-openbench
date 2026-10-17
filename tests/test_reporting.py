@@ -242,3 +242,40 @@ def test_bad_version_and_missing_repeat_rejected(sample: dict[str, Any]) -> None
     _rehash(broken)
     with pytest.raises(ReportValidationError, match="missing or incomplete"):
         validate_report(broken)
+
+
+def test_embedded_frozen_config_cannot_be_replaced_with_forged_self_hash(
+    sample: dict[str, Any],
+) -> None:
+    """A fabricated report SHA is not enough to change the protocol digest."""
+    broken = copy.deepcopy(sample)
+    broken["config"]["baseline"]["config_sha256"] = "0" * 64
+    _rehash(broken)
+    with pytest.raises(ReportValidationError, match="embedded baseline checksum"):
+        validate_report(broken)
+    broken = copy.deepcopy(sample)
+    broken["config"]["baseline"]["n_participants"] = 300
+    _rehash(broken)
+    with pytest.raises(ReportValidationError, match="embedded baseline checksum"):
+        validate_report(broken)
+
+
+def test_manifest_can_validate_alternate_frozen_numeric_json_spellings(
+    tmp_path: Path,
+) -> None:
+    """The only accepted C=1 spellings mirror load_baseline_config."""
+    from dataclasses import asdict
+
+    from psychneuro.config import baseline_from_manifest
+
+    original = json.loads((ROOT / "configs/baseline.json").read_text(encoding="utf-8"))
+    for c_value in (1, 1.0):
+        original["models"]["logistic_regression"]["C"] = c_value
+        config_path = tmp_path / "alternative.json"
+        config_path.write_text(json.dumps(original), encoding="utf-8")
+        loaded = load_baseline_config(config_path)
+        assert baseline_from_manifest(asdict(loaded)) == loaded
+    with pytest.raises(ValueError, match="digest"):
+        baseline_from_manifest(
+            {**asdict(loaded), "config_sha256": "f" * 64}
+        )
