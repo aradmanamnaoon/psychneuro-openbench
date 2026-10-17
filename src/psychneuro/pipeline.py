@@ -104,7 +104,10 @@ def run_pipeline(config: PipelineConfig, registry_path: Path) -> dict[str, objec
         except (ValueError, RuntimeError) as exc:
             raise PipelineError(f"repeat {i + 1}: benchmark failed: {exc}") from exc
         source = cast(dict[str, object], result["source"])
-        if source.get("source_kind") != "synthetic" or source.get("rights_basis") != "synthetic-original":
+        if (
+            source.get("source_kind") != "synthetic"
+            or source.get("rights_basis") != "synthetic-original"
+        ):
             raise PipelineError("only approved original synthetic data are allowed")
         status = result.get("status")
         if status not in ("ok", "ineligible"):
