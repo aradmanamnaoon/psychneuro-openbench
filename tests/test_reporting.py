@@ -7,7 +7,6 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
-from dataclasses import asdict
 from pathlib import Path
 from typing import Any
 
@@ -160,7 +159,9 @@ def test_reported_summary_must_derive_from_repeats(sample: dict[str, Any]) -> No
 
 def test_selected_policy_must_match_training_selected_candidate(sample: dict[str, Any]) -> None:
     broken = copy.deepcopy(sample)
-    broken["runs"][0]["test_metrics"]["cv_selected_policy"]["balanced_accuracy"] = 0.6
+    broken["runs"][0]["test_metrics"]["cv_selected_policy"] = {
+        "balanced_accuracy": 0.6, "macro_f1": 0.4
+    }
     _rehash(broken)
     with pytest.raises(ReportValidationError, match="selected policy"):
         validate_report(broken)
