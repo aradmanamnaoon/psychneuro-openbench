@@ -26,7 +26,9 @@ def test_valid_synthetic_fixture_identity() -> None:
     assert summary.source_sha256 == card["source_sha256"]
 
 
-@pytest.mark.parametrize("key", ["synthetic", "source_kind", "rights_basis", "source_url_or_generator"])
+@pytest.mark.parametrize(
+    "key", ["synthetic", "source_kind", "rights_basis", "source_url_or_generator"]
+)
 def test_external_or_false_rights_fail_closed(key: str) -> None:
     records, card = _fixture()
     card[key] = False if key == "synthetic" else "external"
