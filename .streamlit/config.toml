@@ -1,0 +1,16 @@
+# Streamlit Community Cloud private-review CANDIDATE (NOT DEPLOYED).
+# Do not publish a public app; private repo visibility is not sufficient authorization.
+# No bind addresses, credentials, public sharing or network services are configured.
+[server]
+headless = true
+enableCORS = true
+enableXsrfProtection = true
+maxUploadSize = 2
+enableStaticServing = false
+
+[client]
+showErrorDetails = "none"
+toolbarMode = "minimal"
+
+[browser]
+gatherUsageStats = false
