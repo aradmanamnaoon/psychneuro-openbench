@@ -67,7 +67,12 @@ def test_seed_rejection(seed: object) -> None:
 @pytest.mark.parametrize("n_participants,trials", [(0, 2), (2, 0), (-1, 1), (2, -1), (True, 2)])
 def test_invalid_sizes(n_participants: object, trials: object) -> None:
     with pytest.raises(ValueError):
-        generate_trials(SyntheticConfig(n_participants=n_participants, trials_per_participant=trials))  # type: ignore[arg-type]
+        generate_trials(
+            SyntheticConfig(
+                n_participants=n_participants,
+                trials_per_participant=trials,
+            )  # type: ignore[arg-type]
+        )
 
 
 def test_memory_bound() -> None:
