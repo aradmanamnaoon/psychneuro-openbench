@@ -26,7 +26,7 @@ REVIEWED = (
     "docs/pm16-issue-map.md",
 )
 _LINK = re.compile(r"!?\[[^\]]*\]\(([^)]+)\)")
-_FENCE = re.compile(r"^\s*("\x60" r"{3,}|~{3,})")
+_FENCE = re.compile(r"^\s*(\x60{3,}|~{3,})")
 _INLINE_CODE = re.compile(r"\x60[^\x60]*\x60")
 
 
