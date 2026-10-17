@@ -114,7 +114,7 @@ def run_scenario(scenario: Scenario, project_root: Path) -> dict[str, Any]:
     try:
         raw = run_pipeline(PipelineConfig(baseline, scenario.repeats), registry)
         validated = validate_report(raw)
-        bundle = build_bundle(validated)
+        build_bundle(validated)  # integrity/export validation, no file or network side effects
     except (ValueError, RuntimeError, OSError, KeyError, TypeError) as exc:
         raise ScenarioError("synthetic workflow failed; no report is available") from exc
     return cast(dict[str, Any], validated)
