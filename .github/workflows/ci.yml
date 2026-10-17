@@ -1,5 +1,5 @@
 # Manual-only to avoid unattended use of private GitHub Actions minutes.
-# PM-06 through PM-10 code is NOT validated until the exact branch and run logs are inspected.
+# PM-06 through PM-11 code is NOT validated until the exact branch and run logs are inspected.
 name: Synthetic and loader CPU quality gates (manual only)
 on:
   workflow_dispatch:
@@ -45,6 +45,21 @@ jobs:
         run: |
           sha256sum artifacts/pm10/report.json
           cat artifacts/pm10/report.json
+      - name: Render PM-11 reproducibility exports from actual PM-10 JSON
+        run: |
+          python -m psychneuro.reporting --input artifacts/pm10/report.json --output-dir artifacts/pm11
+          python -m compileall -q app.py
+      - name: Print PM-11 exact export artifact hashes
+        run: |
+          sha256sum artifacts/pm11/report.json artifacts/pm11/report.md artifacts/pm11/artifact-manifest.json
+          cat artifacts/pm11/artifact-manifest.json
+      - name: Archive PM-11 report and lineage exports
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: pm11-report-exports-${{ matrix.python-version }}
+          path: artifacts/pm11/
+          retention-days: 7
+          if-no-files-found: error
       - name: Archive guarded PM-10 repeat summary
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
