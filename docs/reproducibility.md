@@ -173,3 +173,39 @@ and archival checksums outside the report.
 **GO:** Private source review of this reproducibility procedure.
 **NO-GO:** Claiming a clean hosted replay, actual scores, complete dependency
 lock, empirically validated neuroscience result, deployed app or public release.
+
+## PM-01–16 remediation: bounded private CI identity sidecar (SOURCE ONLY)
+
+New private remediation source adds an evidence-producing step to the
+**existing manual-only workflow**, not a new or automatic Actions trigger.
+The future runner, *after passing* pytest/Ruff/mypy and all PM10/11/13
+synthetic artifact comparisons, is configured to execute:
+
+```sh
+mkdir -p artifacts/verification
+python -m pip freeze --disable-pip-version-check > artifacts/verification/resolved-dependencies.txt
+python -m psychneuro.attestation --output artifacts/verification/ci-evidence.json
+cat artifacts/verification/ci-evidence.json
+```
+
+Only an actual GitHub-hosted run with `GITHUB_ACTIONS=true`, the exact
+private repository ID, valid 40-character commit SHA and numeric run ID
+will produce the sidecar. It independently checks both reports' eligible
+state and compares genuine PM10/11/13 JSON/Markdown/manifest bytes and
+records SHA-256 of the exact resolved dependency list. GitHub's workflow
+will retain the sidecar and dependency freeze for seven days **only after
+the run really succeeds**. A CI environment variable or self-reported
+digest is not a cryptographic signature; verify the run's exact commit,
+steps, uploaded artifacts and API status separately.
+
+Also, `src/psychneuro/config.py` now independently reconstructs a
+report-embedded frozen v1 protocol digest and rejects arbitrary
+self-rehashed claims of different config/seed/dimensions. The repeated
+pipeline normalizes exported slice/confusion-matrix fields to JSON-native
+types for reliable read-back. These changes are version-preserving
+research software safeguards; none has yet passed exact-branch pytest,
+mypy, Ruff or an executed benchmark.
+
+**Recorded PM-01–16 remediation status: NO CURRENT REMEDIATION CI RUN.**
+See the [full gate ledger](pm01-pm16-gap-closure.md), not an
+invented Actions URL or a guessed accuracy/CPU value.
