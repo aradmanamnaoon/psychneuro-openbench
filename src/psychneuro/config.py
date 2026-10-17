@@ -144,3 +144,80 @@ def load_baseline_config(path: Path) -> BaselineConfig:
         split_seed=split_seed,
         cv_folds=folds,
     )
+
+
+def baseline_from_manifest(value: object) -> BaselineConfig:
+    """Verify report-embedded baseline metadata against the frozen v1 protocol.
+
+    A report's self-checksum can be recomputed by anyone. Reconstruct the
+    canonical config from strictly bounded declared seed/dimension fields,
+    then check its SHA against the supplied config digest. Only JSON 1 and
+    1.0 spellings of the frozen C=1 regularization are accepted; both are
+    valid forms under the original configuration parser. No file paths,
+    external rights, user-supplied predictors or code execution are involved.
+    """
+    obj = _object(
+        value, "report baseline",
+        {
+            "config_version", "config_sha256", "generator_seed",
+            "n_participants", "trials_per_participant", "split_seed", "cv_folds",
+        },
+    )
+    if obj["config_version"] != CONFIG_VERSION:
+        raise ValueError("report baseline has unsupported configuration version")
+    digest = obj["config_sha256"]
+    if (
+        type(digest) is not str or len(digest) != 64
+        or any(char not in "0123456789abcdef" for char in digest)
+    ):
+        raise ValueError("report baseline has invalid configuration digest")
+    seed = _integer(obj["generator_seed"], "generator_seed", 0, _MAX_SEED)
+    split_seed = _integer(obj["split_seed"], "split_seed", 0, _MAX_SEED)
+    participants = _integer(obj["n_participants"], "n_participants", 9, _MAX_TRIALS)
+    trials = _integer(
+        obj["trials_per_participant"], "trials_per_participant", 1, _MAX_TRIALS
+    )
+    if participants * trials > _MAX_TRIALS:
+        raise ValueError("report baseline synthetic trial count exceeds limit")
+    folds = _integer(obj["cv_folds"], "cv_folds", 5, 5)
+    candidates: set[str] = set()
+    for regularization in (1, 1.0):
+        fixed_models = {
+            "dummy_prior": {"strategy": "prior"},
+            "logistic_regression": {
+                "solver": "lbfgs", "C": regularization,
+                "max_iter": 1000, "random_state": 42,
+            },
+        }
+        source = {
+            "config_version": CONFIG_VERSION,
+            "source": "synthetic-original",
+            "dataset": {
+                "generator_seed": seed, "n_participants": participants,
+                "trials_per_participant": trials,
+            },
+            "split": {
+                "method": "participant-shuffle-v1",
+                "seed": split_seed, "cv_folds": folds,
+            },
+            "task": _FIXED["task"],
+            "models": fixed_models,
+            "metrics": _FIXED["metrics"],
+            "selection": _FIXED["selection"],
+        }
+        canonical = json.dumps(
+            source, sort_keys=True, ensure_ascii=True,
+            separators=(",", ":"), allow_nan=False,
+        ).encode("utf-8")
+        candidates.add(hashlib.sha256(canonical).hexdigest())
+    if digest not in candidates:
+        raise ValueError("report baseline digest does not match frozen scientific protocol")
+    return BaselineConfig(
+        config_version=CONFIG_VERSION,
+        config_sha256=cast(str, digest),
+        generator_seed=seed,
+        n_participants=participants,
+        trials_per_participant=trials,
+        split_seed=split_seed,
+        cv_folds=folds,
+    )
