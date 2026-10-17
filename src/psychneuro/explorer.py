@@ -151,3 +151,36 @@ def full_report_summary(
         }
         for name in models
     ]
+
+
+def nominal_uncertainty_intervals(
+    report: dict[str, object], metric: str, selected_models: Sequence[str]
+) -> list[dict[str, str | int | float]]:
+    """Return only existing, non-null PM-10 nominal intervals for plotting.
+
+    These intervals refer to seeded fictional cohorts, not human participants.
+    A missing CI (0-4 eligible repeats) must NEVER become a zero/error bar.
+    """
+    valid = validate_report(report)
+    if metric not in METRICS:
+        raise ReportValidationError("invalid predeclared interval metric")
+    if (
+        any(type(name) is not str or name not in MODELS for name in selected_models)
+        or len(set(selected_models)) != len(selected_models)
+    ):
+        raise ReportValidationError("invalid or duplicate interval model")
+    rows: list[dict[str, str | int | float]] = []
+    for model in selected_models:
+        item = valid["summary"][model][metric]
+        if item["ci95_low"] is None or item["ci95_high"] is None:
+            continue
+        if item["n_repeats"] < 5 or item["ci_method"] is None:
+            raise ReportValidationError("unsupported or undersampled synthetic interval")
+        rows.append({
+            "Model": model,
+            "Eligible repeats": item["n_repeats"],
+            "Mean": item["mean"],
+            "Lower 95%": item["ci95_low"],
+            "Upper 95%": item["ci95_high"],
+        })
+    return rows
