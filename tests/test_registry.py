@@ -48,7 +48,9 @@ def test_external_dataset_is_never_generated(tmp_path: Path) -> None:
         load_registered_synthetic(SyntheticConfig(dataset_id="ds000001"), path)
 
 
-@pytest.mark.parametrize("flag", ["enabled", "download_allowed", "participant_data_ingestion_allowed"])
+@pytest.mark.parametrize(
+    "flag", ["enabled", "download_allowed", "participant_data_ingestion_allowed"]
+)
 def test_external_permission_escalation_denied(flag: str) -> None:
     payload = deepcopy(_registry())
     payload["entries"][1][flag] = True
