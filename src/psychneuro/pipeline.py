@@ -58,9 +58,12 @@ def _score(metrics: object, name: str) -> dict[str, float]:
     out: dict[str, float] = {}
     for metric in _METRICS:
         value = metrics.get(metric)
-        if type(value) not in (float, int) or not math.isfinite(value) or not 0 <= value <= 1:
+        if type(value) not in (float, int):
             raise PipelineError(f"{name}: invalid {metric} score")
-        out[metric] = float(value)
+        number = cast(float, value)
+        if not math.isfinite(number) or not 0.0 <= number <= 1.0:
+            raise PipelineError(f"{name}: invalid {metric} score")
+        out[metric] = float(number)
     return out
 
 
