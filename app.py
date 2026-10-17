@@ -114,7 +114,7 @@ if page in ("Overview", "Results and charts"):
         st.info("No eligible synthetic repeats: numerical charts suppressed.")
     else:
         chart = (
-            alt.Chart(rows)
+            alt.Chart(alt.Data(values=rows))
             .mark_point(filled=True, size=100)
             .encode(
                 x=alt.X("Repeat:O", title="Predeclared synthetic cohort repeat"),
