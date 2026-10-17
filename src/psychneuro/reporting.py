@@ -201,6 +201,8 @@ def validate_report(value: object) -> dict[str, Any]:
             raise ReportValidationError("selected policy differs from preselected model")
 
         slices = run.get("test_slice_errors")
+        if slices is None:
+            raise ReportValidationError("eligible repeat is missing guarded slices")
         if slices is not None:
             if not isinstance(slices, list) or len(slices) != 2:
                 raise ReportValidationError("invalid fixed slice table")
@@ -220,6 +222,11 @@ def validate_report(value: object) -> dict[str, Any]:
                         or not isinstance(row.get("metrics"), dict)
                     ):
                         raise ReportValidationError("insufficient slice sample")
+                    observed = _mapping(row["metrics"], "slice metrics")
+                    if observed.get("status") != "ok" or observed.get("n_trials") != row["n_trials"]:
+                        raise ReportValidationError("inconsistent slice metric status/count")
+                    for metric in METRICS:
+                        _score(observed.get(metric), f"slice {metric}")
                 else:
                     raise ReportValidationError("unsupported slice status")
     if observed_ok != eligible:
