@@ -53,3 +53,24 @@ G7 **GO/NO-GO**: GO for code implementation after dedicated repo and v0 rights+s
 - [OpenNeuro data terms](https://docs.openneuro.org/faq), for later separate dataset gate.
 - [GitHub Actions runners](https://docs.github.com/en/actions/how-tos/write-workflows/choose-where-workflows-run/choose-the-runner-for-a-job).
 - Original requirement pages: [Original Notion requirement](https://app.notion.com/p/3fa977a963b281b694cbf7abd6c8059b), [Original Notion requirement](https://app.notion.com/p/3fa977a963b28197aec2e18fb6d232a8), [Original Notion requirement](https://app.notion.com/p/3fa977a963b28173ba3acb8c91fa2119), [Original Notion requirement](https://app.notion.com/p/3fa977a963b28149b312cead66f53777).
+
+## 11. 2026-10-17 implementation reconciliation (non-normative addendum)
+
+The *frozen v0 scientific requirements above remain unchanged*. The original
+PM-01 text was written before this repository existed. **Its G0 statement
+that GitHub repository creation is still blocked is historical, not current.**
+The owner subsequently created a private
+[PsychNeuro OpenBench repository](https://github.com/aradmanamnaoon/psychneuro-openbench).
+PM-02 through PM-04 have real archived historical source/hosted QA evidence,
+while PM-05 through PM-16 contain substantial private implementations but
+still lack successful current-branch hosted integration, scored reports and
+browser/security review. No proof of human, clinical or real cohort validity
+has emerged, and PM-01's five user hypotheses remain untested research
+hypotheses. The normative v0 requirements for immutable code/environment
+provenance, rights and test/validation gates still apply.
+
+A source-only remediation now adds [the PM-01–16 gate ledger](pm01-pm16-gap-closure.md)
+and prepares CI-generated identity/dependency/artifact checks. It does not
+constitute a successful runner, an approved change of scientific protocol or
+a public product release. Preserve the frozen baseline settings unless
+a separately reviewed new protocol version is deliberately accepted.
