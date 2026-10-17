@@ -1,7 +1,9 @@
-"""PM-12 private Streamlit research explorer: synthetic preview OR validated report.
+"""Private, nonclinical Streamlit synthetic explorer and opt-in benchmark UI.
 
-Never mixes the fictional on-demand preview with held-out model evidence.
-Never computes model scores from UI choices, auto-downloads data or retrains.
+Preview controls never score data. Model work runs ONLY after an explicit
+bounded synthetic-only form submission; it uses the existing rights-gated
+PM-10 pipeline. Uploaded PM-10 JSON is validated, never used for training.
+No public service, external human dataset or background model job is implied.
 """
 from __future__ import annotations
 
