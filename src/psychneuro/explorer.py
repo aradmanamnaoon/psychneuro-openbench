@@ -16,7 +16,11 @@ PREVIEW_SEEDS = (73, 74, 75)
 PREVIEW_PARTICIPANTS = (6, 12, 24)
 PREVIEW_TRIALS_PER_PARTICIPANT = (8, 20)
 PREVIEW_MAX_ROWS = 1000
-DATA_MODES = ("Original synthetic preview (no model scores)", "Uploaded PM-10 report (results)")
+DATA_MODES = (
+    "Original synthetic preview (no model scores)",
+    "Uploaded PM-10 report (results)",
+    "Run bounded synthetic benchmark (in-app)",
+)
 
 
 @dataclass(frozen=True, slots=True)
