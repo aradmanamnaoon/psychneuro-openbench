@@ -88,7 +88,9 @@ def _rehash(value: dict[str, Any]) -> None:
     )
 
 
-def test_valid_synthetic_fixture_accepted_and_generated_exports_match(sample: dict[str, Any]) -> None:
+def test_valid_synthetic_fixture_accepted_and_generated_exports_match(
+    sample: dict[str, Any],
+) -> None:
     original = copy.deepcopy(sample)
     valid = validate_report(sample)
     bundle = build_bundle(valid)
