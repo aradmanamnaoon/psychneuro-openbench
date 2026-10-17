@@ -1,0 +1,9 @@
+# PM-15 CANDIDATE ONLY — direct application dependencies pinned to released PyPI versions.
+# Checked published version existence, NOT tested pip resolution or host compatibility.
+# The transitive dependency graph is NOT hash-locked; do not claim full reproducibility.
+# Target Python 3.12 on Streamlit Community Cloud advanced settings.
+# This installs the checked-in source package to resolve psychneuro imports.
+.
+streamlit==1.58.0
+altair==5.5.0
+scikit-learn==1.8.0
