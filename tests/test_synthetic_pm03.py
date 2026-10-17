@@ -71,28 +71,44 @@ def test_validation_rejects_noncontiguous_trial_orders() -> None:
 
 
 def test_validation_rejects_mixed_seeds() -> None:
-    records = list(generate_trials(SyntheticConfig(seed=109, n_participants=1, trials_per_participant=3)))
+    records = list(
+        generate_trials(
+            SyntheticConfig(seed=109, n_participants=1, trials_per_participant=3)
+        )
+    )
     records[1] = replace(records[1], generator_seed=110)
     with pytest.raises(ValueError, match="one dataset_id and seed"):
         validate_trials(records)
 
 
 def test_validation_rejects_unknown_stimulus_condition() -> None:
-    records = list(generate_trials(SyntheticConfig(seed=111, n_participants=1, trials_per_participant=3)))
+    records = list(
+        generate_trials(
+            SyntheticConfig(seed=111, n_participants=1, trials_per_participant=3)
+        )
+    )
     records[0] = replace(records[0], stimulus_condition="unknown")  # type: ignore[arg-type]
     with pytest.raises(ValueError, match="choice"):
         validate_trials(records)
 
 
 def test_validation_rejects_nonbinary_correctness() -> None:
-    records = list(generate_trials(SyntheticConfig(seed=112, n_participants=1, trials_per_participant=3)))
+    records = list(
+        generate_trials(
+            SyntheticConfig(seed=112, n_participants=1, trials_per_participant=3)
+        )
+    )
     records[0] = replace(records[0], correct=2)
     with pytest.raises(ValueError, match="binary"):
         validate_trials(records)
 
 
 def test_validation_rejects_nonfinite_difficulty_and_latency() -> None:
-    records = list(generate_trials(SyntheticConfig(seed=113, n_participants=1, trials_per_participant=3)))
+    records = list(
+        generate_trials(
+            SyntheticConfig(seed=113, n_participants=1, trials_per_participant=3)
+        )
+    )
     records[0] = replace(records[0], difficulty=float("inf"))
     with pytest.raises(ValueError, match="difficulty"):
         validate_trials(records)
@@ -104,7 +120,10 @@ def test_validation_rejects_nonfinite_difficulty_and_latency() -> None:
 def test_generated_latency_is_finite_positive_and_never_a_predictor() -> None:
     records = generate_trials(SyntheticConfig(seed=114, n_participants=2, trials_per_participant=4))
     assert all(math.isfinite(r.response_time_ms) and r.response_time_ms > 0 for r in records)
-    card = dataset_card(SyntheticConfig(seed=114, n_participants=2, trials_per_participant=4), records)
+    card = dataset_card(
+        SyntheticConfig(seed=114, n_participants=2, trials_per_participant=4),
+        records,
+    )
     assert card["feature_availability"]["response_time_ms"].startswith("post-response")
     assert card["feature_availability"]["correct"].startswith("target")
 
