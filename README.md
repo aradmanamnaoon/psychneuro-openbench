@@ -19,6 +19,14 @@
 PsychNeuro OpenBench is an emerging **nonclinical, reproducibility-first benchmarking workbench** for behavioral psychology and computational neuroscience research. It is being built for people who want to move from trial tables to defensible model comparisons—without leaking the same participant across training and test data, mistaking post-response measurements for predictors, or losing track of dataset rights.
 
 **Current stage: private engineering preview, not a finished benchmark, published package, or validated/deployed browser app.**
+**PM-01–16 verification remediation (private, NOT RUN):** The new
+[gap/acceptance ledger](docs/pm01-pm16-gap-closure.md) distinguishes verified
+historical PM-02–04 runs from blocked PM-05–16 gates. It links code fixes for
+the frozen config-report digest, JSON-native artifact round trips, PM-16's
+offline documentation link checks and an unexecuted, manually gated hosted
+CI provenance sidecar. No full current-commit test, benchmark, Streamlit
+browser audit or public release has passed or occurred.
+
 **PM-15 deployment gate: BLOCKED. No hosted demo URL exists.** A private-host
 configuration and directly pinned Python requirements have been committed
 for a later owner-approved review; their installation and compatibility are
