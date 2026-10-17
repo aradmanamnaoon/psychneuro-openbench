@@ -241,6 +241,16 @@ def validate_report(value: object) -> dict[str, Any]:
                 raise ReportValidationError("invalid fixed slice table")
             for pos, label in enumerate(("left", "right")):
                 row = _mapping(slices[pos], "slice")
+                if set(row) != {
+                    "feature", "slice", "n_trials", "n_participants",
+                    "metrics", "status", "reason",
+                }:
+                    raise ReportValidationError("unexpected exportable slice metadata")
+                if row.get("reason") not in (
+                    None, "insufficient_independent_participants_or_trials",
+                    "single_truth_class", "empty_partition",
+                ):
+                    raise ReportValidationError("unsupported slice reason text")
                 if row.get("feature") != "stimulus_condition" or row.get("slice") != label:
                     raise ReportValidationError("unexpected slice axis")
                 _integer(row.get("n_trials"), "slice.n_trials")
@@ -256,6 +266,12 @@ def validate_report(value: object) -> dict[str, Any]:
                     ):
                         raise ReportValidationError("insufficient slice sample")
                     observed = _mapping(row["metrics"], "slice metrics")
+                    if set(observed) != {
+                        "status", "reason", "n_trials", "support_0", "support_1",
+                        "predicted_0", "predicted_1", "prevalence_1",
+                        "confusion_matrix", "balanced_accuracy", "macro_f1",
+                    }:
+                        raise ReportValidationError("unexpected slice metric metadata")
                     if observed.get("status") != "ok" or observed.get("n_trials") != row["n_trials"]:
                         raise ReportValidationError("inconsistent slice metric status/count")
                     for metric in METRICS:
