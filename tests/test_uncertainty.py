@@ -172,7 +172,9 @@ def test_ineligible_run_disclosed_and_ci_withheld(
     monkeypatch.setattr(
         pipeline,
         "run_experiment",
-        lambda config, path: _synthetic_result(config.generator_seed, valid=config.generator_seed != 75),
+        lambda config, path: _synthetic_result(
+            config.generator_seed, valid=config.generator_seed != 75
+        ),
     )
     report = run_pipeline(PipelineConfig(CFG, repeats=5), REGISTRY)
     assert report["status"] == "incomplete"
