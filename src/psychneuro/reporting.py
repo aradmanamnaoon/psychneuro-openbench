@@ -149,7 +149,7 @@ def validate_report(value: object) -> dict[str, Any]:
         or base_split + requested - 1 > 2**64 - 1
     ):
         raise ReportValidationError("invalid seed range")
-    if baseline.get("cv_folds") != 5:
+    if _integer(baseline.get("cv_folds"), "cv_folds") != 5:
         raise ReportValidationError("unsupported grouped CV policy")
     if config.get("seed_rule") != (
         "generator_seed+index and split_seed+index, index starts at 0"
@@ -357,7 +357,9 @@ def build_bundle(report: dict[str, Any]) -> ExportBundle:
     ]
     manifest = {
         "artifact_manifest_version": EXPORT_VERSION,
-        "data_schema_version": SCHEMA_VERSION,
+        "expected_data_schema_version": SCHEMA_VERSION,
+        "schema_version_basis": "current package contract; not attested by PM-10 report",
+        "source_commit_sha": None,
         "input_report_version": REPORT_VERSION,
         "input_report_canonical_sha256": valid["report_sha256"],
         "baseline_config_sha256": valid["config"]["baseline"]["config_sha256"],
