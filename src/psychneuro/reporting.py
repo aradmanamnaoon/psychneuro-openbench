@@ -272,7 +272,10 @@ def validate_report(value: object) -> dict[str, Any]:
                         "confusion_matrix", "balanced_accuracy", "macro_f1",
                     }:
                         raise ReportValidationError("unexpected slice metric metadata")
-                    if observed.get("status") != "ok" or observed.get("n_trials") != row["n_trials"]:
+                    if (
+                        observed.get("status") != "ok"
+                        or observed.get("n_trials") != row["n_trials"]
+                    ):
                         raise ReportValidationError("inconsistent slice metric status/count")
                     for metric in METRICS:
                         _score(observed.get(metric), f"slice {metric}")
@@ -339,7 +342,10 @@ def render_markdown(report: dict[str, Any]) -> str:
     ]
     for row in cast(list[dict[str, Any]], valid["runs"]):
         if row["status"] != "ok":
-            lines.append(f"| {row['repeat']} | {row['generator_seed']} | N/A (ineligible) | N/A | N/A |")
+            lines.append(
+                f"| {row['repeat']} | {row['generator_seed']} | "
+                "N/A (ineligible) | N/A | N/A |"
+            )
         else:
             metrics = row["test_metrics"]["cv_selected_policy"]
             lines.append(
