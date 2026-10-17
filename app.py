@@ -19,6 +19,7 @@ from psychneuro.explorer import (
     PREVIEW_TRIALS_PER_PARTICIPANT,
     filter_report_scores,
     full_report_summary,
+    nominal_uncertainty_intervals,
     prepare_synthetic_preview,
 )
 from psychneuro.reporting import METRICS, MODELS, ReportValidationError, build_bundle, parse_report
@@ -314,6 +315,57 @@ if page in ("Overview", "Results and charts"):
         "Balanced accuracy is the average recall across classes 0 and 1. "
         "Macro F1 is the average of per-class F1 scores. "
         "SE and nominal CI refer to simulated cohort seeds, NOT human participants."
+    )
+    st.subheader("Nominal repeat-level uncertainty — original full report")
+    st.caption(
+        "A vertical line shows the UNCLIPPED approximate 95% Student-t interval "
+        "around the mean across ELIGIBLE seeded synthetic cohorts. It may "
+        "extend outside the theoretical score range [0, 1], so the interval "
+        "axis is intentionally not truncated. This is not a human-population CI, "
+        "statistical significance finding or calibrated model comparison."
+    )
+    interval_rows = nominal_uncertainty_intervals(report, metric, selected_models)
+    if not interval_rows:
+        st.info(
+            "No eligible 95% interval for these models. At least 5 eligible "
+            "synthetic cohort repeats are needed; unavailable intervals are N/A, "
+            "not a fabricated zero-width bar."
+        )
+    else:
+        data = alt.Data(values=interval_rows)
+        base = alt.Chart(data).encode(
+            x=alt.X("Model:N", title="Fixed baseline or training-CV-selected policy")
+        )
+        intervals = base.mark_rule(size=4).encode(
+            y=alt.Y("Lower 95%:Q", title="Score / nominal interval (unitless)"),
+            y2=alt.Y2("Upper 95%:Q"),
+            tooltip=[
+                alt.Tooltip("Model:N"),
+                alt.Tooltip("Eligible repeats:Q", format="d"),
+                alt.Tooltip("Mean:Q", format=".4f"),
+                alt.Tooltip("Lower 95%:Q", format=".4f"),
+                alt.Tooltip("Upper 95%:Q", format=".4f"),
+            ],
+        )
+        means = base.mark_point(filled=True, size=140).encode(
+            y=alt.Y("Mean:Q", title="Score / nominal interval (unitless)"),
+            tooltip=[
+                alt.Tooltip("Model:N"),
+                alt.Tooltip("Mean:Q", format=".4f"),
+            ],
+        )
+        st.altair_chart(
+            (intervals + means).properties(
+                title="Descriptive uncertainty across fictional cohort seeds",
+                description="Nominal intervals and mean points, tabulated directly below.",
+            ),
+            use_container_width=True,
+        )
+        st.caption("Accessible numerical equivalent; never recalculated from filters.")
+        st.dataframe(interval_rows, hide_index=True)
+    st.caption(
+        "No probability of superiority, causal inference, clinical utility, "
+        "independent human subjects, or empirical neuroscience claim is permitted."
     )
 
 if page == "Reports and lineage":
