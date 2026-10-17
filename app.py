@@ -76,7 +76,9 @@ if source_mode == DATA_MODES[0]:
     participants = st.sidebar.selectbox(
         "Fictional participants", PREVIEW_PARTICIPANTS, index=1
     )
-    trials = st.sidebar.selectbox("Trials per fictional participant", PREVIEW_TRIALS_PER_PARTICIPANT)
+    trials = st.sidebar.selectbox(
+        "Trials per fictional participant", PREVIEW_TRIALS_PER_PARTICIPANT
+    )
     st.divider()
     if page in ("Overview", "Synthetic preview"):
         preview = prepare_synthetic_preview(seed, participants, trials)
