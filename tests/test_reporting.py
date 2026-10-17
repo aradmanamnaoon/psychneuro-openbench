@@ -281,3 +281,31 @@ def test_manifest_can_validate_alternate_frozen_numeric_json_spellings(
         baseline_from_manifest(
             {**asdict(loaded), "config_sha256": "f" * 64}
         )
+
+
+def test_slice_confusion_counts_survive_exact_json_roundtrip(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Original BinaryMetrics tuple shapes must be normalized in run_pipeline."""
+    from dataclasses import asdict
+
+    import psychneuro.pipeline as pipeline
+    from psychneuro.metrics import score_binary
+
+    def simulated_run(config: Any, registry_path: Path) -> dict[str, Any]:
+        record = _fake_experiment(config.generator_seed)
+        if registry_path != REGISTRY:
+            raise ValueError("wrong original synthetic registry")
+        binary = score_binary([0, 1] * 20, [0, 1] * 20)
+        first = record["test_slice_errors"][0]
+        first["n_participants"] = 11
+        first["metrics"] = asdict(binary)
+        first["status"] = "ok"
+        first["reason"] = None
+        return record
+
+    monkeypatch.setattr(pipeline, "run_experiment", simulated_run)
+    report = run_pipeline(PipelineConfig(BASELINE, repeats=1), REGISTRY)
+    raw_counts = report["runs"][0]["test_slice_errors"][0]["metrics"]["confusion_matrix"]
+    assert raw_counts == [[20, 0], [0, 20]]
+    assert parse_report(build_bundle(report).report_json) == report
