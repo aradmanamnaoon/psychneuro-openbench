@@ -1,5 +1,5 @@
 # Manual-only to avoid unattended use of private GitHub Actions minutes.
-# PM-06 through PM-09 code is NOT validated until the exact branch and run logs are inspected.
+# PM-06 through PM-10 code is NOT validated until the exact branch and run logs are inspected.
 name: Synthetic and loader CPU quality gates (manual only)
 on:
   workflow_dispatch:
@@ -38,6 +38,20 @@ jobs:
         run: |
           sha256sum configs/baseline.json artifacts/pm08/manifest.json
           cat artifacts/pm08/manifest.json
+      - name: Execute PM-10 predeclared synthetic repeated pipeline
+        run: |
+          python -m psychneuro.pipeline --config configs/baseline.json --registry data/registry.json --repeats 5 --output-dir artifacts/pm10
+      - name: Print PM-10 synthetic-only report and checksum
+        run: |
+          sha256sum artifacts/pm10/report.json
+          cat artifacts/pm10/report.json
+      - name: Archive guarded PM-10 repeat summary
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: pm10-synthetic-repeat-${{ matrix.python-version }}
+          path: artifacts/pm10/report.json
+          retention-days: 7
+          if-no-files-found: error
       - name: Archive synthetic-only PM-08 experiment manifest
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
