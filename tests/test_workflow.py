@@ -291,3 +291,61 @@ def test_live_app_mode_does_not_train_on_page_load(
     assert any("No in-app run yet" in item.value for item in at.info)
     assert len(at.file_uploader) == 0
     assert len(at.download_button) == 0
+
+
+def test_unexpected_export_fields_and_sensitive_text_are_rejected(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A self-rehashed uploaded JSON cannot smuggle unrelated metadata."""
+    from psychneuro.pipeline import PipelineConfig, run_pipeline
+    from psychneuro import pipeline
+
+    def fake_exp(config: Any, path: Path) -> dict[str, Any]:
+        h = hashlib.sha256(str(config.generator_seed).encode()).hexdigest()
+        scores = {
+            "dummy_prior": {"status": "ok", "balanced_accuracy": 0.5, "macro_f1": 0.4},
+            "logistic_regression": {
+                "status": "ok", "balanced_accuracy": 0.6, "macro_f1": 0.5,
+            },
+        }
+        return {
+            "status": "ok",
+            "source": {
+                "source_kind": "synthetic",
+                "rights_basis": "synthetic-original",
+                "source_sha256": h,
+            },
+            "split": {"assignment_sha256": h},
+            "manifest_sha256": h,
+            "selected_model": "dummy_prior",
+            "reasons": [],
+            "test_metrics": scores,
+            "test_slice_errors": [
+                {
+                    "feature": "stimulus_condition", "slice": side,
+                    "n_trials": 40, "n_participants": 5,
+                    "status": "suppressed",
+                    "reason": "insufficient_independent_participants_or_trials",
+                    "metrics": None,
+                } for side in ("left", "right")
+            ],
+        }
+
+    monkeypatch.setattr(pipeline, "run_experiment", fake_exp)
+    report = run_pipeline(
+        PipelineConfig(load_baseline_config(BASELINE), 1),
+        ROOT / "data" / "registry.json",
+    )
+    report["patient_email"] = "not-real@example.invalid"
+    report.pop("report_sha256")
+    payload = json.dumps(report, sort_keys=True, separators=(",", ":"))
+    report["report_sha256"] = hashlib.sha256(payload.encode()).hexdigest()
+    with pytest.raises(ValueError, match="unsafe for export"):
+        build_bundle(report)
+    report.pop("patient_email")
+    report["runs"][0]["reasons"].append("study@example.invalid")
+    report.pop("report_sha256")
+    payload = json.dumps(report, sort_keys=True, separators=(",", ":"))
+    report["report_sha256"] = hashlib.sha256(payload.encode()).hexdigest()
+    with pytest.raises(ValueError, match="unsafe reason"):
+        build_bundle(report)
