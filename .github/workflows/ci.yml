@@ -1,5 +1,5 @@
 # Manual-only to avoid unattended use of private GitHub Actions minutes.
-# PM-06 through PM-12 code is NOT validated until the exact branch and run logs are inspected.
+# PM-06 through PM-13 code is NOT validated until the exact branch and run logs are inspected.
 name: Synthetic and loader CPU quality gates (manual only)
 on:
   workflow_dispatch:
@@ -22,7 +22,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install development requirements
         run: python -m pip install --disable-pip-version-check -e '.[dev,parquet,benchmark,ui]'
-      - name: Run all pytest including PM-12 UI AppTest, loader and benchmark tests
+      - name: Run all pytest including PM-13 live synthetic integration and UI smoke
         run: python -m pytest -q
       - name: Lint
         run: python -m ruff check .
@@ -60,6 +60,23 @@ jobs:
           cmp artifacts/pm11/report.md artifacts/pm12/recheck/report.md
           cmp artifacts/pm11/artifact-manifest.json artifacts/pm12/recheck/artifact-manifest.json
           sha256sum artifacts/pm12/recheck/*.json artifacts/pm12/recheck/*.md
+      - name: Execute PM-13 exact in-app scenario through the actual rights-checked pipeline
+        run: |
+          python -m psychneuro.workflow --generator-seed 73 --participants 24 --trials 20 --repeats 5 --output-dir artifacts/pm13
+      - name: Verify PM-13 report and export bytes against original PM-10 and PM-11
+        run: |
+          cmp artifacts/pm10/report.json artifacts/pm13/report.json
+          cmp artifacts/pm11/report.md artifacts/pm13/report.md
+          cmp artifacts/pm11/artifact-manifest.json artifacts/pm13/artifact-manifest.json
+          sha256sum artifacts/pm13/*.json artifacts/pm13/*.md
+          cat artifacts/pm13/artifact-manifest.json
+      - name: Archive PM-13 genuine computed synthetic results (if run succeeds)
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: pm13-synthetic-live-workflow-${{ matrix.python-version }}
+          path: artifacts/pm13/
+          retention-days: 7
+          if-no-files-found: error
       - name: Archive PM-11 report and lineage exports
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
