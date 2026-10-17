@@ -116,12 +116,25 @@ def validate_report(value: object) -> dict[str, Any]:
     with an independently verified GitHub Actions run or scientific finding.
     """
     data = _mapping(value, "report")
+    required_top = {
+        "report_version", "status", "source_policy", "independence_unit",
+        "config", "n_requested", "n_eligible", "n_ineligible", "runs",
+        "summary", "interpretation", "report_sha256",
+    }
+    if set(data) != required_top:
+        raise ReportValidationError("unknown/missing report fields; unsafe for export")
     if data.get("report_version") != REPORT_VERSION:
         raise ReportValidationError("unsupported PM-10 report version")
     if data.get("source_policy") != "original synthetic only; no external or human data":
         raise ReportValidationError("non-synthetic or unverified data rights")
     if data.get("independence_unit") != "distinctly seeded synthetic cohort; not trial rows":
         raise ReportValidationError("unsupported independence unit")
+    if data.get("interpretation") != (
+        "Only descriptive uncertainty across predetermined synthetic draws. "
+        "Not a CI for human participants, model significance, clinical utility, "
+        "or generalization. No best-seed picking; ineligible runs disclosed."
+    ):
+        raise ReportValidationError("unsupported interpretation or injected text")
     supplied = _sha(data.get("report_sha256"), "report_sha256")
     unsigned = {key: val for key, val in data.items() if key != "report_sha256"}
     if supplied != _digest(unsigned):
@@ -129,6 +142,13 @@ def validate_report(value: object) -> dict[str, Any]:
 
     config = _mapping(data.get("config"), "config")
     baseline = _mapping(config.get("baseline"), "baseline")
+    if set(config) != {"baseline", "repeats", "seed_rule"}:
+        raise ReportValidationError("unknown configuration fields; unsafe for export")
+    if set(baseline) != {
+        "config_version", "config_sha256", "generator_seed",
+        "n_participants", "trials_per_participant", "split_seed", "cv_folds",
+    }:
+        raise ReportValidationError("unexpected baseline config metadata")
     if baseline.get("config_version") != CONFIG_VERSION:
         raise ReportValidationError("unexpected versioned baseline protocol")
     _sha(baseline.get("config_sha256"), "baseline config_sha256")
@@ -165,6 +185,12 @@ def validate_report(value: object) -> dict[str, Any]:
     observed_ok = 0
     for index, item in enumerate(runs, start=1):
         run = _mapping(item, f"runs[{index}]")
+        if set(run) != {
+            "repeat", "generator_seed", "split_seed", "status",
+            "source_sha256", "split_sha256", "experiment_manifest_sha256",
+            "selected_model", "reasons", "test_metrics", "test_slice_errors",
+        }:
+            raise ReportValidationError("unknown or missing repeat fields; unsafe for export")
         if (
             _integer(run.get("repeat"), "repeat", minimum=1) != index
             or _integer(run.get("generator_seed"), "generator_seed") != base_generator + index - 1
@@ -175,6 +201,13 @@ def validate_report(value: object) -> dict[str, Any]:
             _sha(run.get(field), field)
         if not isinstance(run.get("reasons"), list):
             raise ReportValidationError("missing reasons array")
+        for reason in run["reasons"]:
+            if (
+                type(reason) is not str or len(reason) > 256
+                or any(ord(ch) < 32 or ord(ch) > 126 for ch in reason)
+                or "@" in reason
+            ):
+                raise ReportValidationError("unsafe reason string in exportable report")
         status = run.get("status")
         if status == "ineligible":
             if (
