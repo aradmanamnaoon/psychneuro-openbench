@@ -23,6 +23,7 @@ from psychneuro.explorer import (
     prepare_synthetic_preview,
 )
 from psychneuro.reporting import METRICS, MODELS, ReportValidationError, build_bundle, parse_report
+from psychneuro.ux import explain_scenario_failure, explain_upload_failure
 from psychneuro.workflow import (
     SCENARIO_GENERATOR_SEEDS,
     SCENARIO_PARTICIPANTS,
@@ -36,6 +37,11 @@ from psychneuro.workflow import (
 st.set_page_config(page_title="PsychNeuro OpenBench — private review", layout="wide")
 st.title("PsychNeuro OpenBench")
 st.caption("Nonclinical private software preview. No hosted benchmark or clinical service.")
+st.caption(
+    "Getting started: choose a permitted source in the sidebar. The fictional "
+    "preview needs no upload. A model run starts only after you submit the "
+    "synthetic-only form. Headings, labels and result tables supplement charts."
+)
 st.warning(
     "Software evaluation only — NOT human neuroscience evidence, medical advice "
     "or a clinical prediction tool. Uploading an internally consistent JSON "
@@ -50,6 +56,10 @@ source_mode = st.sidebar.selectbox("Permitted data source", DATA_MODES, index=0)
 st.sidebar.caption(
     "No public or third-party datasets. Demo controls do not alter the locked "
     "PM-10 test split, model selection, or saved reports."
+)
+st.sidebar.caption(
+    "Keyboard: use Tab and Shift+Tab through labeled controls, then Enter/Space "
+    "to activate buttons. No response field is required for the preview."
 )
 
 if page == "Overview":
@@ -105,7 +115,7 @@ if source_mode == DATA_MODES[0]:
         )
         st.code(preview.source_sha256, language="text")
         st.caption("SHA-256 of the original generator's canonical CSV, not a CI attestation.")
-        st.dataframe([asdict(row) for row in preview.rows], hide_index=True)
+        st.table([asdict(row) for row in preview.rows])
         st.caption(
             "First 12 rows; selected predictors only: synthetic cue (left/right), "
             "difficulty (unitless). Correctness, response and latency intentionally "
@@ -164,7 +174,10 @@ if is_live:
             with st.spinner("Computing the requested synthetic-only benchmark…"):
                 result = run_scenario(selected, Path(__file__).resolve().parent)
         except (ScenarioError, ValueError) as exc:
-            st.error(f"Synthetic benchmark rejected or failed: {exc}")
+            st.error(
+                "Synthetic benchmark rejected or failed: "
+                + explain_scenario_failure(exc)
+            )
             st.stop()
         st.session_state["pm13_last_report"] = result
         st.session_state["pm13_last_scenario"] = asdict(selected)
@@ -183,7 +196,10 @@ if is_live:
         bundle = build_bundle(report)
     except (ValueError, TypeError) as exc:
         st.session_state.pop("pm13_last_report", None)
-        st.error(f"Saved session artifact was invalid and cleared: {exc}")
+        st.error(
+            "Saved session artifact was invalid and cleared. "
+            + explain_upload_failure(exc)
+        )
         st.stop()
     st.success(
         "In-app execution completed using the rights-checked synthetic pipeline. "
@@ -213,7 +229,10 @@ else:
         report = parse_report(uploaded.getvalue())
         bundle = build_bundle(report)
     except (ReportValidationError, ValueError) as exc:
-        st.error(f"Input rejected without plotting or exporting: {exc}")
+        st.error(
+            "Input rejected without plotting or exporting: "
+            + explain_upload_failure(exc)
+        )
         st.stop()
     st.success(
         "Source policy, protocol, seed order, score summary and internal hash are consistent."
@@ -300,15 +319,18 @@ if page in ("Overview", "Results and charts"):
             )
         )
         st.altair_chart(plot, use_container_width=True)
-        st.caption("Data table — accessible numerical equivalent of all visible chart points.")
-        st.dataframe(rows, hide_index=True)
+        st.caption(
+            "Text alternative: the static table below lists every plotted point "
+            "by repeat, model/policy and unitless score. The plot is optional."
+        )
+        st.table(rows)
     st.subheader("Full-report descriptive uncertainty (not filter-dependent)")
     st.caption(
         "This summary always uses ALL eligible original repeats, even if "
         "selected_repeats above excludes some. No post hoc interval recomputation."
     )
     if selected_models:
-        st.dataframe(full_report_summary(report, metric, selected_models), hide_index=True)
+        st.table(full_report_summary(report, metric, selected_models))
     else:
         st.info("Select at least one predeclared model or policy to display its summary.")
     st.caption(
@@ -361,8 +383,12 @@ if page in ("Overview", "Results and charts"):
             ),
             use_container_width=True,
         )
-        st.caption("Accessible numerical equivalent; never recalculated from filters.")
-        st.dataframe(interval_rows, hide_index=True)
+        st.caption(
+            "Text alternative: the static table below gives each model, "
+            "eligible-repeat count, mean and unclipped nominal CI boundaries. "
+            "Values are from the complete original report."
+        )
+        st.table(interval_rows)
     st.caption(
         "No probability of superiority, causal inference, clinical utility, "
         "independent human subjects, or empirical neuroscience claim is permitted."
@@ -380,8 +406,8 @@ if page == "Reports and lineage":
 
 st.subheader("Download the complete original report and provenance exports")
 st.caption(
-    "Downloads are FULL-REPORT exports from this uploaded input, not recomputed "
-    "or truncated to the comparison filters above."
+    "Downloads are full-report exports from the checked source, not filtered "
+    "to the selected chart points. No raw fictional trial rows are exported."
 )
 st.download_button(
     "PM-10 JSON report",
