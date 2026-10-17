@@ -15,6 +15,7 @@ dependencies = []
 dev = ["pytest>=8,<10", "ruff>=0.9,<1", "mypy>=1.12,<2"]
 parquet = ["pyarrow>=17"]
 benchmark = ["scikit-learn>=1.5,<2"]
+ui = ["streamlit>=1.58,<2", "altair>=5,<7"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
