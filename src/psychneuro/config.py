@@ -85,7 +85,7 @@ def _matches(actual: object, expected: object) -> bool:
 def _integer(value: object, name: str, lower: int, upper: int) -> int:
     if type(value) is not int or not lower <= value <= upper:
         raise ValueError(f"{name} must be an integer in [{lower}, {upper}]")
-    return cast(int, value)
+    return value
 
 
 def load_baseline_config(path: Path) -> BaselineConfig:
@@ -116,8 +116,8 @@ def load_baseline_config(path: Path) -> BaselineConfig:
         if not _matches(root[key], expected):
             raise ValueError(f"{key}: unsupported or changed benchmark protocol")
     split = _object(root["split"], "split", {"method", "seed", "cv_folds"})
-    for key, expected in cast(dict[str, object], _FIXED["split"]).items():
-        if not _matches(split[key], expected):
+    for key, split_expected in cast(dict[str, object], _FIXED["split"]).items():
+        if not _matches(split[key], split_expected):
             raise ValueError(f"split.{key}: unsupported protocol")
     dataset = _object(
         root["dataset"], "dataset",

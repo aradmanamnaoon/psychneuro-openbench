@@ -11,7 +11,7 @@ import hashlib
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 from .config import BaselineConfig, load_baseline_config
 from .pipeline import PipelineConfig, run_pipeline
@@ -117,7 +117,7 @@ def run_scenario(scenario: Scenario, project_root: Path) -> dict[str, Any]:
         build_bundle(validated)  # integrity/export validation, no file or network side effects
     except (ValueError, RuntimeError, OSError, KeyError, TypeError) as exc:
         raise ScenarioError("synthetic workflow failed; no report is available") from exc
-    return cast(dict[str, Any], validated)
+    return validated
 
 
 def main() -> int:

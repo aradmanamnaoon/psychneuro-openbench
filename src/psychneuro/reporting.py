@@ -51,7 +51,7 @@ def _mapping(value: object, name: str) -> dict[str, Any]:
 def _integer(value: object, name: str, *, minimum: int = 0) -> int:
     if type(value) is not int or value < minimum:
         raise ReportValidationError(f"{name} must be an integer >= {minimum}")
-    return cast(int, value)
+    return value
 
 
 def _digest(value: object) -> str:

@@ -132,7 +132,7 @@ def run_pipeline(config: PipelineConfig, registry_path: Path) -> dict[str, objec
             scored = {
                 name: _score(results.get(name), name) for name in _MODELS[:2]
             }
-            selected = scored[cast(str, choice)]
+            selected = scored[choice]
             scored["cv_selected_policy"] = selected
             for name, metrics in scored.items():
                 for metric in _METRICS:

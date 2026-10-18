@@ -118,10 +118,10 @@ def _indices(
             by_subject[subject_id] = name
     output: dict[SplitName, list[int]] = {"train": [], "validation": [], "test": []}
     for index, row in enumerate(data.records):
-        name = by_subject.get(row.participant_id)
-        if name is None:
+        assigned = by_subject.get(row.participant_id)
+        if assigned is None:
             raise ValueError("unassigned participant")
-        output[name].append(index)
+        output[assigned].append(index)
     return tuple(output["train"]), tuple(output["validation"]), tuple(output["test"])
 
 
