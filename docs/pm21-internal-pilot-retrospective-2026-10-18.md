@@ -26,3 +26,6 @@
 6. **P2 — Public release and profile synchronization:** only after every release gate passes and independent specific approvals; version tag, public README/site/LinkedIn/HF each evaluated separately.
 
 **Follow-up ownership:** AI through connected tools for code/docs/source and remote observations when supported; human user is evidence reviewer and authorization gate only. **No new Week-2 creation**, no personal/professional profile edits, no outreach, no paid services, no branch merges. Status **PM-21 BLOCKED**, with retrospective sub-deliverable provided independently.
+
+## Internal follow-up — 2026-10-18 (PM-18 completed documents, not external feedback)
+The PM-18 case-study, [three unsent drafts](pm18-outreach-drafts.md), [empty feedback log](pm18-feedback-instrument.md), and [prioritized private issue backlog](pm18-backlog-evidence-log.md) are committed as private artifacts, with [browser issue #8](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/8) and [synthetic-data licensing issue #9](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/9) tracking release gaps. The PM-18 Notion status has advanced from Planned to **Blocked**, since upstream PM-17 evidence, actual hosted verification and feedback remain missing. No sent invitation, human response, or public/social change resulted. **NO-GO** stands.
