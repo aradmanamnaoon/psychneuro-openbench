@@ -119,7 +119,7 @@ def test_true_one_repeat_synthetic_e2e_and_no_sensitive_raw_fields() -> None:
 def test_uncertainty_plot_requires_five_real_eligible_seeds(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    import psychneuro.pipeline as pipeline
+    from psychneuro import pipeline
     from psychneuro.pipeline import PipelineConfig, run_pipeline
 
     def fake_experiment(config: Any, path: Path) -> dict[str, Any]:
@@ -174,7 +174,7 @@ def test_uncertainty_plot_requires_five_real_eligible_seeds(
 def test_uncertainty_plot_no_fake_intervals_for_failed_run(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    import psychneuro.pipeline as pipeline
+    from psychneuro import pipeline
     from psychneuro.pipeline import PipelineConfig, run_pipeline
     from psychneuro.uncertainty import summary_dict
 
@@ -227,7 +227,7 @@ def test_exports_are_not_subsetted_by_graph_selection(
 ) -> None:
     from psychneuro import workflow
     from psychneuro.explorer import filter_report_scores
-    from psychneuro.pipeline import PipelineConfig, run_pipeline
+    from psychneuro.pipeline import run_pipeline
 
     def fake_experiment(config: Any, path: Path) -> dict[str, Any]:
         h = hashlib.sha256(str(config.generator_seed).encode()).hexdigest()
@@ -277,8 +277,9 @@ def test_live_app_mode_does_not_train_on_page_load(
 ) -> None:
     """Streamlit simulated shell must not start any model work without a click."""
     from streamlit.testing.v1 import AppTest
-    from psychneuro.explorer import DATA_MODES
+
     from psychneuro import workflow
+    from psychneuro.explorer import DATA_MODES
 
     def forbidden_run(scenario: Scenario, root: Path) -> dict[str, Any]:
         raise AssertionError("model execution happened without explicit scenario submission")
@@ -297,8 +298,8 @@ def test_unexpected_export_fields_and_sensitive_text_are_rejected(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """A self-rehashed uploaded JSON cannot smuggle unrelated metadata."""
-    from psychneuro.pipeline import PipelineConfig, run_pipeline
     from psychneuro import pipeline
+    from psychneuro.pipeline import PipelineConfig, run_pipeline
 
     def fake_exp(config: Any, path: Path) -> dict[str, Any]:
         h = hashlib.sha256(str(config.generator_seed).encode()).hexdigest()

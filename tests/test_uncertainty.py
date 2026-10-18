@@ -141,7 +141,7 @@ def _synthetic_result(seed: int, *, valid: bool = True) -> dict[str, Any]:
 def test_pipeline_predeclares_distinct_seed_pairs_and_digest(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    import psychneuro.pipeline as pipeline
+    from psychneuro import pipeline
 
     seeds: list[tuple[int, int]] = []
 
@@ -167,7 +167,7 @@ def test_pipeline_predeclares_distinct_seed_pairs_and_digest(
 def test_ineligible_run_disclosed_and_ci_withheld(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    import psychneuro.pipeline as pipeline
+    from psychneuro import pipeline
 
     monkeypatch.setattr(
         pipeline,
@@ -197,7 +197,7 @@ def test_seed_overflow_and_bad_protocol_rejected() -> None:
 def test_wrong_rights_or_nonfinite_result_refused(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    import psychneuro.pipeline as pipeline
+    from psychneuro import pipeline
 
     def wrong_rights(config: object, path: Path) -> dict[str, Any]:
         obj = _synthetic_result(73)

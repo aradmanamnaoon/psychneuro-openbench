@@ -69,7 +69,7 @@ def _fake_experiment(seed: int, *, eligible: bool = True) -> dict[str, Any]:
 
 @pytest.fixture
 def report(monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
-    import psychneuro.pipeline as pipeline
+    from psychneuro import pipeline
 
     def fake_run(config: Any, registry_path: Path) -> dict[str, Any]:
         assert registry_path == ROOT / "data" / "registry.json"
@@ -119,8 +119,8 @@ def test_comparison_points_remain_original_noninvented_values(report: dict[str, 
         selected_repeats=[1, 3],
     )
     assert len(points) == 4
-    assert set(row["Repeat"] for row in points) == {1, 3}
-    assert set(row["Score"] for row in points) == {0.5, 0.6}
+    assert {row["Repeat"] for row in points} == {1, 3}
+    assert {row["Score"] for row in points} == {0.5, 0.6}
     assert all(row["Model"] in ("dummy_prior", "logistic_regression") for row in points)
     assert filter_report_scores(
         report, metric="macro_f1",
@@ -182,7 +182,7 @@ def test_empty_selection_and_wrong_metric_do_not_fabricate(report: dict[str, Any
 def test_artifact_comparison_incomplete_run_withheld(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    import psychneuro.pipeline as pipeline
+    from psychneuro import pipeline
 
     def fake_run(config: Any, registry_path: Path) -> dict[str, Any]:
         return _fake_experiment(config.generator_seed, eligible=config.generator_seed != 74)
@@ -256,9 +256,7 @@ def test_app_uploaded_fixture_exposes_real_input_only_and_comparison_controls(
     at.sidebar.radio[0].set_value("Results and charts").run()
     assert not at.exception
     assert len(at.multiselect) == 2
-    assert at.multiselect[0].value == list(
-        ("dummy_prior", "logistic_regression", "cv_selected_policy")
-    ) or tuple(at.multiselect[0].value) == (
+    assert at.multiselect[0].value == ["dummy_prior", "logistic_regression", "cv_selected_policy"] or tuple(at.multiselect[0].value) == (
         "dummy_prior", "logistic_regression", "cv_selected_policy"
     )
     at.multiselect[0].set_value(["dummy_prior"]).run()

@@ -14,9 +14,9 @@ import pytest
 
 from psychneuro.config import CONFIG_VERSION, load_baseline_config
 from psychneuro.experiments import ExperimentConfig, run_experiment
+from psychneuro.loaders import load_dataset
 from psychneuro.metrics import score_binary
 from psychneuro.split import create_group_split
-from psychneuro.loaders import load_dataset
 from psychneuro.synthetic import SyntheticConfig
 
 REPO = Path(__file__).resolve().parents[1]
@@ -180,7 +180,7 @@ def test_cv_ineligible_never_exposes_holdout_scores(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     # Force invalid CV truth coverage without reading test labels.
-    import psychneuro.experiments as experiments
+    from psychneuro import experiments
 
     calls: list[tuple[int, ...]] = []
 

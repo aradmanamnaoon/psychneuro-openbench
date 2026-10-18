@@ -20,10 +20,9 @@ Status: draft, not run or approved by maintainers.
 # generated locally; no datasets are fetched and no individual is real.
 import numpy as np
 import pandas as pd
+import skrub
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import GroupKFold
-
-import skrub
 
 rng = np.random.default_rng(73)
 participant_id = np.repeat(np.arange(32), 4)
@@ -78,7 +77,7 @@ predictions = (
 # Use the documented with_scoring interface to request ROC AUC. These are
 # illustrative simulator-fold scores, not estimates of human generalization.
 scores = predictions.skb.with_scoring("roc_auc").skb.cross_validate()
-scores
+print(scores)
 
 # %%
 # Limitations

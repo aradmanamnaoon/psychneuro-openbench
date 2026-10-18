@@ -106,7 +106,7 @@ def test_disabled_external_dataset_cannot_enter_scenario_runner(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """The real pipeline rejects wrong rights; no valid report gets exported."""
-    import psychneuro.pipeline as pipeline
+    from psychneuro import pipeline
 
     def illegal_source(config: Any, registry_path: Path) -> dict[str, Any]:
         sha = hashlib.sha256(b"disallowed").hexdigest()
@@ -152,7 +152,7 @@ def test_report_review_mode_without_file_has_friendly_empty_state() -> None:
 def test_profiler_contract_single_bounded_run_without_host_identifiers(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    import psychneuro.profiling as profiling
+    from psychneuro import profiling
 
     seen: list[Scenario] = []
 

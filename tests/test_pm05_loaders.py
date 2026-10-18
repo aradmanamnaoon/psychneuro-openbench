@@ -13,7 +13,11 @@ import pytest
 from psychneuro.loaders import load_dataset, manifest_json
 from psychneuro.quality import DataQualityError, validate_quality
 from psychneuro.synthetic import (
-    CSV_COLUMNS, SyntheticConfig, dataset_card, generate_trials, to_csv_text,
+    CSV_COLUMNS,
+    SyntheticConfig,
+    dataset_card,
+    generate_trials,
+    to_csv_text,
 )
 
 REGISTRY = Path(__file__).resolve().parents[1] / "data" / "registry.json"

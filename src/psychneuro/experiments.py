@@ -19,8 +19,8 @@ from .baselines import ModelName, features_from_trials, make_estimator, predict_
 from .config import load_baseline_config
 from .loaders import LoadedDataset, load_dataset
 from .metrics import BinaryMetrics, score_binary
-from .split import GroupSplit, create_group_split, validate_group_split
 from .slices import guarded_slice_metrics
+from .split import GroupSplit, create_group_split, validate_group_split
 from .synthetic import SyntheticConfig, TrialRecord
 
 _MODELS: tuple[ModelName, ...] = ("dummy_prior", "logistic_regression")

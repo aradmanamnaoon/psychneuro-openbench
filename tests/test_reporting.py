@@ -69,7 +69,7 @@ def _fake_experiment(seed: int, *, eligible: bool = True) -> dict[str, Any]:
 
 @pytest.fixture
 def sample(monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
-    import psychneuro.pipeline as pipeline
+    from psychneuro import pipeline
 
     def fake_run(config: Any, registry_path: Path) -> dict[str, Any]:
         assert registry_path == REGISTRY
@@ -122,7 +122,7 @@ def test_chart_points_are_only_from_authentic_input_rows(sample: dict[str, Any])
     points = chart_rows(sample, "balanced_accuracy")
     assert len(points) == 15  # 5 eligible repeats, two models + CV-selected policy
     assert [p["Repeat"] for p in points[::3]] == [1, 2, 3, 4, 5]
-    assert set(p["Score"] for p in points) == {0.5, 0.65}
+    assert {p["Score"] for p in points} == {0.5, 0.65}
     assert chart_rows(sample, "macro_f1")[0]["Score"] == 0.4
     with pytest.raises(ReportValidationError, match="unsupported chart"):
         chart_rows(sample, "latency")

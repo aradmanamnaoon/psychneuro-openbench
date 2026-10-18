@@ -321,19 +321,25 @@ def render_markdown(report: dict[str, Any]) -> str:
     lines = [
         "# PsychNeuro OpenBench — synthetic benchmark report",
         "",
-        "**Nonclinical, synthetic software evidence ONLY.** This JSON's internal "
-        "SHA-256 validates formatting/integrity, NOT authorship, CI execution or "
-        "scientific validity.",
+        (
+            "**Nonclinical, synthetic software evidence ONLY.** This JSON's internal "
+            "SHA-256 validates formatting/integrity, NOT authorship, CI execution or "
+            "scientific validity."
+        ),
         "",
         f"- PM-10 protocol: `{REPORT_VERSION}`",
         f"- Report status: **{valid['status']}**",
-        f"- Synthetic cohorts requested / eligible / ineligible: "
-        f"**{valid['n_requested']} / {valid['n_eligible']} / {valid['n_ineligible']}**",
+        (
+            f"- Synthetic cohorts requested / eligible / ineligible: "
+            f"**{valid['n_requested']} / {valid['n_eligible']} / {valid['n_ineligible']}**"
+        ),
         f"- Original PM-10 payload SHA-256: `{valid['report_sha256']}`",
         f"- Fixed config SHA-256: `{valid['config']['baseline']['config_sha256']}`",
         "- Scoring: balanced accuracy and macro F1; both unitless (0–1).",
-        "- Uncertainty: across distinct synthetic cohort seeds, not held-out "
-        "participants or real-world populations.",
+        (
+            "- Uncertainty: across distinct synthetic cohort seeds, not held-out "
+            "participants or real-world populations."
+        ),
         "",
         "## Repeat-level synthetic held-out metrics",
         "",
@@ -380,12 +386,18 @@ def render_markdown(report: dict[str, Any]) -> str:
         "- Source rights: synthetic-original; no real participants or clinical data.",
         "- Fictional participants are held out by group within each repeat.",
         "- Model selection uses training-only CV, not held-out test results.",
-        "- Slice scores are suppressed unless at least 10 distinct fictional participants, "
-        "30 rows and both truth classes are available per subgroup.",
-        "- Nominal t intervals use an approximation with >=5 eligible repeats; "
-        "intervals are NOT calibrated human-population uncertainty estimates.",
-        "- Numeric tables reflect the supplied artifact, NOT independent validation "
-        "of the originating CI run. Reconcile repository commit and Actions artifacts.",
+        (
+            "- Slice scores are suppressed unless at least 10 distinct fictional participants, "
+            "30 rows and both truth classes are available per subgroup."
+        ),
+        (
+            "- Nominal t intervals use an approximation with >=5 eligible repeats; "
+            "intervals are NOT calibrated human-population uncertainty estimates."
+        ),
+        (
+            "- Numeric tables reflect the supplied artifact, NOT independent validation "
+            "of the originating CI run. Reconcile repository commit and Actions artifacts."
+        ),
         "",
         "## Per-repeat provenance",
         "",
