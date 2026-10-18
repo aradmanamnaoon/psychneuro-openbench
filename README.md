@@ -240,3 +240,13 @@ See [the release gate checklist](docs/release-gates.md) and [rights policy](docs
 Reproducibility software earns trust from decisions another lab can inspect: the data we were allowed to use, the subjects the model never saw, the baselines it had to beat, and the exact record of what ran. That is the objective of PsychNeuro OpenBench—not a leaderboard of attractive but unauditable scores.
 
 **Development stays private until the agreed acceptance gates pass and the owner explicitly approves publication.** A polished README is preparation for that review, not evidence that the platform is finished.
+
+
+
+### Dated PM-18–PM-21 private CI verification — 2026-10-18
+
+**UPDATE (supersedes the earlier “CI NOT RUN” statements for this exact code candidate only):** [GitHub Actions run #39109383260](https://github.com/aradmanamnaoon/psychneuro-openbench/actions/runs/39109383260) **PASSED on commit `2479f0d322b3179c30b64673f8beac584a4ba162`**. Both Python 3.11 and 3.12 independently passed **318 pytest tests, Ruff, strict mypy over 20 source files, dependency installation/pip check**, and real rights-gated synthetic-only PM06/08/10/11/12/13 pipeline/export checks. Ten private CI artifacts were uploaded and are available while GitHub retains them. Review [draft internal PR #10](https://github.com/aradmanamnaoon/psychneuro-openbench/pull/10) and its explicit remaining merge gates; do **not** merge automatically.
+
+The PM10 report hash differs across interpreter versions **because Python version is part of the experiment manifest and its SHA**, while the compared metric summaries and baseline configuration hash matched. The within-Python report/export byte comparisons passed; no cross-platform identical-hash claim is made.
+
+**NO-GO FOR RELEASE remains unchanged.** No live app URL, 0/20 executed B01–B20 private browser/mobile/accessibility tests, no independent generated synthetic-export licensing decision, no real research subjects, no user feedback and no approved public deployment/release. The repo remains **PRIVATE**. See [PM19 audit](docs/pm19-independent-qa-2026-10-18.md), [PM20 gate](docs/pm20-competitive-release-gate-2026-10-18.md), [PM21 internal retrospective](docs/pm21-internal-pilot-retrospective-2026-10-18.md). This README addendum is AI-assisted; the linked hosted CI is real.
