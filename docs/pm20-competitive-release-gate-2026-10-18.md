@@ -37,3 +37,6 @@
 - Releases API: empty list; GitHub Pages flag `has_pages=false`; deployment list empty in accessible results. **Live app URL: none established.** No HTML/screenshot/mobile test fabricated. Re-check public URLs only *after* legitimate release/hosting.
 
 **PM-20 status: BLOCKED.** PM-19 evidence documents failure; cannot perform version release. Next permissible activity: private remediation and actual hosted verification (no paid/cloud deployment without consent). Do not create public claims or future Week-2 planning records.
+
+## Dependency update — 2026-10-18
+PM-18's internal case study, consent-aware questionnaire, unsent outreach drafts and issue ledger now exist at [PM-18 case study](case-study.md) and [PM-18 evidence](pm18-backlog-evidence-log.md). This resolves **document absence**, but **not** its required upstream PM-17 verification, actual reviewers, final CI or live usability conditions: PM-18 status is **Blocked**. MOABB's [official cross-subject evaluation](https://moabb.neurotechx.com/docs/generated/moabb.evaluations.CrossSubjectEvaluation.html) further confirms that subject-aware benchmarking is pre-existing and must not be claimed as invention. No release gate status changes: **NO-GO**. No GitHub release exists at recheck.
