@@ -167,7 +167,7 @@ def test_missingness_outliers_and_shifted_synthetic_records_are_guarded() -> Non
         SyntheticConfig(seed=11, n_participants=12, trials_per_participant=4),
         REGISTRY,
     )
-    with pytest.raises(ValueError, match="stale|source|metadata"):
+    with pytest.raises(ValueError, match="checksum mismatch|stale|source|metadata"):
         create_group_split(replace(data, records=shifted))
     for changed in (
         replace(original[0], difficulty=float("nan")),
