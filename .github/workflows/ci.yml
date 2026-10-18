@@ -1,7 +1,20 @@
-# Manual-only to avoid unattended use of private GitHub Actions minutes.
-# PM-06 through PM-15 code is NOT validated until the exact branch and run logs are inspected.
-name: Synthetic and loader CPU quality gates (manual only)
+# Private PM18-21 audit: bounded CI is permitted only on the exact review branch.
+# The earlier PM02/PM04 successful runs are not proof for this candidate.
+# Push paths prevent documentation-only edits from consuming private runner minutes.
+name: Synthetic and loader CPU quality gates (private review)
 on:
+  push:
+    branches:
+      - review/pm19-pm21-independent-gates-20261018
+    paths:
+      - .github/workflows/ci.yml
+      - src/**
+      - tests/**
+      - data/**
+      - configs/**
+      - app.py
+      - requirements.txt
+      - pyproject.toml
   workflow_dispatch:
     inputs:
       profile_small_synthetic:
