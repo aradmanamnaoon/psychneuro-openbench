@@ -137,6 +137,15 @@ jobs:
           path: artifacts/pm08/manifest.json
           retention-days: 7
           if-no-files-found: error
+      - name: PM-30 / PM-34 Week 2 bounded fictional participant controls
+        run: python -m psychneuro.week2_demo --output-dir artifacts/week2
+      - name: Archive Week 2 genuine fictional subject control results
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: week2-subject-bootstrap-frozen-null-${{ matrix.python-version }}
+          path: artifacts/week2/
+          retention-days: 7
+          if-no-files-found: error
       - name: Print exact-code and artifact audit evidence
         run: |
           echo "Git commit: ${GITHUB_SHA}"
