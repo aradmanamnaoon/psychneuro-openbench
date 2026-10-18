@@ -1,7 +1,28 @@
-# Manual-only. Avoid automatic private-runner spend. This is not a release workflow.
-name: Synthetic and loader CPU quality gates (manual only)
+# Private PM18-21 audit: bounded CI is permitted only on the exact review branch.
+# The earlier PM02/PM04 successful runs are not proof for this candidate.
+# Push paths prevent documentation-only edits from consuming private runner minutes.
+name: Synthetic and loader CPU quality gates (private review)
 on:
+  push:
+    branches:
+      - review/pm19-pm21-independent-gates-20261018
+    paths:
+      - .github/workflows/ci.yml
+      - src/**
+      - tests/**
+      - data/**
+      - configs/**
+      - app.py
+      - requirements.txt
+      - pyproject.toml
+      - upstream-prototypes/**
   workflow_dispatch:
+    inputs:
+      profile_small_synthetic:
+        description: "Explicit opt-in: profile one 480-row synthetic run (extra CI usage)"
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -15,15 +36,117 @@ jobs:
       matrix:
         python-version: ['3.11', '3.12']
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install development requirements
-        run: python -m pip install --disable-pip-version-check -e '.[dev,parquet]'
-      - name: Run generator, loader and Parquet tests
+        run: python -m pip install --disable-pip-version-check -e '.[dev,parquet,benchmark,ui]'
+      - name: PM-15 resolve exact pinned direct Streamlit host requirements
+        run: |
+          python -m pip install --disable-pip-version-check -r requirements.txt
+          python -m pip check
+          python -m pip freeze --disable-pip-version-check
+      - name: Run all pytest including PM-15 host config, rights and privacy preflight
         run: python -m pytest -q
       - name: Lint
         run: python -m ruff check .
       - name: Strict typing
         run: python -m mypy src
+      - name: Execute synthetic-only PM-06 exploration
+        run: |
+          python -m psychneuro.explore --seed 73 --participants 12 --trials-per-participant 20 --registry data/registry.json --output-dir artifacts/pm06
+      - name: Execute PM-08 grouped synthetic benchmark
+        run: |
+          python -m psychneuro.experiments --config configs/baseline.json --registry data/registry.json --output-dir artifacts/pm08
+      - name: Display PM-09 versioned configuration and manifest evidence
+        run: |
+          sha256sum configs/baseline.json artifacts/pm08/manifest.json
+          cat artifacts/pm08/manifest.json
+      - name: Execute PM-10 predeclared synthetic repeated pipeline
+        run: |
+          python -m psychneuro.pipeline --config configs/baseline.json --registry data/registry.json --repeats 5 --output-dir artifacts/pm10
+      - name: Print PM-10 synthetic-only report and checksum
+        run: |
+          sha256sum artifacts/pm10/report.json
+          cat artifacts/pm10/report.json
+      - name: Render PM-11 reproducibility exports from actual PM-10 JSON
+        run: |
+          python -m psychneuro.reporting --input artifacts/pm10/report.json --output-dir artifacts/pm11
+          python -m compileall -q app.py
+      - name: Print PM-11 exact export artifact hashes
+        run: |
+          sha256sum artifacts/pm11/report.json artifacts/pm11/report.md artifacts/pm11/artifact-manifest.json
+          cat artifacts/pm11/artifact-manifest.json
+      - name: PM-12 reproduce exact PM-11 report export bytes from the same real PM-10 input
+        run: |
+          python -m psychneuro.reporting --input artifacts/pm10/report.json --output-dir artifacts/pm12/recheck
+          cmp artifacts/pm11/report.json artifacts/pm12/recheck/report.json
+          cmp artifacts/pm11/report.md artifacts/pm12/recheck/report.md
+          cmp artifacts/pm11/artifact-manifest.json artifacts/pm12/recheck/artifact-manifest.json
+          sha256sum artifacts/pm12/recheck/*.json artifacts/pm12/recheck/*.md
+      - name: Execute PM-13 exact in-app scenario through the actual rights-checked pipeline
+        run: |
+          python -m psychneuro.workflow --generator-seed 73 --participants 24 --trials 20 --repeats 5 --output-dir artifacts/pm13
+      - name: Verify PM-13 report and export bytes against original PM-10 and PM-11
+        run: |
+          cmp artifacts/pm10/report.json artifacts/pm13/report.json
+          cmp artifacts/pm11/report.md artifacts/pm13/report.md
+          cmp artifacts/pm11/artifact-manifest.json artifacts/pm13/artifact-manifest.json
+          sha256sum artifacts/pm13/*.json artifacts/pm13/*.md
+          cat artifacts/pm13/artifact-manifest.json
+      - name: PM-14 optional real hosted CPU/memory single-repeat measurement
+        if: ${{ inputs.profile_small_synthetic && matrix.python-version == '3.11' }}
+        run: |
+          python -m psychneuro.profiling --output artifacts/pm14/profile-small.json
+          cat artifacts/pm14/profile-small.json
+      - name: Archive PM-14 measurement ONLY if explicitly opted in
+        if: ${{ inputs.profile_small_synthetic && matrix.python-version == '3.11' }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: pm14-private-480-synthetic-profiler
+          path: artifacts/pm14/profile-small.json
+          retention-days: 7
+          if-no-files-found: error
+      - name: Archive PM-13 genuine computed synthetic results (if run succeeds)
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: pm13-synthetic-live-workflow-${{ matrix.python-version }}
+          path: artifacts/pm13/
+          retention-days: 7
+          if-no-files-found: error
+      - name: Archive PM-11 report and lineage exports
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: pm11-report-exports-${{ matrix.python-version }}
+          path: artifacts/pm11/
+          retention-days: 7
+          if-no-files-found: error
+      - name: Archive guarded PM-10 repeat summary
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: pm10-synthetic-repeat-${{ matrix.python-version }}
+          path: artifacts/pm10/report.json
+          retention-days: 7
+          if-no-files-found: error
+      - name: Archive synthetic-only PM-08 experiment manifest
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: pm08-benchmark-${{ matrix.python-version }}
+          path: artifacts/pm08/manifest.json
+          retention-days: 7
+          if-no-files-found: error
+      - name: Print exact-code and artifact audit evidence
+        run: |
+          echo "Git commit: ${GITHUB_SHA}"
+          python --version
+          python -m pip freeze --disable-pip-version-check
+          sha256sum artifacts/pm06/*.json artifacts/pm06/*.csv artifacts/pm06/*.svg
+          cat artifacts/pm06/manifest.json
+      - name: Save PM-06 exploration and provenance evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: pm06-synthetic-pilot-${{ matrix.python-version }}
+          path: artifacts/pm06/
+          retention-days: 7
+          if-no-files-found: error

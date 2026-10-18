@@ -1,0 +1,43 @@
+{
+  "schema_version": "0.1.0",
+  "kind": "pm06_exploration_execution_plan",
+  "execution_status": "NOT_RUN",
+  "provenance_status": "metadata_only_pre_execution",
+  "source": {
+    "dataset_id": "psychneuro-synthetic-v0",
+    "generator": "psychneuro.synthetic.generate_trials",
+    "generator_source": "src/psychneuro/synthetic.py",
+    "source_version": "0.1.0",
+    "source_kind": "synthetic",
+    "license": "not-separately-specified",
+    "rights_basis": "synthetic-original",
+    "consent_boundary": "no_real_participants",
+    "registry": "data/registry.json",
+    "allow_external_datasets": false,
+    "raw_file_sha256": null,
+    "canonical_csv_sha256": null
+  },
+  "configuration": {
+    "seed": 73,
+    "n_participants": 12,
+    "trials_per_participant": 20,
+    "expected_trials_from_configuration": 240
+  },
+  "transforms": [],
+  "planned_artifacts": [
+    "artifacts/pm06/summary.json",
+    "artifacts/pm06/manifest.json",
+    "artifacts/pm06/difficulty_summary.csv",
+    "artifacts/pm06/accuracy_by_difficulty.svg"
+  ],
+  "observed": {
+    "git_commit_sha": null,
+    "github_actions_run_url": null,
+    "python_version": null,
+    "observed_trial_count": null,
+    "summary_sha256": null,
+    "artifact_sha256s": null,
+    "test_results": null
+  },
+  "warning": "This is a reproducible configuration/rights plan, not proof of execution, results, license clearance for third-party data, or validation of real human behavior."
+}

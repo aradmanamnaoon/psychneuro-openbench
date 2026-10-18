@@ -1,0 +1,4 @@
+# GitHub issue templates are currently staged only on the private PM-16 branch.
+# Templates do NOT appear in the new-issue chooser until owner-approved
+# integration to default branch 'main'. No external contacts are configured.
+blank_issues_enabled: true
