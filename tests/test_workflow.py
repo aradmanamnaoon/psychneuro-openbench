@@ -350,3 +350,26 @@ def test_unexpected_export_fields_and_sensitive_text_are_rejected(
     report["report_sha256"] = hashlib.sha256(payload.encode()).hexdigest()
     with pytest.raises(ValueError, match="unsafe reason"):
         build_bundle(report)
+
+def test_cli_resolves_repo_from_working_directory_when_wheel_installed(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """Never derive the repository root from the installed package's __file__."""
+    import sys
+
+    from psychneuro import workflow
+
+    roots: list[Path] = []
+
+    def stub_run(scenario: Scenario, project_root: Path) -> dict[str, Any]:
+        roots.append(project_root)
+        raise ScenarioError("expected synthetic-only test abort")
+
+    monkeypatch.chdir(ROOT)
+    monkeypatch.setattr(sys, "argv", ["psychneuro.workflow", "--output-dir", str(tmp_path)])
+    monkeypatch.setattr(workflow, "run_scenario", stub_run)
+    with pytest.raises(SystemExit) as exc:
+        workflow.main()
+    assert exc.value.code == 2
+    assert roots == [ROOT]

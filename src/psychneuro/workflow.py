@@ -136,7 +136,9 @@ def main() -> int:
         repeats=args.repeats,
     )
     try:
-        report = run_scenario(scenario, Path(__file__).resolve().parents[2])
+        # A wheel install moves __file__ into site-packages; use the caller's
+        # trusted repository working directory for its versioned config/registry.
+        report = run_scenario(scenario, Path.cwd())
         bundle = build_bundle(report)
     except (ValueError, OSError) as exc:
         parser.error(str(exc))
