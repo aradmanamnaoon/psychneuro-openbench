@@ -2,7 +2,7 @@ diff --git a/skrub/_docs/examples/02_data_ops/1170_group_aware_cross_validation.
 new file mode 100644
 --- /dev/null
 +++ b/skrub/_docs/examples/02_data_ops/1170_group_aware_cross_validation.py
-@@ -0,0 +1,90 @@
+@@ -0,0 +1,89 @@
 +"""
 +Grouped cross-validation for repeated observations
 +==================================================
@@ -25,10 +25,9 @@ new file mode 100644
 +# generated locally; no datasets are fetched and no individual is real.
 +import numpy as np
 +import pandas as pd
++import skrub
 +from sklearn.linear_model import LogisticRegression
 +from sklearn.model_selection import GroupKFold
-+
-+import skrub
 +
 +rng = np.random.default_rng(73)
 +participant_id = np.repeat(np.arange(32), 4)
@@ -83,7 +82,7 @@ new file mode 100644
 +# Use the documented with_scoring interface to request ROC AUC. These are
 +# illustrative simulator-fold scores, not estimates of human generalization.
 +scores = predictions.skb.with_scoring("roc_auc").skb.cross_validate()
-+scores
++print(scores)
 +
 +# %%
 +# Limitations

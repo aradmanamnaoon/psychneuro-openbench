@@ -15,6 +15,7 @@ on:
       - app.py
       - requirements.txt
       - pyproject.toml
+      - upstream-prototypes/**
   workflow_dispatch:
     inputs:
       profile_small_synthetic:
