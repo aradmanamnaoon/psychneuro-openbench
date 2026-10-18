@@ -1,7 +1,7 @@
 # PM-15 — Private zero-cost host configuration and blocked browser-only runbook
 
 **2026-10-17: PROPOSED SOURCE FILES ONLY; NOT INSTALLED, TESTED, DEPLOYED OR APPROVED.**
-There is no live demo URL. Repository `aradmanamnaoon/psychneuro-openbench` is private. The **PM-14 prerequisite remains Blocked**: zero recent hosted PM-14 workflow runs. Do NOT deploy or change GitHub visibility, enable public access, invite external viewers, grant OAuth scope, pay, or create a new account without explicit owner authorization.
+There is no live demo URL. Repository `aradmanamnaoon/psychneuro-openbench` is private. The **PM-14 prerequisite remains Blocked**: zero recent hosted PM-14 workflow runs. DO NOT deploy or change GitHub visibility, enable public access, invite external viewers, grant OAuth scope, pay, or create a new account without explicit owner authorization.
 
 ## Host choice, limitations and why no live URL
 
@@ -63,3 +63,6 @@ The above browser-only steps are contingency documentation, **not chores assigne
 - [Daily honest changelog](pm15-changelog.md)
 
 **PM-15 GO = private source review. DEPLOYMENT / RELEASE = NO-GO.**
+
+## Exact-candidate CI correction — 2026-10-18
+The first actual private branch CI [run 39108122761](https://github.com/aradmanamnaoon/psychneuro-openbench/actions/runs/39108122761) installed dependencies successfully on both Python 3.11 and 3.12 but failed 8/317 pytest tests per job. Seven failures were caused by this PM-15 direct pin to Streamlit 1.58.0, whose AppTest interface lacks the `download_button` member used by the committed tests. [Streamlit 1.65.0 official testing API](https://docs.streamlit.io/1.65.0/develop/api-reference/app-testing/st.testing.v1.apptest) documents `AppTest.download_button`; the candidate direct pin and package minimum have therefore been aligned with that test contract. The eighth first-run failure was a case-sensitive deployment-warning assertion, fixed by this emphatic written `DO NOT deploy` warning without changing the policy. These are **candidate corrections**, not PASS claims, until the subsequent exact-commit run proves them. Independent browser QA/host authorization remain absent.

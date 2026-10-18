@@ -12,7 +12,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 EXPECTED_DIRECT_REQUIREMENTS = {
     ".",
-    "streamlit==1.58.0",
+    "streamlit==1.65.0",
     "altair==5.5.0",
     "scikit-learn==1.8.0",
 }
@@ -39,7 +39,7 @@ def test_python_312_is_supported_by_project_metadata() -> None:
     pyproject = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
     assert pyproject["project"]["requires-python"] == ">=3.11"
     assert pyproject["project"]["version"] == "0.1.0.dev0"
-    assert "streamlit>=1.58,<2" in pyproject["project"]["optional-dependencies"]["ui"]
+    assert "streamlit>=1.65,<2" in pyproject["project"]["optional-dependencies"]["ui"]
     assert "scikit-learn>=1.5,<2" in pyproject["project"]["optional-dependencies"]["benchmark"]
 
 
