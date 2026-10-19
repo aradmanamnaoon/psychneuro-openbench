@@ -40,9 +40,35 @@ class RunStore:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         with self._connect() as conn:
             conn.execute("CREATE TABLE IF NOT EXISTS runs (run_id TEXT PRIMARY KEY, payload BLOB NOT NULL)")
+            conn.execute(
+                "CREATE TABLE IF NOT EXISTS provenance_index ("
+                "run_id TEXT NOT NULL, ordinal INTEGER NOT NULL, "
+                "node_sha256 TEXT NOT NULL, kind TEXT NOT NULL, parents_json TEXT NOT NULL, "
+                "PRIMARY KEY (run_id, ordinal), "
+                "FOREIGN KEY (run_id) REFERENCES runs(run_id))"
+            )
 
     def _connect(self) -> sqlite3.Connection:
-        return sqlite3.connect(self.path, timeout=5.0)
+        conn = sqlite3.connect(self.path, timeout=5.0)
+        conn.execute("PRAGMA foreign_keys = ON")
+        return conn
+
+    @staticmethod
+    def _index_rows(record: dict[str, Any]) -> list[tuple[int, str, str, str]]:
+        nodes: list[dict[str, Any]] = record["nodes"]
+        return [
+            (position, item["sha256"], item["kind"], canonical(item["parents"]).decode("utf-8"))
+            for position, item in enumerate(nodes)
+        ]
+
+    @classmethod
+    def _verify_index(cls, conn: sqlite3.Connection, record: dict[str, Any]) -> None:
+        actual = conn.execute(
+            "SELECT ordinal, node_sha256, kind, parents_json FROM provenance_index "
+            "WHERE run_id=? ORDER BY ordinal", (record["run_id"],)
+        ).fetchall()
+        if actual != cls._index_rows(record):
+            raise ValueError("provenance sidecar integrity mismatch")
 
     def put(self, record: dict[str, Any]) -> None:
         run_id = record.get("run_id")
@@ -53,18 +79,29 @@ class RunStore:
         if len(blob) > _MAX_RECORD_BYTES:
             raise ValueError("run record exceeds storage cap")
         with self._connect() as conn:
-            conn.execute("INSERT OR IGNORE INTO runs (run_id, payload) VALUES (?, ?)", (run_id, blob))
+            cursor = conn.execute(
+                "INSERT OR IGNORE INTO runs (run_id, payload) VALUES (?, ?)", (run_id, blob)
+            )
             stored = conn.execute("SELECT payload FROM runs WHERE run_id=?", (run_id,)).fetchone()
             if stored is None or stored[0] != blob:
                 raise ConflictError("run ID already exists with different evidence")
+            if cursor.rowcount == 1:
+                conn.executemany(
+                    "INSERT INTO provenance_index "
+                    "(run_id, ordinal, node_sha256, kind, parents_json) "
+                    "VALUES (?, ?, ?, ?, ?)",
+                    [(run_id, *row) for row in self._index_rows(record)],
+                )
+            self._verify_index(conn, record)
 
     def get(self, run_id: str) -> dict[str, Any] | None:
         if not _RUN_ID.fullmatch(run_id):
             raise ValueError("invalid run ID")
         with self._connect() as conn:
             row = conn.execute("SELECT payload FROM runs WHERE run_id=?", (run_id,)).fetchone()
-        if row is None:
-            return None
-        record: dict[str, Any] = json.loads(row[0])
-        _check_record(record)
+            if row is None:
+                return None
+            record: dict[str, Any] = json.loads(row[0])
+            _check_record(record)
+            self._verify_index(conn, record)
         return record
