@@ -1,0 +1,58 @@
+{
+  "schema_version": "w04-chat3-browser-observed-20261019-v1",
+  "review_commit": "bd1f56866357a7108aa29c51cb7bf81cdcc573b7",
+  "verified_git_blob_matches": 18,
+  "verified_git_blob_expected": 18,
+  "scope": "local isolated loopback Chromium + fictional P25 permission + synchronous W03 grouped fit/P13 explorer",
+  "privacy": "No external datasets; generated in-memory token neither stored nor published; screenshots mask token; no remote deployment",
+  "browser": {
+    "engine": "Chromium headless shell",
+    "version": "156.0.8078.4",
+    "playwright_python": "1.64.0",
+    "reduced_motion": true,
+    "desktop_viewport": "1280x860",
+    "mobile_viewport": "375x812"
+  },
+  "types": {
+    "node": "20.20.2",
+    "typescript": "5.9.3",
+    "axe_core": "4.10.3",
+    "npm_ci_exit": 0,
+    "npm_typecheck_exit": 0,
+    "node_tests_passed": 4,
+    "node_tests_failed": 0
+  },
+  "observations": {
+    "axe_tags": [
+      "wcag2a",
+      "wcag2aa",
+      "wcag21a",
+      "wcag21aa"
+    ],
+    "axe_violations": [],
+    "first_keyboard_focus": "token",
+    "rights_preview": "ALLOWED for local fictional fixture",
+    "aggregate_table_rows": 1,
+    "provenance_graph_nodes": 4,
+    "downloaded_receipt": "w04-envelope-1; local integrity verified, not authenticated signature",
+    "tampered_receipt_http": 422,
+    "desktop_document_overflow": false,
+    "mobile_document_overflow": false,
+    "mobile_document_width": 375,
+    "page_script_errors": 0
+  },
+  "screenshots_local_only": {
+    "desktop_sha256": "312cd126cb861625754871ea63a0338a751bdf4964e74465fc938ae8dad92048",
+    "mobile_sha256": "f273651ddddf3e4a0348a1ac19b9c61885999008cf7abb1a003995b00ce26a08",
+    "stored_in_git": false,
+    "note": "Recreate using scripts/w04_browser_audit.py; no claim of manually witnessed screen reader."
+  },
+  "exclusions": [
+    "Full manual screen-reader audit",
+    "OS-level process crash recovery",
+    "Externally trusted root/signature",
+    "Nonfictional data rights",
+    "Production/deployed browser UX",
+    "Exact HEAD GitHub-hosted CI"
+  ]
+}
