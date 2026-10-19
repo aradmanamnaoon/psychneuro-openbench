@@ -7,11 +7,12 @@ from __future__ import annotations
 
 import json
 import sqlite3
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
+
 from psychneuro.w03.vault import canonical, digest
 
 
@@ -41,7 +42,7 @@ class LedgerStore:
         event = RightsEvent(event_type=event_type, dataset_id=dataset_id, action=action,
                             allowed=allowed, actor_pseudonym=actor_pseudonym,
                             correlation_id=correlation_id,
-                            at_utc=datetime.now(timezone.utc).isoformat())
+                            at_utc=datetime.now(UTC).isoformat())
         with sqlite3.connect(self.path, timeout=10) as db:
             db.execute("BEGIN IMMEDIATE")
             row = db.execute("SELECT event_sha FROM w04_rights_ledger ORDER BY seq DESC LIMIT 1").fetchone()

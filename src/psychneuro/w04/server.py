@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+
 from fastapi import FastAPI
 
 from .api import create_app

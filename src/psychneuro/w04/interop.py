@@ -9,8 +9,9 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from psychneuro.w03.vault import digest, verify_serialized
 from psychneuro.w03.store import _check_record
+from psychneuro.w03.vault import digest, verify_serialized
+
 from .rights import Action, DatasetRights, Principal, decide
 
 

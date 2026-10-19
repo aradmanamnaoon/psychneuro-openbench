@@ -1,0 +1,233 @@
+# PRIVATE synthetic-only release hardening. No release/deploy, no registry push, no upload.
+name: W04 private SBOM, dependency audit and container smoke
+on:
+  push:
+    branches:
+      - review/w04-chat3-final-rebase-20261019
+    paths:
+      - .github/workflows/w04-private-hardening.yml
+      - infra/Dockerfile
+      - compose.yaml
+      - pyproject.toml
+      - src/**
+      - tests/**
+      - benchmarks/**
+      - apps/web/package-lock.json
+      - apps/web/package.json
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: w04-hardening-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  python-sbom-and-advisories:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # actions/checkout v6
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # actions/setup-python v6
+        with:
+          python-version: '3.12'
+      - name: Install review dependencies and pinned security tools
+        run: |
+          python -m pip install --disable-pip-version-check -e '.[dev,benchmark,w03,ui,parquet]'
+          python -m pip install --disable-pip-version-check 'pip-audit==2.10.1' 'cyclonedx-bom==7.5.0'
+          python -m pip check
+      - name: Build and validate private Python CycloneDX SBOM without artifact upload
+        run: |
+          cyclonedx-py environment --spec-version 1.6 --output-format JSON --output-file "$RUNNER_TEMP/w04-python-sbom.json"
+          python - "$RUNNER_TEMP/w04-python-sbom.json" <<'PY'
+          import json, sys
+          with open(sys.argv[1], encoding="utf-8") as stream:
+              manifest = json.load(stream)
+          assert manifest.get("bomFormat") == "CycloneDX"
+          assert manifest.get("specVersion") == "1.6"
+          assert len(manifest.get("components", [])) > 10
+          print("private_sbom_components:", len(manifest["components"]))
+          PY
+          sha256sum "$RUNNER_TEMP/w04-python-sbom.json"
+          echo "exact_sha=$GITHUB_SHA"
+      - name: Audit installed Python dependencies (fail closed on advisories)
+        run: |
+          set +e
+          pip-audit --local --format json --output "$RUNNER_TEMP/w04-python-audit.json"
+          status=$?
+          set -e
+          python - "$RUNNER_TEMP/w04-python-audit.json" <<'PY'
+          import json, pathlib, sys
+          path = pathlib.Path(sys.argv[1])
+          if not path.is_file():
+              print("audit_report_missing")
+              sys.exit(2)
+          report = json.loads(path.read_text(encoding="utf-8"))
+          deps = report.get("dependencies", [])
+          vulns = [(d.get("name"), v.get("id")) for d in deps for v in d.get("vulns", [])]
+          print("audited_python_packages:", len(deps))
+          print("known_python_advisories:", len(vulns))
+          for name, identifier in vulns[:25]:
+              print("advisory:", name, identifier)
+          PY
+          exit "$status"
+
+  local-only-container:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # actions/checkout v6
+      - name: Build private smoke image (no publish)
+        run: docker build --file infra/Dockerfile --tag "w04-private-smoke:${GITHUB_SHA}" .
+      - name: Start nonroot restricted instance on runner loopback and test health/auth
+        shell: bash
+        run: |
+          set -euo pipefail
+          token="$(python3 -c 'import secrets; print(secrets.token_urlsafe(48))')"
+          key="$(python3 -c 'import secrets; print(secrets.token_urlsafe(48))')"
+          volume="w04-private-smoke-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          cid=""
+          cleanup() {
+            if [ -n "$cid" ]; then docker rm -f "$cid" >/dev/null 2>&1 || true; fi
+            docker volume rm "$volume" >/dev/null 2>&1 || true
+          }
+          trap cleanup EXIT
+          docker volume create "$volume" >/dev/null
+          cid="$(docker run --detach --rm --read-only \
+            --tmpfs /tmp:rw,nosuid,nodev,noexec,size=64m \
+            --cap-drop=ALL --security-opt=no-new-privileges \
+            --pids-limit=128 --memory=768m --cpus=1 \
+            --mount "type=volume,source=$volume,target=/var/lib/psychneuro" \
+            -p '127.0.0.1::8000' \
+            -e "W04_PRIVATE_TOKEN=$token" \
+            -e "W04_P25_PERMIT_KEY=$key" \
+            -e "W04_DB_PATH=/var/lib/psychneuro/aggregate.sqlite" \
+            -e "W04_REGISTRY_PATH=/opt/psychneuro/data/registry.json" \
+            "w04-private-smoke:${GITHUB_SHA}")"
+          bind="$(docker port "$cid" 8000/tcp)"
+          case "$bind" in 127.0.0.1:*) ;; *) echo "unsafe_bind"; exit 1;; esac
+          port="${bind##*:}"
+          ready=0
+          for attempt in $(seq 1 30); do
+            if curl --silent --fail --max-time 2 "http://127.0.0.1:$port/health" > "$RUNNER_TEMP/w04-health.json"; then
+              ready=1; break
+            fi
+            sleep 1
+          done
+          test "$ready" -eq 1
+          python3 - "$RUNNER_TEMP/w04-health.json" <<'PY'
+          import json, sys
+          with open(sys.argv[1], encoding="utf-8") as stream:
+              status = json.load(stream)
+          assert status == {"status": "private-only", "dataset": "original-synthetic"}
+          PY
+          anonymous="$(curl --silent --output /dev/null --write-out '%{http_code}' --max-time 5 "http://127.0.0.1:$port/w04/v2/catalog")"
+          authenticated="$(curl --silent --output /dev/null --write-out '%{http_code}' --max-time 5 -H "X-Internal-Token: $token" "http://127.0.0.1:$port/w04/v2/catalog")"
+          test "$anonymous" = "403"
+          test "$authenticated" = "403" # no P25 grant installed; deny by default
+          running_uid="$(docker exec "$cid" id -u)"
+          test "$running_uid" = "10001"
+
+          # No external or human data: operator installs one synthetic-only,
+          # 24-hour P25 policy inside the private ephemeral container.
+          docker exec "$cid" python -m psychneuro.w04.provision_private \
+            --attestation-ref=runner-fictional-registry-verified-v1 \
+            --operator=ci-synthetic-reviewer --acknowledge-internal-only
+
+          printf '%s' '{"generator_seed":73,"split_seed":42,"n_participants":36,"trials_per_participant":12}' > "$RUNNER_TEMP/request.json"
+          create_status="$(curl --silent --show-error --max-time 120 \
+            --output "$RUNNER_TEMP/created.json" --write-out '%{http_code}' \
+            -H "X-Internal-Token: $token" -H 'Content-Type: application/json' \
+            --data-binary "@$RUNNER_TEMP/request.json" \
+            "http://127.0.0.1:$port/w04/v2/runs")"
+          test "$create_status" = "201"
+          run_id="$(python3 - "$RUNNER_TEMP/created.json" <<'PY'
+          import json, re, sys
+          with open(sys.argv[1], encoding="utf-8") as stream:
+              obj = json.load(stream)
+          run_id = obj["run_id"]
+          assert re.fullmatch(r"[0-9a-f]{64}", run_id)
+          assert obj["rights"] == "internal-synthetic-only"
+          assert obj["n_train_groups"] > 0 and obj["n_test_groups"] > 0
+          print(run_id)
+          PY
+          )"
+          graph_status="$(curl --silent --show-error --max-time 20 \
+            --output "$RUNNER_TEMP/graph.json" --write-out '%{http_code}' \
+            -H "X-Internal-Token: $token" \
+            "http://127.0.0.1:$port/w04/v2/runs/$run_id/graph")"
+          test "$graph_status" = "200"
+          python3 - "$RUNNER_TEMP/graph.json" <<'PY'
+          import json, re, sys
+          with open(sys.argv[1], encoding="utf-8") as stream:
+              graph = json.load(stream)
+          assert graph["schema_version"] == "w04-graph-2"
+          assert len(graph["nodes"]) == 4
+          assert re.fullmatch(r"[0-9a-f]{64}", graph["root"])
+          assert "not independent signatures" in graph["warning"]
+          PY
+
+          # A valid checksum is still not an independent signature; deny import
+          # EVEN when the API request is an authenticated maintainer.
+          export_status="$(curl --silent --show-error --max-time 20 \
+            --output "$RUNNER_TEMP/export.json" --write-out '%{http_code}' \
+            -H "X-Internal-Token: $token" \
+            "http://127.0.0.1:$port/w04/v2/runs/$run_id/artifact")"
+          test "$export_status" = "200"
+          import_status="$(curl --silent --show-error --max-time 20 \
+            --output /dev/null --write-out '%{http_code}' \
+            -H "X-Internal-Token: $token" -H 'Content-Type: application/json' \
+            --data-binary "@$RUNNER_TEMP/export.json" \
+            "http://127.0.0.1:$port/w04/v2/artifacts/import")"
+          test "$import_status" = "403"
+
+          # Revocation must invalidate an existing fitted synthetic result.
+          docker exec "$cid" python -c 'from pathlib import Path; from psychneuro.w04.policy_v2 import PolicyStore; import os; PolicyStore(Path(os.environ["W04_DB_PATH"]), permit_key=os.environ["W04_P25_PERMIT_KEY"].encode()).revoke(tenant="local", dataset="w03-original-synthetic", operator="ci-synthetic-reviewer")'
+          revoked_status="$(curl --silent --show-error --max-time 20 \
+            --output /dev/null --write-out '%{http_code}' \
+            -H "X-Internal-Token: $token" \
+            "http://127.0.0.1:$port/w04/v2/runs/$run_id")"
+          test "$revoked_status" = "403"
+          echo "healthy_private_loopback=1 anonymous_denied=1 no_policy_denied=1 nonroot=1"
+          echo "real_synthetic_http_fit=1 graph_verified=1 legacy_import_denied=1 revocation_denied=1 exact_sha=$GITHUB_SHA"
+
+  hosted-synthetic-latency:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # actions/checkout v6
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # actions/setup-python v6
+        with:
+          python-version: '3.12'
+      - name: Install fitted synthetic science and API dependencies
+        run: python -m pip install --disable-pip-version-check -e '.[w03]'
+      - name: Measure in-process TestClient/SQLite/real fitted synthetic run
+        run: |
+          W04_BENCHMARK_OUTPUT="$RUNNER_TEMP/w04-private-latency.csv" python benchmarks/measure_w04_http.py
+          python - "$RUNNER_TEMP/w04-private-latency.csv" <<'PY'
+          import csv, sys
+          with open(sys.argv[1], encoding="utf-8", newline="") as stream:
+              rows = list(csv.DictReader(stream))
+          assert len(rows) == 4
+          expected = {"health_baseline", "authorized_run_read", "authorized_p13_graph",
+                      "authorized_artifact_export"}
+          assert {row["operation"] for row in rows} == expected
+          for row in rows:
+              assert float(row["p95_ms"]) >= float(row["median_ms"]) >= 0
+              assert int(row["n"]) >= 60
+              print("measured:", row["operation"], "p50_ms=", row["median_ms"],
+                    "p95_ms=", row["p95_ms"],
+                    "rss_kiB=", row["peak_process_rss_kib"])
+          PY
+          echo "measurement_scope=in-process_testclient_not_network_or_production exact_sha=$GITHUB_SHA"
+
+  node-dependency-advisories:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # actions/checkout v6
+      - name: Install exact private TypeScript lockfile
+        run: npm ci --prefix apps/web --ignore-scripts --no-fund --no-audit
+      - name: Audit all locked browser/dev packages for high-or-critical advisories
+        run: |
+          npm audit --prefix apps/web --audit-level=high --no-fund
+          echo "npm_high_critical_gate=pass exact_sha=$GITHUB_SHA"

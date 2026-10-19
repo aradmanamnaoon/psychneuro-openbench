@@ -37,6 +37,19 @@ def test_real_w03_run_and_p25_revocation(tmp_path: Path) -> None:
     assert client.get("/w04/v2/runs/"+run_id+"/graph", headers=h).json()["verified"]
     receipt = client.get("/w04/v2/runs/"+run_id+"/artifact", headers=h).json()
     assert client.post("/w04/v2/artifacts/verify", headers=h, json=receipt).status_code == 200
+    # An authenticated maintainer must not import an unsigned legacy envelope,
+    # even if it passes SHA-based integrity verification.
+    maintainer_app = create_strict_app(
+        db_path=db, registry_path=registry,
+        credentials={TOKEN: Principal(tenant="local", subject="maintainer", role="maintainer")},
+        policy=policy,
+    )
+    maintainer_client = TestClient(maintainer_app)
+    import_attempt = maintainer_client.post(
+        "/w04/v2/artifacts/import", headers=h, json=receipt,
+    )
+    assert import_attempt.status_code == 403
+    assert import_attempt.json()["detail"]["code"] == "W04_FORBIDDEN"
     receipt["payload"]["result"]["test_balanced_accuracy"] = 0.99
     assert client.post("/w04/v2/artifacts/verify", headers=h, json=receipt).status_code == 422
     assert client.post("/w04/v2/runs", headers=h, json={**REQ, "generator_seed":74}).status_code == 403

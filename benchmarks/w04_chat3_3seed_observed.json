@@ -1,0 +1,57 @@
+{
+  "interpretation": "Synthetic software verification only; do not infer population validity or statistical significance.",
+  "python": "3.13.13",
+  "rows_per_seed": 432,
+  "runs": [
+    {
+      "dummy_outer_balanced_accuracy": 0.5,
+      "outer_balanced_accuracy": 0.5,
+      "provenance_root": "2579eb8213827b0fd434f3339f11b7651ca545562852d6a8742bd97fd11b38d2",
+      "run_id": "b4a0f38b4c3302c56a1e75151813dc0bada8c1f95b45269eee9fe0914ba16844",
+      "seed": 73,
+      "selected_c": 0.1,
+      "source_sha256": "bc6f7b672193d4c4b4af13d1df25964454d3216d6e5c4b3c9c9c6099363412b8",
+      "split_sha256": "9d1dce92823468eb1019629b7c9c8f86c391d6f151fb5ed9b418d3b5377ad6c8",
+      "test_balanced_accuracy": 0.5,
+      "test_groups": 8,
+      "total_groups": 36,
+      "train_groups": 21,
+      "validation_groups": 7,
+      "validation_set_used_in_nested_cv": false
+    },
+    {
+      "dummy_outer_balanced_accuracy": 0.5,
+      "outer_balanced_accuracy": 0.5,
+      "provenance_root": "0341ebd097fa187b1b93a06bc0edffb29a5f3c2a861c2580a06a4b280f54482d",
+      "run_id": "b7fcae5c239a25439470c273cb49dd3fd9b232d2bf85ca01d8c47053386564e9",
+      "seed": 74,
+      "selected_c": 0.1,
+      "source_sha256": "ebb2d8b22cf5d06e500e16f6c329656f707b164a6b66dcffb30a79a2e31f16b3",
+      "split_sha256": "497db65b7592540297a991c2373d981e594b814aeff198a6a0b69914061e7a57",
+      "test_balanced_accuracy": 0.5,
+      "test_groups": 8,
+      "total_groups": 36,
+      "train_groups": 21,
+      "validation_groups": 7,
+      "validation_set_used_in_nested_cv": false
+    },
+    {
+      "dummy_outer_balanced_accuracy": 0.5,
+      "outer_balanced_accuracy": 0.5,
+      "provenance_root": "b947ca6b43f45cd66b4816aee424b8120c5fb50e93b84872c07c29f4c4d10d78",
+      "run_id": "0b4c87c60d7acf59c6804037015089f45fd9730d88c8eaf7ecd617f024cdf824",
+      "seed": 75,
+      "selected_c": 0.1,
+      "source_sha256": "fa223ea141d75b04696d74a8978761833b9439ed27379b48af65e1167d0ff89d",
+      "split_sha256": "3735f0faa1b1d43116417cd141a6ec2e49ca0f5d6b61a95955f9cdcd745b5221",
+      "test_balanced_accuracy": 0.5,
+      "test_groups": 8,
+      "total_groups": 36,
+      "train_groups": 21,
+      "validation_groups": 7,
+      "validation_set_used_in_nested_cv": false
+    }
+  ],
+  "scope": "independently reexecuted original-synthetic W03 P1/P13 only; not P25 v2 worker",
+  "source_snapshot": "672dbc9c7ef2f59789c66a04a770a61764835e0b"
+}

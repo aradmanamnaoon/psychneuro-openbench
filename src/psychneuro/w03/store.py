@@ -70,7 +70,9 @@ class RunStore:
         if actual != cls._index_rows(record):
             raise ValueError("provenance sidecar integrity mismatch")
 
-    def put(self, record: dict[str, Any]) -> None:
+    @classmethod
+    def put_in_connection(cls, conn: sqlite3.Connection, record: dict[str, Any]) -> None:
+        """Write the validated record within a caller-owned SQLite transaction."""
         run_id = record.get("run_id")
         if not isinstance(run_id, str) or not _RUN_ID.fullmatch(run_id):
             raise ValueError("invalid run ID")
@@ -78,21 +80,25 @@ class RunStore:
         blob = canonical(record)
         if len(blob) > _MAX_RECORD_BYTES:
             raise ValueError("run record exceeds storage cap")
-        with self._connect() as conn:
-            cursor = conn.execute(
-                "INSERT OR IGNORE INTO runs (run_id, payload) VALUES (?, ?)", (run_id, blob)
+        cursor = conn.execute(
+            "INSERT OR IGNORE INTO runs (run_id, payload) VALUES (?, ?)", (run_id, blob)
+        )
+        stored = conn.execute("SELECT payload FROM runs WHERE run_id=?", (run_id,)).fetchone()
+        if stored is None or stored[0] != blob:
+            raise ConflictError("run ID already exists with different evidence")
+        if cursor.rowcount == 1:
+            conn.executemany(
+                "INSERT INTO provenance_index "
+                "(run_id, ordinal, node_sha256, kind, parents_json) "
+                "VALUES (?, ?, ?, ?, ?)",
+                [(run_id, *row) for row in cls._index_rows(record)],
             )
-            stored = conn.execute("SELECT payload FROM runs WHERE run_id=?", (run_id,)).fetchone()
-            if stored is None or stored[0] != blob:
-                raise ConflictError("run ID already exists with different evidence")
-            if cursor.rowcount == 1:
-                conn.executemany(
-                    "INSERT INTO provenance_index "
-                    "(run_id, ordinal, node_sha256, kind, parents_json) "
-                    "VALUES (?, ?, ?, ?, ?)",
-                    [(run_id, *row) for row in self._index_rows(record)],
-                )
-            self._verify_index(conn, record)
+        cls._verify_index(conn, record)
+
+
+    def put(self, record: dict[str, Any]) -> None:
+        with self._connect() as conn:
+            self.put_in_connection(conn, record)
 
     def get(self, run_id: str) -> dict[str, Any] | None:
         if not _RUN_ID.fullmatch(run_id):
