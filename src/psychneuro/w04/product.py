@@ -1,4 +1,4 @@
-# ruff: noqa: B008, I001  # FastAPI dependency injection uses Depends defaults.
+# ruff: noqa: I001  # FastAPI dependency injection uses Depends defaults.
 """W04 v2 private product facade: P25 rights -> W03 P1 -> P13 provenance.
 
 Not production IAM: static internal tokens are operator-managed.
