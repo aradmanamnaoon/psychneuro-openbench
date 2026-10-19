@@ -117,6 +117,7 @@ def audit(output: Path) -> dict[str, Any]:
                     else:
                         raise AssertionError("run not created: " + page.locator("#alert").inner_text())
                     page.locator("#scores table").wait_for(timeout=60000)
+                    page.locator("#graph li").nth(3).wait_for(timeout=60000)
                     results["aggregate_table_rows"] = page.locator("#scores tbody tr").count()
                     results["verified_graph_nodes"] = page.locator("#graph li").count()
                     assert results["aggregate_table_rows"] == 1
