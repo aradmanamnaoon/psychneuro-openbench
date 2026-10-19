@@ -97,7 +97,7 @@ jobs:
           from pathlib import Path
           Path(".env").write_text(
               "W04_PRIVATE_TOKEN=" + secrets.token_urlsafe(36) +
-              "\\nW04_P25_PERMIT_KEY=" + secrets.token_urlsafe(36) + "\\n"
+              "\nW04_P25_PERMIT_KEY=" + secrets.token_urlsafe(36) + "\n"
           )
           PY
           chmod 600 .env
