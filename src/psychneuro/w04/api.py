@@ -49,7 +49,7 @@ def create_app(*, db_path: Path, registry_path: Path,
     acl = TenantRunACL(db_path)
     jobs = JobStore(db_path)
     policy_audit = LedgerStore(db_path)
-    app = FastAPI(title="W04 private benchmark + provenance + rights", version="0.4.0",
+    app = FastAPI(title="W04 private benchmark + provenance + rights", version="0.4.2",
                   docs_url=None, redoc_url=None, openapi_url="/w04/openapi.json")
 
     def actor(x_internal_token: str | None = Header(default=None)) -> Principal:
