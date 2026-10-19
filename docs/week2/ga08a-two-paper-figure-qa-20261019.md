@@ -1,6 +1,6 @@
 # GA-08A: original-figure QA supplement — 2026-10-19
 
-**Status:** source/figure checking DONE; learner mastery NOT VERIFIED; mission remains **Needs Review**. Existing Week 2 dossier: [GA-08A–GA-10B](ga08a-ga10b.md). No new mission, human data, recruitment or external correspondence. This is a **private-branch** literature-reading supplement, not an original study or published finding.
+**Status (updated 2026-10-19 after reviewer approval):** **Verified Done — GA-08A research artifact only.** Original-source figures independently rechecked; learner mastery, original experimental replication and personal article reading **NOT VERIFIED**. Existing Week 2 dossier: [GA-08A–GA-10B](ga08a-ga10b.md). No new mission, human data, recruitment or external correspondence. This is a **private-branch** literature-reading supplement, not an original study or published finding.
 
 ## Why this supplement exists
 The GA-08A Notion mission (2026-10-22 flexible queue) and its 2026-10-18 research report identified two published original studies but explicitly left **exact figure panels and preparation counts** for direct inspection. These details are now checked against scans of the original publications, not against textbooks or secondary summaries.
@@ -52,8 +52,21 @@ print(f"t={t:.5f}, df={df}, two-sided p={p2:.7f}, one-sided p={p2/2:.7f}")
 - [x] Verified **exact HH Fig. 3** (printed p. 508) and **Neher/Sakmann Fig. 3a–c** (p. 801) against primary scanned pages.
 - [x] Figure denominators/temperature recorded and contrast in scale made explicit.
 - [x] Independent rounded-statistic arithmetic performed, with numerical test and test-direction limitation.
-- [ ] Reviewer independently reads captions, challenges inference, and signs off.
+- [x] **Artifact review authorization received from user on 2026-10-19.** Independent paper/figure/caption and inference QA performed by assistant; this does **not** establish that the user personally read the original figures.
 - [ ] Access to original preparation-level full sample list, raw recordings, model fit uncertainty and original correlation-sidedness: **UNKNOWN**.
-- [ ] No claim of learner completion or published outcome until independently established.
+- [x] Verified the artifact makes **no claim** of learner mastery, research publication, formal education, experimental replication or endorsed interpretation.
 
 **No external contacts, dataset downloads, direct human/animal experimentation, manuscript submission, new PR, merges, public release, or modification of the read-only Neuroscience Academy.** This is evidence for a private draft in the Career Lab, not academic endorsement.
+
+## Final independent evidence acceptance — 2026-10-19 (supersedes former Needs Review artifact label)
+
+**Verdict: GA-08A research-reading deliverable VERIFIED DONE; human neuroscience mastery NOT ASSESSED.** The user explicitly approved finishing the existing mission. Reviewer approval authorizes updating the artifact and its Notion evidence status; it is not evidence that they personally inspected or independently replicated these historical experiments. No other Career/Academy task status changes.
+
+**Second-pass evidence read:**
+1. [Hodgkin & Huxley 1952 original PDF](https://isn.ucsd.edu/courses/beng207/reading/Hodgkin_Huxley_1952_jp.pdf#page=9), PDF p. 9/printed p. 508 Fig. 3 directly labels **axon 17**, **6–7 °C**, observed circles vs Eq. (11) curves A–L; [PDF p. 10/printed p. 509](https://isn.ucsd.edu/courses/beng207/reading/Hodgkin_Huxley_1952_jp.pdf#page=10) describes the **initial-delay model mismatch**, and Table 1's chosen parameters. Hence neither twelve voltage conditions nor individual time observations should be counted as twelve independent axons.
+2. [Neher & Sakmann 1976 original Nature scan](https://cenl.ucsd.edu/psych506A/papers/neher-sakmann%2Bsingle-channel-currents-membrane-denervated-frog-muscle%2BNature%2B1976.pdf#page=3), PDF p. 3/printed p. 801 directly labels **Fig. 3a** three different experiments (three agonists), **Fig. 3b** eight pooled experiments, **Fig. 3c** eight averaged histograms; the text lists **27 conductance determinations**, not 27 frogs. [PDF p. 2/printed p. 800](https://cenl.ucsd.edu/psych506A/papers/neher-sakmann%2Bsingle-channel-currents-membrane-denervated-frog-muscle%2BNature%2B1976.pdf#page=2) describes the frog muscle preparation and patch electrode.
+3. **Independent computational QA actually executed on 2026-10-19:** re-ran the dependency-free Simpson-integral check in this file's source matrix, and cross-checked with SciPy's Student-t survival function available in the assistant's isolated runtime (no user installations). For published rounded `r=0.91, n=8`: `t=5.3762453`, `df=6`, `two-sided p=0.001701696`, `one-sided p=0.000850848`; both methods agreed within displayed precision. Paper reports significance better than 0.1%; exact historical sidedness/unrounded r **UNKNOWN**. This is a consistency review, not original data reanalysis or proof the authors erred.
+
+**Unknowns retained transparently:** full independent squid-axon and frog-animal counts, underlying raw recordings/fit covariance, original t-test convention and present-day animal ethics documentation. They are **not prerequisites to an honest annotated primary-literature matrix** when labeled as unavailable; no values imputed. No original copyrighted figure/pdf or real experimental data copied or redistributed. Original read-only Neuroscience Academy remains untouched. No third-party outreach, human/animal experiment, paper submission, merge or public posting.
+
+**Acceptance criteria passed:** two real peer-reviewed primary journal studies with verified DOIs; source dates and direct links; questions, preparation/sample *as reported*, experimental design and main panels; limits and counterexamples; distinction of pooled vs independent units; executable and observed numerical QA; explicit rights/ethics guardrails; explicit learner-mastery boundary. **No further user action is required for this source-reading deliverable.**
