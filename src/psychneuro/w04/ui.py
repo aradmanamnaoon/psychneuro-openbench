@@ -54,7 +54,7 @@ resuming a cancelled job requires a fresh P25 grant and restarts fitting from th
 <label for="job-key">Idempotency key (reuse for exact retry)</label><input id="job-key" size="48" value="fictional-demo-job-1" maxlength="80">
 <label for="job-id">Durable job ID (64-character lowercase hex)</label><input id="job-id" size="64" pattern="[a-f0-9]{64}">
 <button id="job-create">Queue synthetic experiment</button><button id="job-status">Get durable status</button>
-<button id="job-cancel">Cancel queued/running job</button><button id="job-resume">Resume cancelled job</button>
+<button id="job-cancel">Cancel queued/running job</button><button id="job-resume">Resume cancelled job</button><button id="job-receipt">Download verified worker receipt</button>
 <p id="job-display" role="status" aria-live="polite"></p></section>
 </main><script>
 'use strict';
@@ -119,5 +119,18 @@ $('job-cancel').addEventListener('click',async()=>{
 $('job-resume').addEventListener('click',async()=>{
  try{const job=await jobStatus();await postJson('/w04/v3/jobs/'+job.id+'/resume',$('token').value,{});await jobStatus();}
  catch(e){notifyError(e);}
+});
+$('job-receipt').addEventListener('click',async()=>{
+ try {
+   const job=await jobStatus();
+   if(job.state!=='succeeded')throw new Error('No verified worker artifact published');
+   const receipt=await readJson('/w04/v3/jobs/'+job.id+'/receipt',$('token').value);
+   const url=URL.createObjectURL(new Blob([JSON.stringify(receipt,null,2)],{type:'application/json'}));
+   try {
+     const a=document.createElement('a');a.href=url;a.download='w04-worker-'+job.id+'.json';
+     document.body.appendChild(a);a.click();a.remove();
+   }finally {URL.revokeObjectURL(url);}
+   $('job-display').textContent='Worker receipt exported. Hash and P25 policy checks are not independent signer authenticity.';
+ }catch(e){notifyError(e);}
 });
 </script></body></html>'''
