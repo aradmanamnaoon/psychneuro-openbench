@@ -1,3 +1,4 @@
+# ruff: noqa: B008, I001  # FastAPI Depends defaults are intentional.
 """Internal-only W04 FastAPI adapter for existing W03 runner and immutable ledger.
 
 Authentication secrets supplied by operator and mapped server-side to roles.
