@@ -199,7 +199,7 @@ psychneuro-openbench/
 └── .github/workflows/                            # Private review/manual quality workflows
 ~~~
 
-There are multiple historical private branches and draft PRs. **Do not merge divergent W04 branches without first reconciling their exact commits, test evidence and release conditions.** The primary integrated but unmerged feature line is [W04 unified draft PR #24](../../pull/24).
+There are multiple historical private branches and draft PRs. **Do not merge divergent W04 branches without first reconciling their exact commits, test evidence and release conditions.** The primary integrated but unmerged feature line is [W04 unified draft PR #24](https://github.com/aradmanamnaoon/psychneuro-openbench/pull/24).
 
 ## Scientific boundaries that do not go away
 
@@ -235,7 +235,7 @@ Start with [CONTRIBUTING.md](CONTRIBUTING.md), [the tutorial](docs/tutorial.md),
 
 ### License and research use
 
-Code and original documentation: [Apache License 2.0](LICENSE). That license does not automatically grant rights over separately sourced datasets or generated exports; consult the [license policy](docs/license-policy.md) and the open [data-rights decision issue #9](../../issues/9).
+Code and original documentation: [Apache License 2.0](LICENSE). That license does not automatically grant rights over separately sourced datasets or generated exports; consult the [license policy](docs/license-policy.md) and the open [data-rights decision issue #9](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/9).
 
 ---
 
