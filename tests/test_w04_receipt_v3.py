@@ -1,10 +1,8 @@
 """Test-only synthetic graphs: no empirical metric or participant observations."""
 from __future__ import annotations
 
-import copy
 import hashlib
 import importlib.util
-import json
 import sys
 from pathlib import Path
 
