@@ -1,67 +1,81 @@
-# Independent W04 science/security audit (AI-assisted internal; 2026-10-19)
-**DECISION: NO-GO for merge, public release, human-data use, scientific claims and publication.** This is *not* an external independent auditor's attestation. Scheduled W04 is **2026-11-05–11**; this is preparatory work on 2026-10-19, not completed future human study hours.
+# W04 Independent Scientific and Security Audit — reconciled review
 
-## Source identification and branch DAG
-- **Repo:** private [aradmanamnaoon/psychneuro-openbench](https://github.com/aradmanamnaoon/psychneuro-openbench).
-- **W03:** private [draft PR #13](https://github.com/aradmanamnaoon/psychneuro-openbench/pull/13) unmerged; head at first inspection `8e511988e1feecce434eb7a5c109df5ebaf4ef90`; original historic exact source SHA `4eeb17845dac7641b75d9a8164f125db6c213659`. Historical [CI #39228198934](https://github.com/aradmanamnaoon/psychneuro-openbench/actions/runs/39228198934) reported 349 PASS in each Python 3.11.17 and 3.12.15. Source tested then; no blanket CI proof for current PR.
-- **W04 original:** private [draft PR #14](https://github.com/aradmanamnaoon/psychneuro-openbench/pull/14), base `main`, head `a9c84cba4bb0fcec44197ddffe782ab75d9e7ae3` when inspected; four changed files: `rights_v1.py`, `interop_v1.py`, `test_w04_interop.py`, `docs/week4/release-gate.md`. First check returned **no associated PR workflow runs** for this SHA. Do not interpret absent result as evidence that no other CI exists elsewhere.
-- **Chat3 review branch:** `review/w04-independent-audit-20261019` forked from W04 PR #14 SHA; separate new private branch **not integrated into PR #14**. Patches: contract-field/type/size validation and an optional externally pinned digest; new negative tests; this audit plus eight GA files and final gate. Neither W03's branch nor original W04 PR merged.
-- Required Chat1 `docs/week4/CHAT1_BACKEND_HANDOFF.md` and Chat2 `docs/week4/CHAT2_PRODUCT_VALIDATION_HANDOFF.md` were 404 on `main` and the first-inspected W04 head. There is **no evidence** of their asserted PR/branch/test claims. Other equivalently named artifacts were not discovered in the inspected four W04 PR-changed files; treat as **BLOCKED**. Concurrent future writes in other chats are not assumed.
-- **Contract DAG observed rather than imagined:** W03: `SyntheticConfig` + `load_dataset(registry)` → `create_group_split` → `validate_group_split` → `nested_grouped_benchmark` → `RunResult` → `make_chain` of 4 nodes → `RunStore` immutable aggregate + provenance sidecar; internal `FastAPI` POST/GET. W04 *separate* prototype: caller-constructed P25 `DatasetGrant` → `evaluate` → `validate_split` (group names, not W03 raw row indices) → caller-provided `accuracy` → SHA256 event hash. **No actual W03 measured result to W04 event mapping.**
-- **Contract versions:** W03 `w03-engine-1` (`src/psychneuro/w03/contracts.py`); W04 `p25.v1` (`src/psychneuro/rights_v1.py`) and `interop.v1` (`src/psychneuro/interop_v1.py`). Versions are *not* a guaranteed stable/public compatibility specification.
+**Review date:** 2026-10-19 (W04 scheduled 2026-11-05–11). **Decision: NO-GO.** This is an independent *AI-assisted second-pass code review*, not a third-party human assurance report. No production approval, release, clinical claim, thesis result, merge, deploy or external outreach.
 
-## Traceable claim → source → test → CI evidence → status
-| Claim | Source paths | Tests / negative oracles | Hosted CI/log | Status |
-|---|---|---|---|---|
-| Group isolation against duplicate/partial/crossover participants | `src/psychneuro/w03/nested.py` (`validate_isolation`), `src/psychneuro/split.py` | `tests/test_w03_integrated.py` | W03 run 39228198934, earlier exact SHA | HISTORIC-VERIFIED ONLY |
-| Nested train-only preprocessing and C selection | `w03/nested.py` `_model/_select` | W03 test and CV source inspected | same earlier W03 run | PARTIAL independent review; current clean-room run NOT DONE |
-| W03 P13 four-node chain and SQLite corruption detection | `w03/vault.py`, `w03/store.py` | `tests/test_w03_integrated.py` | earlier W03 run | PARTIAL; unsigned, mutable root |
-| W04 denied rights, revoked local grant, prohibited action | `rights_v1.py`, `interop_v1.py` | `tests/test_w04_interop.py` | no W04 hosted run at inspected head | LOCAL-TARGETED, no authentic attestation |
-| W04 altered event schema / unknown fields / duplicate groups | patched `interop_v1.py` | added independent negative pytest cases | new review head hosted CI NOT VERIFIED | LOCAL-TARGETED, no hosted proof |
-| Independently pinned digest detects coherent rehash | patched `verify_artifact(expected_sha256=...)` | test rehash then pin rejects | no hosted W04 proof | LOCAL-TARGETED, not a digital signature |
-| Independent model score and effect | W03 source plus report; no new experiment | handwritten BA oracle; no new real fit | prior reported BA logistic=.5,dummy=.5,test=.5 | SCIENTIFIC EFFECT NOT ESTABLISHED |
-| Real source rights, current revocation/tenant ACL | W04 caller-supplied booleans; no credential service | no authoritative rights attestation | none | BLOCKED |
-| UI, multi-service E2E, worker resume, migration/rollback, private deployment, load | none on inspected W04 patch | none observed | none | BLOCKED |
+## Exact checked source and dependencies
 
-## Actual local execution details
-Executed sandbox **Python 3.13.5**, `PYTHONPATH=src python -m pytest tests/test_w04_interop.py -q` on a **locally reconstructed patch prototype** at `/mnt/data/w04_audit`, **17 passed in 0.06 s** after fixing an initial broken roundtrip representation (two failed tests before fix). Verification includes 9 parameterized rehashed off-contract vectors, event unknown fields/overlap/duplicates, bool/NaN/infinite/invalid seeds, oversized payload, external digest pin mismatch, present/absent rights and a hand-calculated balanced-accuracy check. Because local files were recreated from reviewed source and the GitHub review branch has separate source formatting/test composition, **the 17-pass count is not an exact-current-commit CI or full-repository test claim**. Ruff and mypy are not installed in sandbox; those checks were NOT RUN for this review branch. A Python 3.11/3.12 live matrix, actual W03 registry replay, migration recovery, property-testing Hypothesis, browser keyboard audits, load measurements and private hosted smoke were NOT RUN. Targeted execution log sandbox SHA256: `89e1b0af37b0d94ce229fc7d791696421fed9f216ea64fa59a7364500c439d87`; sandbox reconstructed source SHA256 `40a32dcc2a5a1b50c080dd598694f0cb0564f4366c208500eded44dbe0efd101` (not GitHub blob hash).
-
-**Independent BA oracle:** TP=3,FN=1,TN=5,FP=1 → BA=[3/4+5/6]/2=19/24≈0.791667. Dummy all-negative with both truth classes present → BA=.5. These are hand-chosen counts, NOT a fitted scientific run. W03 archived original reported 36 fictional participant IDs×12 trials=432, 21 train/8 test/7 reserved, generator seed 73, split seed 42; outer and dummy BA=.5, heldout=.5. Historical source hash `bc6f7b672193d4c4b4af13d1df25964454d3216d6e5c4b3c9c9c6099363412b8`, split `9d1dce92823468eb1019629b7c9c8f86c391d6f151fb5ed9b418d3b5377ad6c8`, run `b4a0f38b4c3302c56a1e75151813dc0bada8c1f95b45269eee9fe0914ba16844`, provenance root `8d7c322a7d1d17f0fb41f87c9e6f78b4d409ed1650f604e3bf70821b157981ed`. **Copied from historic report, not freshly recreated/rehash-checked by Chat 3.**
-
-## Data seed/licence/hash and rights registry
-| Item | Seed/source hash | Rights status |
+| Evidence | Immutable identifier / scope | Audit disposition |
 |---|---|---|
-| W03 fictional generator only | seed 73, W03 archived SHA above | `not-separately-specified`; private internal synthetic only; standalone CSV public redistribution **not authorized** |
-| W03 partition | seed 42, W03 archived split SHA above | participant disjointness checked in reported W03 run; current clean rebuild not verified |
-| W04 mocked “fictional” grant | `"a"*64` is a placeholder, not actual source content | `license_id="CC0-1.0"` **in test object only**; DO NOT interpret as a granted CC0 data license |
-| Real OpenNeuro candidates | no human inputs downloaded/used in W04 | disabled/no authorization, consent and compliance review not verified |
+| Private repo | [psychneuro-openbench](https://github.com/aradmanamnaoon/psychneuro-openbench), private, writable, default `main` | VERIFIED connector metadata |
+| Historic W03 | [PR #13](https://github.com/aradmanamnaoon/psychneuro-openbench/pull/13), head `8e511988e1feecce434eb7a5c109df5ebaf4ef90`, unmerged | source separate; historical [Actions #39228198934](https://github.com/aradmanamnaoon/psychneuro-openbench/actions/runs/39228198934) tested `4eeb17845dac7641b75d9a8164f125db6c213659`, not current W04 |
+| Original W04 | [PR #14](https://github.com/aradmanamnaoon/psychneuro-openbench/pull/14), head `a9c84cba4bb0fcec44197ddffe782ab75d9e7ae3`, unmerged | separate four-file P25 mock slice |
+| Chat 1 actual | [private Chat1 branch](https://github.com/aradmanamnaoon/psychneuro-openbench/tree/review/w04-chat1-durable-backend-20261019) commit `8fbfb1ed27d4ac22ea46fa859951e0cd4f5b647f` | inspected `w04/policy_v2.py`, `queue_v2.py`, `api_hardened.py`, tests; no exact named handoff file, no hosted run returned |
+| Chat 2 actual | [private Chat2 branch](https://github.com/aradmanamnaoon/psychneuro-openbench/tree/review/w04-chat2-product-20261019) commit `2d436aaac460cff5bc7d29fd4f2026b7b56be4a2` | `CHAT2_ARCHITECTURE_AND_RUNBOOK.md` exists as **equivalent** design handoff; `CHAT2_PRODUCT_VALIDATION_HANDOFF.md` does not; browser/TS/product/test code exists, no hosted run returned |
+| Original prior Chat3 | [private review branch](https://github.com/aradmanamnaoon/psychneuro-openbench/tree/review/w04-independent-audit-20261019) commit `9b35a993b3a5b832d844c6f8b937a9ef4409b051` | original PR14-oriented independent mock-contract validation; not a merged Chat1/2 test |
+| Current reconciled Chat3 | [private security review branch](https://github.com/aradmanamnaoon/psychneuro-openbench/tree/review/w04-chat3-reconciled-security-20261019), based on actual Chat2 head `2d436aaa...` | **new fail-closed import patch**, regression test source, 8 transferred GA drafts and this revised audit; no PR or merge |
 
-## Threat model and residual risk
-- **Actors/assets:** malicious dataset submitter; compromised worker or operator; concurrent or replayed clients; unauthorized tenant; stolen internal header token; privacy-sensitive study source; dataset rights; benchmark validity and provenance chain.
-- **Trust boundaries:** untrusted dataset→rights attestor; source→group partition; train data→model; test cohort→model choice; API caller→tenant run store; persisted event→trusted independent digest; export→external audience.
-- **Positive controls presently visible:** W03 manifest fixed pre-response predictors, bounded participant counts; group-isolated sklearn Pipeline; internal token check; immutable same-run SQLite payload and sidecar; W04 local-rights denial and strengthened type/size/schema validation.
-- **Unmitigated:** rights attestation is user-supplied `verified`; revocation neither stored nor checked at replay/export; forged linked digests pass without external anchor; W04 `accuracy` is an arbitrary scalar; no trained weight digest; tenant ACL; key rotation; rate limit; queued-job concurrency/leases/cancellation; reproducible transitive lock; DB rollback; raw dataset commitment; live accessibility; rate/latency and resource DoS. HTTPS/private host not independently inspected. A `GITHUB_SHA` environment value written to W03 chain is not cryptographic proof of running code.
+**Critical dependency DAG:** `W03 original synthetic registry → W03 SourceRights/P25 synthetic-only policy → W03 GroupKFold nested CV → immutable RunStore → unsigned P13 4-node SHA-256 DAG → Chat2 v2 run ACL → browser/TS consumer`. Chat1 **separate** branch adds P25 `p25-event-2` ledger, HMAC-scoped permit, `w04-job-2` SQLite CAS/fencing/lease; not present on Chat2 base. Chat2 `w04-envelope-1` is hash-integrity-only, no source-owner signature. `w03-engine-1`, `p25-rights-1`, `p25-event-2`, `w04-envelope-1` are NOT a jointly reviewed versioned compatibility guarantee.
 
-## E1–E14 disposition (no epic marked DONE)
-| Epic | Status | Evidence / blocking gate |
+## Source-to-test-to-hosted-CI claim ledger
+
+| Claim | Code and test | Independent observation | Exact-head CI |
+|---|---|---|---|
+| Participant disjoint grouped splits, train-only selection, dummy | `src/psychneuro/w03/nested.py`, `tests/test_w03_integrated.py` | Source and historic reported run inspected; clean W03 replay NOT RUN | historic #39228198934, different SHA |
+| Local P25 policy with explicit revocation | Chat1 `w04/policy_v2.py`, `tests/test_w04_hardened_backend.py` | Source inspected; operator-provided rights not legally attested; HMAC key not external root | NONE returned for Chat1 head |
+| Fenced queue and cancellation coordination | Chat1 `w04/queue_v2.py`, `tests/test_w04_hardened_backend.py` | SQLite transactional CAS/fence code exists; no real worker/computation checkpoint/restart equivalence | NONE |
+| W03-backed run and artifact browser API | Chat2 `w04/product.py`, `w04/api.py`, `tests/test_w04_product_v2.py` | Real registry-backed test **written**; not executed on exact Chat2 SHA in this audit; no keyboard/screenreader audit | NONE |
+| **Non-atomic artifact import** | Chat2 original `product.py` imported: `acl.claim → runs.put` | SQLite failure-model reproducer leaves **1 ownership row** after simulated storage exception. Independent model of observed sequence, not checked-out code | NONE |
+| Import refusal regression | new Chat3 `w04/product.py`; `tests/test_w04_product_v2.py` | Import endpoint intentionally **403 W04_IMPORT_DISABLED** before any ACL write; new test asserts empty ACL after valid import attempt; **test code unrun** | NONE |
+| Independent BA and grouping oracle | local synthetic script `w04_chat3_independent_oracle.json` | Python 3.13.5/NumPy 2.3.5/scikit-learn; confusion TP3 FN0 TN5 FP2 gives BA 6/7=0.857142857; row-KFold has overlapping groups [13,13,13,12], GroupKFold [0,0,0,0] | independent local-only, NOT W03/W04 regression |
+| Hash event perturbation | original independent review `tests/test_w04_interop.py`, `interop_v1.py` | Prior local reconstructed prototype **17 passed** (not exact GitHub byte-identical) | NONE |
+
+**Historic reported W03 fixture:** 36 fictional groups × 12 trials=432 rows; synthetic generator seed 73, split seed 42; 21 train, 8 test, 7 reserved; 3 outer/2 inner grouped folds, logistic `C=0.1`; dummy/logistic outer BA each 0.5 and heldout 0.5. These are historical W03 reported numbers, **not** new independent replication. Historical hashes reported: source `bc6f7b672193d4c4b4af13d1df25964454d3216d6e5c4b3c9c9c6099363412b8`; split `9d1dce92823468eb1019629b7c9c8f86c391d6f151fb5ed9b418d3b5377ad6c8`; result `b4a0f38b4c3302c56a1e75151813dc0bada8c1f95b45269eee9fe0914ba16844`; provenance root `8d7c322a7d1d17f0fb41f87c9e6f78b4d409ed1650f604e3bf70821b157981ed`. **The current GitHub heads were NOT rebuilt/rehashed from that dataset.**
+
+## Rights and data provenance registry
+
+| Item | Source and integrity | Rights conclusion |
 |---|---|---|
-| E1 multi-dataset API/browser & split view | BLOCKED | no W04 integrated UI |
-| E2 provenance explorer/export/import | PARTIAL | W03 digest DAG, W04 event hash, no explorer/authenticated import |
-| E3 cancellation/resume/roles/audit | BLOCKED | no job worker/ACL tests |
-| E4 Docker/cloud/CI/locked export | BLOCKED | only earlier W03 manual CI |
-| E5 P25 rights contract | PARTIAL | `rights_v1.py` local booleans, no true license attestor |
-| E6 independent baseline/falsification | PARTIAL | BA oracle and local negative tests, W03 historical 0.5; no fresh registered replay |
-| E7 typed persistence/schema rights lifecycle | PARTIAL | W03 immutable SQLite only, no migration/revocation |
-| E8 distributed fault-tolerant execution | BLOCKED | no lease/job/queue/recovery |
-| E9 accessible browser/API/SDK | BLOCKED | W03 API source; no W04 UI/SDK/accessibility |
-| E10 performance/scale | BLOCKED | no measured capacity tests |
-| E11 adversarial threat QA | PARTIAL | malformed/tamper tests; forged hash/tenant/revocation unsolved |
-| E12 exact-head hosted validation/recovery | PARTIAL | older W03 CI only, no exact W04 current-head run |
-| E13 integrated P1+P13+P25 | PARTIAL | isolated mock event only; **not true cross-system execution** |
-| E14 reviewer artifacts/runbook | PARTIAL | private GA/docs and local log; no production walkthrough |
+| W03 fictional generated behavior | local generation, seed73, historic SHA as above | permitted as internal synthetic fixture by code conventions; separately licensed export NOT established |
+| W03 train/test/validation partition | split seed42, historic split hash | group isolation source present; no claim of participant independence beyond fixture |
+| Chat1 `W03_INTERNAL` | `rights.py`, server controlled | internal synthetic aggregate handling only; permission issuer/retention/legal authorization not externally reviewed |
+| Chat2 dataset rights and `interop` | `p25-rights-1`, unsigned SHA-256 envelope | local integrity, not identity, consent, authenticated holder or lawful external redistribution |
+| Original W04 `CC0-1.0` toy grant | test constant, not a signed source grant | no CC0 rights inferred |
+| Human/OpenNeuro inputs | no W04 real dataset downloaded | excluded until specific consent, copyright/license, institutional and privacy review |
 
-## Referee recommendation and experiment
-**MAJOR REVISION**: (1) no behavioral/neuroscience construct validated; (2) participant-only split ignores site/time dependence; (3) score reflects synthetic task and possible inspection bias; (4) three related folds give invalid naive confidence intervals; (5) signed provenance absent; (6) P25 bool grant can be forged; (7) model-score input arbitrary; (8) robustness across realistic imbalance and independent trials absent. See [GA7 peer-review objections and falsification matrix](ga/GA7_INDEPENDENT_SKEPTICAL_REFEREE_REPORT.md). Require precommitted synthetic multi-seed factorial tests, two independent metric implementations, sealed external/held-site validation if ever lawfully available, rights/tenant negatives and exact private CI before reconsidering.
+**Threat model:** principals (operator, API user, worker, tenant, source steward, malicious importer); assets (synthetic row data, run scores, participant splits, run ownership, policy revision, receipts); boundaries (source→permission, train→test, API→ACL, worker lease→storage, archived hash→trusted signer). Remaining P0 risks include: `runs.put` not transactionally co-committed with ownership (import disabled as mitigation, not a full fix); deterministic run collisions across tenants; mutable unsigned roots and coherent rehash forgery; no deployed auth/session, rate limiting or token rotation; revocation/permit check and worker stage not proven atomic; cancellation fencing only coordinates, cannot stop fitting without a worker; SQLite rights ledger not proof of consent; no real data rights adjudication, DB migration/rollback, cross-process load or clean private host.
 
-## References and audit limits
-Full targeted 13-source primary-methods/standards bibliography [GA1](ga/GA1_LITERATURE_EVIDENCE.md); key direct publisher records include [Cawley & Talbot](https://www.jmlr.org/papers/v11/cawley10a.html), [Varma & Simon](https://doi.org/10.1186/1471-2105-7-91), [Varoquaux et al.](https://doi.org/10.1016/j.neuroimage.2016.10.038), [Roberts et al.](https://doi.org/10.1111/ecog.02881), [Kapoor & Narayanan](https://doi.org/10.1016/j.patter.2023.100804), [W3C PROV-O](https://www.w3.org/TR/prov-o/). This assistant is not an unaffiliated third-party auditor and does not certify scientific generalization, regulatory compliance, institutional rights or public release readiness.
+## E1–E14 verified status
+
+| Epic | Status | What exists / missing hard gate |
+|---|---|---|
+| E1 benchmark-to-browser | PARTIAL | Chat2 W03-backed v2 API/UI source; no actual browser or second dataset |
+| E2 P13 graph/export/import | PARTIAL | source graph and verification; import deliberately disabled, unsigned |
+| E3 job cancellation/resume/auth | PARTIAL | Chat1 coordination and Chat2 legacy job metadata on **different branches**; real worker absent |
+| E4 Docker/cloud/CI/lock | PARTIAL | Docker/manual workflow source; Docker/CI/security scan not executed at reviewed head |
+| E5 P25 rights engine | PARTIAL | typed v1/v2 policy code; independent rights authority unverified |
+| E6 independent baselines/ablation | PARTIAL | independent arithmetic/grouping oracle; no fresh W03 multi-seed ablation |
+| E7 schemas/persistence/revocation | PARTIAL | SQLite source and version tables; migration/retention/rollback not proven |
+| E8 restart-safe distributed execution | PARTIAL | Chat1 transactional coordination/leases but **no actual worker/restart equivalence** |
+| E9 accessible product/API/TS SDK | PARTIAL | browser/TS source; keyboard/axe/accessibility/SDK E2E not run |
+| E10 latency/memory/scale | BLOCKED | no representative benchmark measured |
+| E11 adversarial property/security | PARTIAL | artifact/tenant/negative tests in source; current-head full tests and threat remediation open |
+| E12 exact-hosted CI/recovery | BLOCKED | no exact Chat1/Chat2/reconciled-head hosted CI and rollback |
+| E13 three-system E2E | PARTIAL | Chat2 registry-backed integration **test source**, not independently executed; Chat1 not combined |
+| E14 reviewer evidence | PARTIAL | 8 GA artifacts, independent oracle, threat memo; release/a11y gates open |
+
+## Skeptical scientific peer review — MAJOR REVISION (software methods only)
+
+1. **Construct mismatch:** fictional two-condition classifier has no established cognitive/neural construct validity; never infer diagnostic utility.
+2. **Hierarchical dependence:** leaving subjects out does not address shared scanner/site/experimenter/time/session; prespecify a held-site or temporal stress test.
+3. **Endogenous features/target timing:** prove no post-response field or outcome-derived metadata enters `X`; add a deliberate injected-future-feature negative test.
+4. **Model selection leakage:** nested grouped CV is an intended defense, but verify preprocessors are fitted inside each inner fold, and do not use sealed holdout for tuning.
+5. **Null and chance baselines:** a random balanced classifier's expected BA and dummy 0.5 are not evidence of biological signal; require predeclared ablation and no selection on seeds.
+6. **Uncertainty:** overlapping CV train folds and shared subjects violate independent-fold assumptions; no naive p-value, fold-SE CI, calibration or population generalization.
+7. **Rights vs hashes:** self-consistent rehash, stale permission and forged ledger roots break authenticity and legitimacy; require externally pinned signed evidence and revoke-before-worker-commit negative.
+8. **Sampling under shift:** site/session effects and class imbalance can reverse apparent performance; report per-group label prevalence and distribution shift.
+
+**Next experiment design:** (a) prespecify three or more independent fictional generator/partition seed pairs before looking at outcomes; (b) one model/dummy and fixed inner C-grid under same outer groups; (c) ablate one prespecified pre-response predictor; (d) inject identical-group and post-outcome leakage failures to demonstrate rejection; (e) independent sklearn-vs-hand balanced-accuracy confusion oracle for each run; (f) check run-hash corruption/complete coherent forgery with and without separately held trusted root; (g) simulate revocation between authorization and completion with a real worker; (h) record all results without hypothesis testing or significance unless participant-level estimands and independent sampling justify it.
+
+**Key external method references:** [Cawley/Talbot 2010](https://www.jmlr.org/papers/v11/cawley10a.html), [Varma/Simon 2006](https://doi.org/10.1186/1471-2105-7-91), [Varoquaux et al. 2017](https://doi.org/10.1016/j.neuroimage.2016.10.038), [Roberts et al. 2017](https://doi.org/10.1111/ecog.02881), [Kapoor/Narayanan 2023](https://doi.org/10.1016/j.patter.2023.100804), [W3C PROV-O](https://www.w3.org/TR/prov-o/); [full typed bibliography, 13 sources](ga/GA1_LITERATURE_EVIDENCE.md).
+
+**Scope:** no real psychology/neuroscience finding, independent human software audit, consent/legal attestation, clinical validation, third-party adoption, CI pass on current head, or publication.
