@@ -3,8 +3,10 @@
   "evidence_utc_date": "2026-10-19",
   "files_sha256": {
     "src/psychneuro/w04/receipt_v3.py": "805d9119371599e0558086c13296395699463a8de562ccc989d01601027e6228",
+    "src/psychneuro/w04/worker_cli_v5.py": "897516d869c716e4434a37499056bc7252f62c72786a8f7100e46398f82763c4",
     "tests/test_w04_receipt_v3.py": "91e074ee3ae6f04eb232a555c8196256dffc6f76179690c272ecb657eb55a00b",
-    "tests/test_w04_synthetic_numerical_oracles_v5.py": "2b812d062d358857a1b0190849aae4b3a20f04d5eb373397df5e4cdc1a737b64"
+    "tests/test_w04_synthetic_numerical_oracles_v5.py": "2b812d062d358857a1b0190849aae4b3a20f04d5eb373397df5e4cdc1a737b64",
+    "tests/test_w04_worker_cli_v5.py": "fffb549182870539e0d7c2620aa64dbb6f071193a413472da1ec2d51e9c11d67"
   },
   "full_W03_P1_evaluation": "NOT RUN",
   "hosted_ci": "NOT RUN",
@@ -35,8 +37,10 @@
     2026
   ],
   "tests": {
-    "command": "PYTHONPATH=src python -m pytest -q tests/test_w04_receipt_v3.py tests/test_w04_receipt_guard_v3.py tests/test_w04_atomic_worker_v4_contract.py tests/test_w04_synthetic_numerical_oracles_v5.py",
+    "command": "PYTHONPATH=src python -m pytest -q tests/test_w04_receipt_v3.py tests/test_w04_receipt_guard_v3.py tests/test_w04_atomic_worker_v4_contract.py tests/test_w04_synthetic_numerical_oracles_v5.py tests/test_w04_worker_cli_v5.py",
+    "last_rerun_seconds": 1.1,
     "new_numerical_and_tamper_regressions": 20,
-    "passed": 58
+    "operator_cli_tests_using_doubles": 3,
+    "passed": 61
   }
 }

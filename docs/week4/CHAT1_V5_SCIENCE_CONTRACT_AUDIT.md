@@ -13,7 +13,9 @@
 1. `src/psychneuro/w04/receipt_v3.py`: reject a P13 benchmark where the claimed deterministic `run_id` does not equal the actual W03 contract hash of `{contract, request, source, split}`; reject request fields outside W03's fixed known schema and fixed pre-response predictor allowlist. Verify source/split seeds, train/test group counts, model predictors, model-spec-only declaration, final C/test metric, three individual outer/dummy fold scores and their independently rederived mean, selected C grid and metric/unit.
 2. `tests/test_w04_receipt_v3.py`: make the **test-only** four-node fixture use the actual W03 request/run hash and benchmark format, not an opaque fabricated run ID. Add 8 rehashed tampering attacks (identity, scores, seed, model grid, late features, test score, groups, method) plus one independently anchored-root negative control.
 3. `tests/test_w04_synthetic_numerical_oracles_v5.py`: 5 fixed-seed analytical binary balanced-accuracy comparisons against scikit-learn, 5 fixed-seed GroupKFold vs contaminated row-wise KFold comparisons on **invented 16 groups ×6 rows**, plus a hand-calculable BA `(3/4 + 2/4)/2 = 0.625` and invalid input negatives. Always-negative binary baseline is `0.5` where both classes are present. No claim of fitted W03 behavioral result.
-4. `docs/week4/CHAT1_V5_SCOPED_OBSERVED_EVIDENCE.json`: commands, interpreter/library versions, input/test SHA-256 and 500 local verification timing observations. Performance measures only the pure receipt verifier, not W03 training, hosted API latency, memory RSS or distributed load.
+4. `src/psychneuro/w04/worker_cli_v5.py`: an **operator-only** one-shot queue consumer; accepts only bounded tenant/worker identifiers and batch (max 10); requires existing synthetic registry, private-mode SQLite database, and `W04_PERMIT_KEY_HEX` (at least 32 bytes supplied out of band). Rejects missing/insecure configuration, leaks no token through command line or JSON output, prints aggregate job counts only; `--dry-run` inspects due work without training. This is **not** a long-lived managed daemon and does not claim worker-process recovery guarantees.
+5. `tests/test_w04_worker_cli_v5.py`: three synthetic DOUBLE-backed negative/positive CLI tests covering missing key, invalid identifiers, insecure DB mode, missing synthetic registry, bounded dry-run and one-shot dispatch. They do not exercise real P25 HMAC or sklearn fitting.
+6. `docs/week4/CHAT1_V5_SCOPED_OBSERVED_EVIDENCE.json`: commands, interpreter/library versions, input/test SHA-256 and 500 local verification timing observations. Performance measures only the pure receipt verifier, not W03 training, hosted API latency, memory RSS or distributed load.
 
 ## Observed execution, environment, previous failure
 
@@ -22,15 +24,15 @@ From the local *partial source bundle only* (`/mnt/data/w04_chat1_patch`, not fu
 ```bash
 PYTHONPATH=src python -m pytest -q \
   tests/test_w04_receipt_v3.py tests/test_w04_receipt_guard_v3.py \
-  tests/test_w04_atomic_worker_v4_contract.py tests/test_w04_synthetic_numerical_oracles_v5.py
-# observed: 58 passed in 0.99 seconds (Python 3.13.5)
+  tests/test_w04_atomic_worker_v4_contract.py tests/test_w04_synthetic_numerical_oracles_v5.py tests/test_w04_worker_cli_v5.py
+# observed: 61 passed in 1.10 seconds (Python 3.13.5)
 python -m compileall -q src tests
 # observed: exit 0
 python -m pip check
 # FAILED (unrelated global environment): MoviePy 2.2.1 requires Pillow <12; installed Pillow 12.3.0
 ```
 
-The first new numerical oracle run observed **5 failures, 53 passed** due to an error in the *new test fixture*: the labels were accidentally expanded from 96 to 576. Corrected fixture to `labels[groups]`, reran and observed 58 passed. Failures preserved in the reported history, not hidden. Python 3.13.5, pytest 9.0.2, NumPy 2.3.5, scikit-learn 1.8.0, Pydantic 2.13.5, FastAPI 0.128.2, Linux x86_64. New source+test file SHA-256 values are in the machine-readable evidence JSON; check against the GitHub commit before reproducing.
+The first new numerical oracle run observed **5 failures, 53 passed** due to an error in the *new test fixture*: the labels were accidentally expanded from 96 to 576. Corrected fixture to `labels[groups]`, reran and observed 58 passed. After adding the private CLI, 61 passed with no warnings. Failures preserved in the reported history, not hidden. Python 3.13.5, pytest 9.0.2, NumPy 2.3.5, scikit-learn 1.8.0, Pydantic 2.13.5, FastAPI 0.128.2, Linux x86_64. New source+test file SHA-256 values are in the machine-readable evidence JSON; check against the GitHub commit before reproducing.
 
 **Unexecuted:** complete GitHub checkout tests; real W03 registry → fit → score → P13 → P25 SQLite worker; full Python 3.11/3.12 matrix; Ruff/mypy (not installed here); actual key custody, CI, Docker build, browser accessibility, E2E cancellation/restart and migration rollback. No eligible claim of these being passed. Old historical W03 success does not substitute for current commit CI. Stand-in worker tests and graph consistency checks cannot certify model fitting, license authorization or signer authenticity.
 
