@@ -59,7 +59,7 @@ def test_completed_synthetic_fit_survives_sqlite_online_backup_restore(tmp_path:
     ).state == "succeeded"
     with sqlite3.connect(copied) as con:
         assert con.execute("PRAGMA integrity_check").fetchone() == ("ok",)
-        assert con.execute("SELECT COUNT(*) FROM w04_v4_artifacts").fetchone() == 1
+        assert con.execute("SELECT COUNT(*) FROM w04_v4_artifacts").fetchone()[0] == 1
         assert con.execute(
             "SELECT COUNT(*) FROM w04_v2_audit WHERE id=? AND event='published_v4'",
             (item.id,),
