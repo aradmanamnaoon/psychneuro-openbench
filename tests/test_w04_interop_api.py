@@ -10,6 +10,7 @@ from psychneuro.w03.store import RunStore
 from psychneuro.w03.vault import digest, make_chain, portable_chain
 from psychneuro.w04.api import create_app
 from psychneuro.w04.interop import Envelope, export_record, verify_envelope
+from psychneuro.w04.product import TenantRunACL
 from psychneuro.w04.rights import Principal, W03_INTERNAL
 
 M = Principal(subject="maintainer", role="maintainer")
@@ -63,8 +64,12 @@ def test_private_api_auth_integrity_and_job_ownership(tmp_path: Path) -> None:
     assert api.get("/w04/v1/rights").status_code == 403
     assert api.get("/w04/v1/rights", headers={"X-Internal-Token": TOK_V}).status_code == 200
     get = api.get(f"/w04/v1/benchmarks/{record['run_id']}", headers={"X-Internal-Token": TOK_V})
-    assert get.status_code == 200
-    assert get.json()["n_train_groups"] == 21
+    assert get.status_code == 403  # Historical run has no tenant/owner claim.
+    TenantRunACL(db).claim(record["run_id"], M)  # Explicit migration-like ownership.
+    assert api.get(f"/w04/v1/benchmarks/{record['run_id']}", headers={"X-Internal-Token": TOK_V}).status_code == 403
+    claimed = api.get(f"/w04/v1/benchmarks/{record['run_id']}", headers={"X-Internal-Token": TOK_M})
+    assert claimed.status_code == 200
+    assert claimed.json()["n_train_groups"] == 21
     graph = api.get(f"/w04/v1/provenance/{record['run_id']}", headers={"X-Internal-Token": TOK_M})
     assert [n["kind"] for n in graph.json()["nodes"]] == ["source", "split", "model", "benchmark"]
     export = api.get(f"/w04/v1/provenance/{record['run_id']}/export", headers={"X-Internal-Token": TOK_M})
