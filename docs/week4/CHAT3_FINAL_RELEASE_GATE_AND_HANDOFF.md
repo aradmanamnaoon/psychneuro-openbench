@@ -1,70 +1,75 @@
-# CHAT3 — FINAL INDEPENDENT REVIEW, RELEASE GATE AND HANDOFF
-**Prepared:** 2026-10-19, before scheduled W04 2026-11-05–11.
-**RELEASE / MERGE / PUBLICATION DECISION: NO-GO.** Independent in this report means *separate adversarial checks performed by an AI assistant*, **not** an attestation from an external human auditor. No Code/rights/security independent release certification; Done remains unchecked.
+# W04 Chat 3 — final reconciled release gate and handoff
 
-## Verified repository pointers and branch relationship
-- Private repository: https://github.com/aradmanamnaoon/psychneuro-openbench . Unmerged W03 draft PR #13 https://github.com/aradmanamnaoon/psychneuro-openbench/pull/13 (initial inspected head `8e511988e1feecce434eb7a5c109df5ebaf4ef90`). Its historical CI run https://github.com/aradmanamnaoon/psychneuro-openbench/actions/runs/39228198934 ran on **`4eeb17845dac7641b75d9a8164f125db6c213659`**, NOT this new review head.
-- Unmerged original W04 draft PR #14 https://github.com/aradmanamnaoon/psychneuro-openbench/pull/14, first inspected W04 head **`a9c84cba4bb0fcec44197ddffe782ab75d9e7ae3`**, base `main`; no pull-request workflow run was returned for that exact SHA in the first check.
-- Chat 3 private branch **`review/w04-independent-audit-20261019`** created *from original W04 PR #14 SHA*, **not** a merge of W03. New changes exist only on this private branch. Follow the branch HEAD instead of relying on this pre-finalized doc for the eventual final commit SHA; GitHub's contents API updates create additional commits as documents are written.
-- The anticipated `docs/week4/CHAT1_BACKEND_HANDOFF.md` and `docs/week4/CHAT2_PRODUCT_VALIDATION_HANDOFF.md` returned 404 at default and original W04 head. Neither was among four inspected W04 PR14 changed paths. This does not rule out other concurrently edited branches; their work is **unverified/BLOCKED** here. No fictional PR#15 or new product deployment asserted.
-- Existing W04 Notion card: https://app.notion.com/p/3fd977a963b281d29c67df3f38231508 ; only Career calendar https://app.notion.com/p/63dd550782f940f399910a2991cb26cf . W04 begins Thursday **2026-11-05**. The Academy is READ ONLY. No calendar cards created.
+**Dated 2026-10-19. W04 scheduled: Thursday 2026-11-05 through Wednesday 2026-11-11.** **RELEASE DECISION: NO-GO** for integration merge, hosted/public release, human data, manuscript/preprint submission, claimed neuroscience findings or institutional rights approval. This is an AI-assisted technical assessment; an independent third-party human review has not taken place.
 
-## Exact code, run and scientific observations
-1. Inspected W03 P1: `src/psychneuro/w03/{contracts,nested,service,store,vault,api}.py`; and `src/psychneuro/metrics.py`, `tests/test_w03_integrated.py`. W03 source shows GroupKFold outer3/inner2 with fresh Pipeline scaler/encoder in fit, C grid {0.1,1}, dummy prior same-fold, one heldout and SQLite provenance sidecar. This is a SOURCE INSPECTION plus historical W03 hosted evidence, not an independent current-head full-suite PASS.
-2. Inspected W04 actual original P25 `src/psychneuro/rights_v1.py` and `interop_v1.py` and tests; its `accuracy` is **supplied by caller**. The rights evaluator trusts a caller-constructed `verified=True` and claimed `license_id`. No live rights issuer, tenant ACL, distributed queue, revocation projection, signed provenance, browser UI or true W03→W04 measured-result integration exists in the inspected W04 patch.
-3. Chat 3 safely changed `src/psychneuro/interop_v1.py` to fail closed for unknown/malformed/out-of-version event fields, invalid group IDs, NaN/bool accuracy, improper seeds, oversize payload and unexpected bundle keys; added `expected_sha256` option requiring caller-supplied independently trusted pin for detecting coherent rehash. Added tests `tests/test_w04_interop.py` illustrating rehashed off-contract denial and coherent attacker rehash vs pinned root. These changes **do not** authenticate the pin or grant; they simply expose a boundary for future integration.
-4. **Actually executed locally** (separate reconstructed prototype, NOT checkout of final GitHub SHA) Python 3.13.5 `PYTHONPATH=src python -m pytest tests/test_w04_interop.py -q`: **17 passed in 0.06 seconds**. SHA-256 of local log `89e1b0af37b0d94ce229fc7d791696421fed9f216ea64fa59a7364500c439d87`, local reconstructed source SHA `40a32dcc2a5a1b50c080dd598694f0cb0564f4366c208500eded44dbe0efd101`; local tests are related but **not byte-identical** to final private branch. Initial local prototype failed two test cases before a tuple/list roundtrip correction, then passed 17.
-5. **Actually executed separate GA3 synthetic oracle** (Python3.13.5, NumPy2.3.5, scikit-learn1.8.0): 16 fictional groups ×6 rows; row-wise `KFold(4,shuffle=True,random_state=73)` contaminated **4/4 folds** while `GroupKFold(4)` contaminated **0/4**. An educational artificial split comparison, not an upstream skrub integration. Code in [GA3](ga/GA3_UPSTREAM_REVIEW.md).
-6. W03 **historic** CI report: 349 pytest PASS Python3.11.17 and 349 PASS Python3.12.15; generator seed73, split42, 36 fictional groups×12=432 rows, train21/test8/reserved7; outer logistic balanced accuracy **0.5**, dummy **0.5**, heldout **0.5**, C=0.1. Original source SHA `bc6f7b672193d4c4b4af13d1df25964454d3216d6e5c4b3c9c9c6099363412b8`, split SHA `9d1dce92823468eb1019629b7c9c8f86c391d6f151fb5ed9b418d3b5377ad6c8`, run `b4a0f38b4c3302c56a1e75151813dc0bada8c1f95b45269eee9fe0914ba16844`, P13 root `8d7c322a7d1d17f0fb41f87c9e6f78b4d409ed1650f604e3bf70821b157981ed`. Those SHA/score values were copied from W03 archived source report and **NOT freshly independently rebuilt in Chat3**.
-7. Analytical BA oracle: if TP=3,FN=1,TN=5,FP=1 then BA = `(3/4+5/6)/2=19/24=0.791666…`; majority-class constant prediction gives BA 0.5 when both truth classes are present. No human findings or population sampling claim.
+## Observed work completed in this Chat 3 pass
 
-**NOT RUN or NOT VERIFIED:** exact-current-GitHub-head pytest, Ruff, mypy, Hypothesis property suite, clean-room W03 data rebuild and independent rehash, complete Python3.11/3.12 installed dependency matrix, OpenNeuro data rights, API↔browser E2E, cross-W03/W04 measurement wiring, signing, auth/tenant permissions, kill/resume/lease race, migration/rollback, stress CPU/heap/latency, Docker/private host and screen-reader tests, full skrub DataOps/gallery, W04 exact-SHA hosted CI. Past CI success does NOT certify this branch. User did not approve paid runners/deployment; none dispatched deliberately.
+1. Read private repository and existing Notion W04 page, verified W03 and original W04 PR metadata. [PR13](https://github.com/aradmanamnaoon/psychneuro-openbench/pull/13) head `8e511988e1feecce434eb7a5c109df5ebaf4ef90` and [PR14](https://github.com/aradmanamnaoon/psychneuro-openbench/pull/14) head `a9c84cba4bb0fcec44197ddffe782ab75d9e7ae3` are **unmerged**.
+2. Discovered additional private branches [Chat1](https://github.com/aradmanamnaoon/psychneuro-openbench/tree/review/w04-chat1-durable-backend-20261019) head `8fbfb1ed27d4ac22ea46fa859951e0cd4f5b647f` and [Chat2](https://github.com/aradmanamnaoon/psychneuro-openbench/tree/review/w04-chat2-product-20261019) head `2d436aaac460cff5bc7d29fd4f2026b7b56be4a2`. Named `CHAT1_BACKEND_HANDOFF.md` and `CHAT2_PRODUCT_VALIDATION_HANDOFF.md` remain **MISSING**; Chat2's real [CHAT2_ARCHITECTURE_AND_RUNBOOK.md](CHAT2_ARCHITECTURE_AND_RUNBOOK.md) is an **equivalent architecture handoff only**, not evidence of completed validation. No associated PR-triggered hosted runs or commit status entries returned for either head or original Chat3 head.
+3. Created a **separate, private, review-only** branch [`review/w04-chat3-reconciled-security-20261019`](https://github.com/aradmanamnaoon/psychneuro-openbench/tree/review/w04-chat3-reconciled-security-20261019) **from the actual Chat2 SHA**. Did not merge/rebase Chat1, W03 PR13, W04 PR14 or touch `main`. This branch contains Chat2's W03-backed P1/P13/P25 product, UI/TS SDK/test source and transferred eight GA documents plus independent audit.
+4. **Concrete defensive code change:** disabled Chat2's non-atomic `POST /w04/v2/artifacts/import` with a fail-closed `403 W04_IMPORT_DISABLED` before any mutation in `src/psychneuro/w04/product.py`; updated `tests/test_w04_product_v2.py` to require no ACL record for an otherwise-valid import. Previously `acl.claim` could commit before `runs.put` failed. This is a safety mitigation, **NOT** a fixed/import-capable atomic protocol.
+5. Ran standalone independent NumPy/sklearn grouping and BA oracle: Python 3.13.5, NumPy 2.3.5; 16 fictional groups ×6=96 rows; row-wise `KFold(4,shuffle=True,random_state=73)` overlapping training/test groups [13,13,13,12], `GroupKFold(4)` [0,0,0,0]; independent confusion counts TP=3,FN=0,TN=5,FP=2 yielded analytical BA `6/7 = 0.8571428571428572` exactly matching scikit-learn. JSON log SHA-256 `caecf81d8724072439ac07e6735bd5f2fbc228d118189750e4eb7871d23e493b`. Also locally simulated the original non-atomic SQLite ordering and observed one orphaned ownership claim after storage failure. **Neither check runs the exact checked-out GitHub project.**
+6. Reconciled and rewrote [independent audit](INDEPENDENT_SCIENCE_SECURITY_AUDIT.md) to distinguish Chat1/Chat2 genuine source from current unverified evidence. Reviewed exact [skrub #2340](https://github.com/skrub-data/skrub/issues/2340): open issue authored by `aradmanamnaoon`, 0 maintainer comments; the official `CONTRIBUTING.rst` requests maintainer approval before an upstream enhancement PR.
 
-## E1–E14 (DONE / PARTIAL / BLOCKED, all hard gates must pass)
-| Epic | Status | Evidence / hard blocker |
+## Tests, artifacts, hashes and material omissions
+
+| Evidence | Observed numeric result | Limitation |
 |---|---|---|
-| E1 benchmark API and browser visualization | **BLOCKED** | No W04 browser or multi-dataset measured run |
-| E2 provenance explorer/import/export | **PARTIAL** | W03 4-node unsigned DAG, W04 event hash; no explorer or validated re-import |
-| E3 cancellation/checkpoints/role audit | **BLOCKED** | No persisted worker and ACL |
-| E4 Docker/CI/locked artifact packaging | **BLOCKED** | No current hosted W04 CI, no reproducible lock |
-| E5 rights contracts engine P25 | **PARTIAL** | W04 typed mock grant/action/revocation; authority cannot be trusted |
-| E6 benchmark and falsification | **PARTIAL** | Hand BA oracle + separate local negatives; W03 historic benchmark only |
-| E7 persistence/rights lifecycle/migrations | **PARTIAL** | W03 SQLite index; no W04 durable rights/revocation/migrations |
-| E8 concurrency/restart/backpressure | **BLOCKED** | No durable queue or worker tests |
-| E9 accessible browser/API/SDK | **BLOCKED** | W03 internal API source only |
-| E10 performance/scale | **BLOCKED** | No measured capacity/resourcing |
-| E11 threat/property/adversarial QA | **PARTIAL** | Narrow negative tests; no coherent signed attestation and tenant tests |
-| E12 hosted CI/rollback/release engineering | **PARTIAL** | Historical W03 run only, no exact W04 head run |
-| E13 P1×P13×P25 interoperability | **PARTIAL** | Reference hand-fed W04 metric, not true source-linked pipeline |
-| E14 documentation/reviewer evidence | **PARTIAL** | This audit and 8 GA files, no audit certification/live test |
+| Prior W03 manual Actions [run 39228198934](https://github.com/aradmanamnaoon/psychneuro-openbench/actions/runs/39228198934) | **Historical** 349 pytest PASS on each Python 3.11 and 3.12, reported on source SHA `4eeb17845dac7641b75d9a8164f125db6c213659` | Not current W03 PR head or any W04 head. Earlier report, not a new test run |
+| W03 fictional registry | Seed 73, split 42, 36×12 =432 synthetic rows; 21 train/8 test/7 reserved; outer logistic=0.5, dummy=0.5, heldout=0.5 | **Historical reported** scores; NO independent regenerated W03 source hash here |
+| Historical fixture hashes | source `bc6f7b672193d4c4b4af13d1df25964454d3216d6e5c4b3c9c9c6099363412b8`, split `9d1dce92823468eb1019629b7c9c8f86c391d6f151fb5ed9b418d3b5377ad6c8`, run `b4a0f38b4c3302c56a1e75151813dc0bada8c1f95b45269eee9fe0914ba16844`, root `8d7c322a7d1d17f0fb41f87c9e6f78b4d409ed1650f604e3bf70821b157981ed` | Copied from historic report; do not assert rehashed or legally licensed export |
+| Original Chat3 PR14-oriented local prototype | **17 pytest PASS** reported by earlier internal reviewer on recreated files, Python3.13.5 | NOT byte-identical to any current merged/Chat2 head. Do not combine with new patch test counts |
+| New Chat3 standalone oracle | analytic BA 0.857142857, KFold group contamination 4/4 vs GroupKFold 0/4 | verified locally here, independent demonstration **only**, not actual W03 model |
+| New Chat3 import regression | source patched + regression test written; **0 exact-head test executions** | expected 403 cannot be labeled pass without real pytest/CI |
+| Current-head GitHub Actions | **0 PR-triggered runs returned** for Chat1, Chat2, original Chat3 | does not prove no manual workflows exist; no exact-head hosted PASS |
+| Source/fixture rights | synthetic only; W03 standalone CSV license separately `not-separately-specified` | No authenticated rights grant, no human data, no public dataset distribution approval |
 
-## GA1–GA8 completion states
-All GA documents are **delivered as private drafts/evidence**, but no entire GA epic is marked DONE because source verification, real deployment, admissions outcomes, reviewer approval and outreach are distinct.
-| GA | Status | Committed artifact |
+**NOT RUN:** complete repository pytest on reconciled head, Ruff/mypy, Hypothesis, actual W03 seed/hash rebuild, Python 3.11/3.12 matrix, Chat1+Chat2 merged contract, worker retry/cancel/resume equivalence, externally pinned/signed provenance, data steward attestation, revocation worker race, load/RSS/latency, Docker/private-host smoke, migration rollback, real browser keyboard/axe/screen-reader checks, source policy legal review, real upstream skrub integration/docs build. No performance, inferential p value, confidence interval, brain decoding result or external user feedback claimed.
+
+## Status: E1–E14 (zero DONE)
+
+| Epic | State | Key evidence / unmet gate |
 |---|---|---|
-| GA1 literature 8–15 genuine methods/standards | **PARTIAL** | [13-source bibliography](ga/GA1_LITERATURE_EVIDENCE.md): primary simulations/reviews/standards clearly distinguished; not systematic review |
-| GA2 publication protocol and methods | **PARTIAL** | [Hypotheses, claim-evidence matrix, plan, disclosure](ga/GA2_PROTOCOL_METHODS.md), no experimental paper/results |
-| GA3 upstream contribution | **PARTIAL** | [skrub open issue #2340 and reproducer](ga/GA3_UPSTREAM_REVIEW.md); maintainers approval absent, no upstream PR |
-| GA4 labs/pathways/fees | **PARTIAL** | [5 official degree/pathway options](ga/GA4_ACADEMIC_PATHWAYS.md); individual eligibility, funding and live fees/deadlines require recheck |
-| GA5 collaboration and unsent notes | **PARTIAL** | [6–8-week proposal and three personalized UNSENT messages](ga/GA5_COLLABORATION_PROPOSAL_AND_UNSENT_DRAFTS.md) |
-| GA6 portfolio/public technical education | **PARTIAL** | [Case study, commands, factual CV bullets, prospective feedback rubric, scripts](ga/GA6_CASE_STUDY_RUNBOOK_AND_PUBLIC_DRAFTS.md); none published |
-| GA7 critical referee/replication | **PARTIAL** | [9 objections, failure-design and sampling caveats](ga/GA7_INDEPENDENT_SKEPTICAL_REFEREE_REPORT.md); independent human peer review absent |
-| GA8 credibility, decisions and backlog | **PARTIAL** | [Evidence ledger, 30-day ranked P0/P1/P2 backlog](ga/GA8_CLAIM_LEDGER_AND_BACKLOG.md); real external impact absent |
+| E1 multi-dataset benchmark and browser | PARTIAL | Chat2 v2 W03-backed UI source; no second lawful dataset or live browser |
+| E2 provenance explorer/import/export | PARTIAL | unsigned 4-node DAG, JSON verification, **unsafe import disabled** |
+| E3 async jobs/permissions | PARTIAL | Chat1 SQLite lease/fencing and Chat2 metadata API divergent; no worker |
+| E4 Docker/hosted product CI | PARTIAL | Docker/manual workflow source, no actual run/lock/audit |
+| E5 independently useful P25 | PARTIAL | typed policy store/HMAC in Chat1; attestor and client integration unverified |
+| E6 statistical baseline/falsification | PARTIAL | local 96-row group oracle; old W03 results not re-run |
+| E7 durable schema/rights lifecycle | PARTIAL | P25 SQLite and W03 store; rollback/retention unauthorized |
+| E8 restart-safe distributed execution | PARTIAL | Chat1 fenced queue code; no resumed computation proof |
+| E9 browser/API/typed client | PARTIAL | Chat2 TS+HTML+REST source; a11y and E2E untested |
+| E10 genuine scale/performance | BLOCKED | no representative CPU/RSS/p95/load measurements |
+| E11 threats/adversarial QA | PARTIAL | source/test negative controls; current-head security and auth gates open |
+| E12 exact hosted QA/recovery | BLOCKED | no tested current SHA or DB rollback |
+| E13 P1×P13×P25 E2E | PARTIAL | Chat2 registry-backed test written, NOT independently executed; Chat1 not integrated |
+| E14 reproducibility/reviewer bundle | PARTIAL | GA1–GA8 and audit; no independent external sign-off |
 
-## Inventory, rights and scholarly evidence
-Files newly created: this handoff; `docs/week4/INDEPENDENT_SCIENCE_SECURITY_AUDIT.md`; eight GA Markdown documents in `docs/week4/ga/`. Files edited: `src/psychneuro/interop_v1.py`; `tests/test_w04_interop.py`. Original W04 rights file **not** replaced. GA4 scholarship statement was corrected to treat user's credentials and eligibility as **unverified**.
+## GA1–GA8 deliverables
 
-**Dataset/public rights:** W03 internally generated data registry says `not-separately-specified`; W04 `CC0-1.0` is **only a mocked test-string**, not proof of licensed export. No real human or clinical input used. Six candidate human OpenNeuro entries remain unapproved for use, according to historic W03 source memo.
-**Key bibliography:** Cawley & Talbot 2010 https://www.jmlr.org/papers/v11/cawley10a.html ; Varma & Simon 2006 https://doi.org/10.1186/1471-2105-7-91 ; Varoquaux et al. 2017 https://doi.org/10.1016/j.neuroimage.2016.10.038 ; Varoquaux 2018 https://doi.org/10.1016/j.neuroimage.2017.06.061 ; Kapoor & Narayanan 2023 https://doi.org/10.1016/j.patter.2023.100804 ; W3C PROV-O https://www.w3.org/TR/prov-o/ ; FAIR https://doi.org/10.1038/sdata.2016.18 ; full 13 entries in GA1.
-**External third-party audit:** NONE. No university admission, acceptance, scholarship, paper, external maintainer praise or software adoption verified.
+| GA | State | Private file; limitations |
+|---|---|---|
+| GA1 8–15 sources | PARTIAL | [GA1_LITERATURE_EVIDENCE.md](ga/GA1_LITERATURE_EVIDENCE.md) — 13 source-typed records, targeted not systematic |
+| GA2 publication methods | PARTIAL | [GA2_PROTOCOL_METHODS.md](ga/GA2_PROTOCOL_METHODS.md) — protocol, hypotheses, rights/ethics and AI disclosure; NO findings |
+| GA3 upstream contribution | PARTIAL | [GA3_UPSTREAM_REVIEW.md](ga/GA3_UPSTREAM_REVIEW.md) — real issue #2340 and private reproducer; **not maintainer-endorsed**, no PR |
+| GA4 official pathways | PARTIAL | [GA4_ACADEMIC_PATHWAYS.md](ga/GA4_ACADEMIC_PATHWAYS.md) — five degrees/pathways + official research-lab and funding addendum; credential and eligibility unknown |
+| GA5 collaboration draft | PARTIAL | [GA5_COLLABORATION_PROPOSAL_AND_UNSENT_DRAFTS.md](ga/GA5_COLLABORATION_PROPOSAL_AND_UNSENT_DRAFTS.md) — 6–8 week division, 3 UNSENT notes, no offers |
+| GA6 public proof | PARTIAL | [GA6_CASE_STUDY_RUNBOOK_AND_PUBLIC_DRAFTS.md](ga/GA6_CASE_STUDY_RUNBOOK_AND_PUBLIC_DRAFTS.md) — case study, conditional commands, no adoption, optional original scripts |
+| GA7 skeptical referee | PARTIAL | [GA7_INDEPENDENT_SKEPTICAL_REFEREE_REPORT.md](ga/GA7_INDEPENDENT_SKEPTICAL_REFEREE_REPORT.md) — objections, numeric/ethics plan; no human peer review |
+| GA8 evidentiary decisions | PARTIAL | [GA8_CLAIM_LEDGER_AND_BACKLOG.md](ga/GA8_CLAIM_LEDGER_AND_BACKLOG.md) — fact/inference/approval boundaries and prioritized backlog |
 
-## Release rubric and next work
-W04 requires **>=90/100 AND EVERY scientific, rights, security, independent evidence release gate**. This branch is incomplete; a valid numeric score cannot be responsibly awarded for unrun gates and should not be used to make Done true. Keep Notion **In Progress / Done unchecked**, original single 2026-11-05 Thursday card and existing 24 suggested Career hours; total human focused work <=10h/day, Academy unchanged 40 h/week; R-course reminder and three optional original videos remain separate. No claims that study occurred before scheduled week.
+## File manifest and change control
 
-**P0:** reconcile missing Chat1/2 deliverables and merge-base conflicts in private review, run exact W03/W04 code on a single clean fixture with current-source CI; derive W04 metric from trusted W03 RunResult (never caller input); establish rights attestation by data owner and immutable source hashes; prove revoked cached use fails and independently pinned signatures defend coherent tampering.
-**P1:** tenant ACL/role probes, idempotent worker race/cancel/resume, schema migrations and rollback, accessible browser integration/keyboard review, small no-cost authorized private smoke with real logs.
-**P2:** instrument CPU/heap/latency, lock transitive deps, run multi-seed + held-site synthetic falsification, then human independent scientific/security referee. Re-evaluate funding/entry status only against official university records with verified credentials.
+- **New or integrated in this Chat3 branch:** `docs/week4/INDEPENDENT_SCIENCE_SECURITY_AUDIT.md`, this final gate, `docs/week4/ga/GA{1..8}_*.md` (original private reviewed documents reused by their Git blob SHAs, then edited where appropriate).
+- **Modified source now:** `src/psychneuro/w04/product.py` — import disabled pending atomic rights/ACL/store; `tests/test_w04_product_v2.py` — 403 and zero-ACL regression assertion.
+- **Existing Chat2 source inherited:** `src/psychneuro/w04/{api,interop,product,rights,ledger,jobs,ui,server}.py`, `apps/web/src/client.ts`, `docs/week4/CHAT2_ARCHITECTURE_AND_RUNBOOK.md`, Docker/manual workflow/tests.
+- **Chat1 source not integrated:** `w04/{policy_v2,queue_v2,api_hardened}.py`. The missing exact Chat1 handoff is still BLOCKED.
+- The private branch is **not** an open PR, main merge, authorized deploy, or approval to spend CI resources. GitHub content writes create sequential commit SHAs; use live [branch HEAD](https://github.com/aradmanamnaoon/psychneuro-openbench/tree/review/w04-chat3-reconciled-security-20261019) for exact tree and `git rev-parse HEAD`.
 
-**Approvals that remain separate and required:** user approval to merge PRs, publicize repository, deploy even publicly, ingest human datasets, submit manuscript/preprint, contact any academic, open upstream public PR, spend money or claim public recognition. No such actions taken.
+## Priority and owner review decisions
 
-**Final determination: NO-GO** for code merge, scientific public proof, private production use, human-data processing, journal submission and public release; retain an unmerged private audit branch and use the status tables for next cycle.
+**P0:** verify a real Chat1 handoff and Chat2 actual validation traces; choose a reviewed integration base (do not assume DAG merge); make W03 outcome the only permitted source of W04 score; implement atomic tenant claims + immutable store writes and prove rollback with fault injection; bind policy revocation to every worker stage and every export/import; attest source grant and hash against a separately held root. **P1:** run clean pinned GitHub code and full pytest/type/lint/CV replay, host CI exact commit subject to no-cost policy, source-only Docker smoke, lease/fence/cancel and migration/rollback, screen-reader/keyboard checks. **P2:** multi-seed/ablation and held-site/time synthetic shift, performance and signed provenance, independent human security/science review, verified academic prerequisites. No statistical effect claims before robust sampling/estimand plan.
+
+**Rubric:** W04 demands at least **90/100 AND all safety/science/rights/security/independent evidence gates**. Given essential tests not run, a qualifying score cannot be established. **Status In Progress, Done FALSE**. Keep sole W04 Thursday Career calendar date 2026-11-05, suggested Career growth 24 h across week only within <=10 h/day combined learner capacity, Academy READ ONLY 40 h/week, R course reminder and up to 3 optional videos separate. Future course attendance/work not marked completed.
+
+**Separate explicit human approvals required:** review/merge, public repo, external/public deployment, real/human/clinical data, legal/IRB data-clearance, paid compute, any journal/preprint submission, external contact/email, recommendation letters, upstream public PR, career posting. No such action performed. **Final: NO-GO.**
