@@ -83,7 +83,7 @@ def verify_serialized(raw: object, root: str) -> None:
         if not isinstance(entry["metadata"], dict) or not isinstance(entry["parents"], list):
             raise TypeError("invalid provenance metadata/parents")
         if not isinstance(entry["kind"], str) or not isinstance(entry["sha256"], str):
-            raise ValueError("invalid provenance identity")
+            raise TypeError("invalid provenance identity")
         if any(not isinstance(p, str) for p in entry["parents"]):
             raise ValueError("invalid provenance edge")
         converted.append(Node(entry["kind"], tuple(entry["parents"]), entry["metadata"], entry["sha256"]))
