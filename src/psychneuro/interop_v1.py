@@ -7,7 +7,7 @@ import re
 from typing import Any
 from psychneuro.rights_v1 import Action, DatasetGrant, evaluate
 
-_SHA256 = re.compile(r"[0-9a-f]{64}\\Z")
+_SHA256 = re.compile(r"[0-9a-f]{64}\Z")
 _MAX_EVENT_BYTES = 65_536
 _EVENT_FIELDS = frozenset({"version", "dataset", "source_sha256", "license_id",
                            "action", "seed", "split", "accuracy", "rights_decision"})
