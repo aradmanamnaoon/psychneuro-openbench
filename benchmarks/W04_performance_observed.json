@@ -1,0 +1,21 @@
+{
+  "environment": {
+    "machine": "x86_64",
+    "platform": "Linux-6.18.55-x86_64-with-glibc2.41",
+    "python": "3.13.5"
+  },
+  "fixture": "internal synthetic policy + 200 unique SQLite insert IDs",
+  "jobs_create": {
+    "n": 200,
+    "p50_ms": 3.083333,
+    "p95_ms": 5.679023,
+    "peak_tracemalloc_bytes": 263536
+  },
+  "rights": {
+    "n": 200,
+    "p50_ms": 0.004165,
+    "p95_ms": 0.006993,
+    "peak_tracemalloc_bytes": 5704
+  },
+  "seed": "none; deterministic IDs only"
+}
