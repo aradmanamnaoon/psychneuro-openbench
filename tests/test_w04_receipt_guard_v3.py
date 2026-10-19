@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import hashlib
-import importlib.util
+import importlib
 import sys
 from dataclasses import dataclass, replace
 from pathlib import Path
@@ -11,9 +11,11 @@ import pytest
 
 ROOT = Path(__file__).parents[1] / "src"
 sys.path.insert(0, str(ROOT))
-from psychneuro.w04.receipt_guard_v3 import export_authorized, import_authorized
-from psychneuro.w04.receipt_v3 import ReceiptError
-from test_w04_receipt_v3 import make_record
+guard = importlib.import_module("psychneuro.w04.receipt_guard_v3")
+export_authorized = guard.export_authorized
+import_authorized = guard.import_authorized
+ReceiptError = importlib.import_module("psychneuro.w04.receipt_v3").ReceiptError
+make_record = importlib.import_module("test_w04_receipt_v3").make_record
 
 
 @dataclass(frozen=True)
