@@ -10,21 +10,30 @@ from dataclasses import dataclass
 from typing import Protocol
 
 import numpy as np
-from sklearn.compose import ColumnTransformer
-from sklearn.dummy import DummyClassifier
-from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import GroupKFold
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from sklearn.compose import ColumnTransformer  # type: ignore[import-untyped]
+from sklearn.dummy import DummyClassifier  # type: ignore[import-untyped]
+from sklearn.linear_model import LogisticRegression  # type: ignore[import-untyped]
+from sklearn.model_selection import GroupKFold  # type: ignore[import-untyped]
+from sklearn.pipeline import Pipeline  # type: ignore[import-untyped]
+from sklearn.preprocessing import OneHotEncoder, StandardScaler  # type: ignore[import-untyped]
 
 from psychneuro.metrics import score_binary
 
 
 class TrialLike(Protocol):
-    participant_id: str
-    difficulty: float
-    stimulus_condition: str
-    correct: int
+    """Read-only attributes allow a frozen TrialRecord with narrower Literal fields."""
+
+    @property
+    def participant_id(self) -> str: ...
+
+    @property
+    def difficulty(self) -> float: ...
+
+    @property
+    def stimulus_condition(self) -> str: ...
+
+    @property
+    def correct(self) -> int: ...
 
 
 @dataclass(frozen=True)

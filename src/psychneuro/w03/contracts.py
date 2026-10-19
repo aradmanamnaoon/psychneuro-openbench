@@ -39,4 +39,11 @@ class RunResult(BaseModel):
     outer_balanced_accuracy: float = Field(ge=0, le=1)
     dummy_outer_balanced_accuracy: float = Field(ge=0, le=1)
     test_balanced_accuracy: float = Field(ge=0, le=1)
-    selected_c: Literal[0.1, 1.0]
+    selected_c: float = Field(ge=0.1, le=1.0)
+
+    @field_validator("selected_c")
+    @classmethod
+    def fixed_regularization_grid(cls, value: float) -> float:
+        if value not in (0.1, 1.0):
+            raise ValueError("selected C must be one of the prespecified choices")
+        return value
