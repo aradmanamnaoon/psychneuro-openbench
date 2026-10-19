@@ -42,7 +42,57 @@ jobs:
       - name: Ruff source and test lint
         run: python -m ruff check .
       - name: Strict mypy
-        run: python -m mypy src
+        run: python -m mypy --python-version ${{ matrix.python-version }} src
+      - name: Execute genuine rights-gated P1 to P13 synthetic provenance replay
+        run: |
+          python - <<'PY'
+          import hashlib
+          import json
+          from pathlib import Path
+          from tempfile import TemporaryDirectory
+          from psychneuro.w03.contracts import ExperimentRequest
+          from psychneuro.w03.service import execute
+          from psychneuro.w03.store import RunStore
+          from psychneuro.w03.vault import verify_serialized
+          request = ExperimentRequest()
+          with TemporaryDirectory() as directory:
+              store = RunStore(Path(directory) / "runs.sqlite3")
+              first = execute(request, Path("data/registry.json"), store)
+              again = execute(request, Path("data/registry.json"), store)
+              assert first == again, "same request must reproduce same run ID/results"
+              record = store.get(first.run_id)
+              assert record is not None and record["rights"] == "internal-synthetic-only"
+              verify_serialized(record["nodes"], first.provenance_root)
+              assert len(record["nodes"]) == 4
+          report = {
+              "kind": "original-fictional-synthetic-software-only",
+              "no_human_data": True,
+              "not_for_external_distribution": True,
+              "code_sha": __import__("os").environ.get("GITHUB_SHA", "unattested"),
+              "python_version": __import__("platform").python_version(),
+              "generator_seed": request.generator_seed,
+              "split_seed": request.split_seed,
+              "subjects": request.n_participants,
+              "trials_per_subject": request.trials_per_participant,
+              "outer_folds": request.outer_folds,
+              "inner_folds": request.inner_folds,
+              "repeatability_checked": True,
+              "result": first.model_dump(mode="json"),
+          }
+          output = Path("artifacts/w03/synthetic-p1-p13-proof.json")
+          output.parent.mkdir(parents=True, exist_ok=True)
+          body = json.dumps(report, sort_keys=True, indent=2, allow_nan=False) + "\n"
+          output.write_text(body, encoding="utf-8")
+          print(body)
+          print("proof_sha256=" + hashlib.sha256(body.encode("utf-8")).hexdigest())
+          PY
+      - name: Archive actual signed-by-none internal W03 aggregate proof
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: w03-original-synthetic-provenance-${{ matrix.python-version }}
+          path: artifacts/w03/synthetic-p1-p13-proof.json
+          retention-days: 7
+          if-no-files-found: error
       - name: Reproducibility and environment
         run: |
           echo "exact_commit=${GITHUB_SHA}"
