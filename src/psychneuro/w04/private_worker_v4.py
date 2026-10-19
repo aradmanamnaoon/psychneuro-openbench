@@ -204,7 +204,7 @@ class AtomicWorker:
             raise ValueError("bad batch limit")
         now = time.time_ns() if now_ns is None else now_ns
         with self._db() as conn:
-            rows = conn.execute("SELECT id FROM w04_v2_jobs WHERE tenant=? AND "
+            rows = conn.execute("SELECT id FROM w04_v2_jobs WHERE tenant=? AND attempts<3 AND "
                                 "((state='queued' AND next_attempt<=?) OR "
                                 "(state='running' AND lease_until<=?)) "
                                 "ORDER BY next_attempt,id LIMIT ?", (tenant, now, now, limit)).fetchall()
