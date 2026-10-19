@@ -133,3 +133,10 @@ No new schema tables or migrations introduced by this v3 patch. The inherited `p
 ## 2026-10-19 · Exact-code replay evidence supplement
 
 Latest tested W04 source/test commit: `db3b63b72d12853bd5b9956369cdb32a8e9bb3fd`, [full scoped QA report](CHAT1_QA_REPLAY_20261019.md), [machine-readable evidence](CHAT1_QA_REPLAY_RESULTS.json). **92 targeted tests passed**, including actual fitted W03 P1→P13→P25 two synthetic seeds; Ruff pass, mypy strict 30-source pass, compileall pass, pip check pass in isolated Python 3.13.13 environment. Both genuine fitted synthetic benchmarks scored 0.50, equal to dummy 0.50: **no predictive improvement**. Earlier 61/38 test results are historical baseline only. The current SHA's entire repository test suite and hosted 3.11/3.12 CI, independent attestation, external trust root, real worker crash/restart and browser/Docker proof remain BLOCKED; no merge/release. Existing Notion date and Done unchanged.
+
+
+---
+
+## New 2026-10-19 real-fitter failure boundary regression
+
+[Recovery/cancellation evidence](CHAT1_REAL_RECOVERY_QA_20261019.md) and new `tests/test_w04_real_worker_recovery_v5.py` verify real W03 training interrupted *after fit/before publication* and cancellation/revocation of a running fence. Neither failed attempt publishes any artifact; a fresh authorized retry runs the genuine model again and publishes one deterministic run. Final scoped QA: **94 pytest PASS, Ruff PASS, strict mypy (30 staged modules) PASS, compileall PASS** in Python 3.13.13. This is boundary fault-injection, **NOT actual OS process kill**, external rights attestation, full 45-source repository hosted 3.11/3.12 CI or release. Maintain **NO-GO**.
