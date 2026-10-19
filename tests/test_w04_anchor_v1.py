@@ -7,11 +7,9 @@ from dataclasses import dataclass, replace
 from pathlib import Path
 
 import pytest
-from pydantic import ValidationError
-
-import cryptography  # noqa: F401 - required test dependency, never skip security gate
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+from pydantic import ValidationError
 
 sys.path.insert(0, str(Path(__file__).parents[1] / "src"))
 from psychneuro.w04 import anchor_v1 as anchor_mod
@@ -34,21 +32,22 @@ class Receipt:
     receipt_sha256: str = "d" * 64
 
 
-def make_anchor(*, receipt: Receipt = Receipt(), sequence: int = 7, issued: int = NOW - 10):
+def make_anchor(*, receipt: Receipt | None = None, sequence: int = 7, issued: int = NOW - 10):
+    receipt = receipt if receipt is not None else Receipt()
     private = Ed25519PrivateKey.generate()  # Test-only; never a configured signing authority.
     public = private.public_key().public_bytes(
         encoding=serialization.Encoding.Raw,
         format=serialization.PublicFormat.Raw,
     )
-    raw = dict(
-        key_id="offline-reviewer-1", tenant=receipt.tenant,
-        dataset=receipt.dataset, purpose=receipt.purpose,
-        policy_revision=receipt.policy_revision, policy_sha256=receipt.policy_sha256,
-        run_id=receipt.run_id, provenance_root=receipt.provenance_root,
-        receipt_sha256=receipt.receipt_sha256, sequence=sequence,
-        issued_ns=issued, expires_ns=NOW + 60_000_000_000,
-        signature_b64="A" * 88,
-    )
+    raw = {
+        "key_id": "offline-reviewer-1", "tenant": receipt.tenant,
+        "dataset": receipt.dataset, "purpose": receipt.purpose,
+        "policy_revision": receipt.policy_revision, "policy_sha256": receipt.policy_sha256,
+        "run_id": receipt.run_id, "provenance_root": receipt.provenance_root,
+        "receipt_sha256": receipt.receipt_sha256, "sequence": sequence,
+        "issued_ns": issued, "expires_ns": NOW + 60_000_000_000,
+        "signature_b64": "A" * 88,
+    }
     provisional = AnchorV1.model_validate(raw)
     return provisional.model_copy(update={
         "signature_b64": base64.b64encode(private.sign(provisional.signed_bytes())).decode("ascii"),

@@ -8,7 +8,6 @@ from __future__ import annotations
 from types import SimpleNamespace
 
 import pytest
-
 from test_w04_anchor_v1 import NOW, make_anchor
 from test_w04_receipt_v3 import make_receipt
 
