@@ -1,16 +1,9 @@
 name: W03 private synthetic-engine exact-head review
+# Review-run-only after successful exact-code quality gate:
+# GitHub Actions #39228198934 at 4eeb17845dac7641b75d9a8164f125db6c213659.
+# Return to manual execution so later documentation/source edits cannot
+# automatically consume private runner minutes or imply new release approval.
 on:
-  push:
-    branches:
-      - review/w03-current-head-additive-20261019
-    paths:
-      - '.github/workflows/w03-private-review.yml'
-      - 'src/**'
-      - 'tests/**'
-      - 'data/**'
-      - 'configs/**'
-      - 'pyproject.toml'
-      - 'requirements.txt'
   workflow_dispatch:
 
 permissions:
