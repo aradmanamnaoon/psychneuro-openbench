@@ -124,7 +124,69 @@ jobs:
           test "$authenticated" = "403" # no P25 grant installed; deny by default
           running_uid="$(docker exec "$cid" id -u)"
           test "$running_uid" = "10001"
-          echo "healthy_private_loopback=1 anonymous_denied=1 no_policy_denied=1 nonroot=1 exact_sha=$GITHUB_SHA"
+
+          # No external or human data: operator installs one synthetic-only,
+          # 24-hour P25 policy inside the private ephemeral container.
+          docker exec "$cid" python -m psychneuro.w04.provision_private \
+            --attestation-ref=runner-fictional-registry-verified-v1 \
+            --operator=ci-synthetic-reviewer --acknowledge-internal-only
+
+          printf '%s' '{"generator_seed":73,"split_seed":42,"n_participants":36,"trials_per_participant":12}' > "$RUNNER_TEMP/request.json"
+          create_status="$(curl --silent --show-error --max-time 120 \
+            --output "$RUNNER_TEMP/created.json" --write-out '%{http_code}' \
+            -H "X-Internal-Token: $token" -H 'Content-Type: application/json' \
+            --data-binary "@$RUNNER_TEMP/request.json" \
+            "http://127.0.0.1:$port/w04/v2/runs")"
+          test "$create_status" = "201"
+          run_id="$(python3 - "$RUNNER_TEMP/created.json" <<'PY'
+          import json, re, sys
+          with open(sys.argv[1], encoding="utf-8") as stream:
+              obj = json.load(stream)
+          run_id = obj["run_id"]
+          assert re.fullmatch(r"[0-9a-f]{64}", run_id)
+          assert obj["rights"] == "internal-synthetic-only"
+          assert obj["n_train_groups"] > 0 and obj["n_test_groups"] > 0
+          print(run_id)
+          PY
+          )"
+          graph_status="$(curl --silent --show-error --max-time 20 \
+            --output "$RUNNER_TEMP/graph.json" --write-out '%{http_code}' \
+            -H "X-Internal-Token: $token" \
+            "http://127.0.0.1:$port/w04/v2/runs/$run_id/graph")"
+          test "$graph_status" = "200"
+          python3 - "$RUNNER_TEMP/graph.json" <<'PY'
+          import json, re, sys
+          with open(sys.argv[1], encoding="utf-8") as stream:
+              graph = json.load(stream)
+          assert graph["schema_version"] == "w04-graph-2"
+          assert len(graph["nodes"]) == 4
+          assert re.fullmatch(r"[0-9a-f]{64}", graph["root"])
+          assert "not independent signatures" in graph["warning"]
+          PY
+
+          # A valid checksum is still not an independent signature; deny import
+          # EVEN when the API request is an authenticated maintainer.
+          export_status="$(curl --silent --show-error --max-time 20 \
+            --output "$RUNNER_TEMP/export.json" --write-out '%{http_code}' \
+            -H "X-Internal-Token: $token" \
+            "http://127.0.0.1:$port/w04/v2/runs/$run_id/artifact")"
+          test "$export_status" = "200"
+          import_status="$(curl --silent --show-error --max-time 20 \
+            --output /dev/null --write-out '%{http_code}' \
+            -H "X-Internal-Token: $token" -H 'Content-Type: application/json' \
+            --data-binary "@$RUNNER_TEMP/export.json" \
+            "http://127.0.0.1:$port/w04/v2/artifacts/import")"
+          test "$import_status" = "403"
+
+          # Revocation must invalidate an existing fitted synthetic result.
+          docker exec "$cid" python -c 'from pathlib import Path; from psychneuro.w04.policy_v2 import PolicyStore; import os; PolicyStore(Path(os.environ["W04_DB_PATH"]), permit_key=os.environ["W04_P25_PERMIT_KEY"].encode()).revoke(tenant="local", dataset="w03-original-synthetic", operator="ci-synthetic-reviewer")'
+          revoked_status="$(curl --silent --show-error --max-time 20 \
+            --output /dev/null --write-out '%{http_code}' \
+            -H "X-Internal-Token: $token" \
+            "http://127.0.0.1:$port/w04/v2/runs/$run_id")"
+          test "$revoked_status" = "403"
+          echo "healthy_private_loopback=1 anonymous_denied=1 no_policy_denied=1 nonroot=1"
+          echo "real_synthetic_http_fit=1 graph_verified=1 legacy_import_denied=1 revocation_denied=1 exact_sha=$GITHUB_SHA"
 
   hosted-synthetic-latency:
     runs-on: ubuntu-latest
