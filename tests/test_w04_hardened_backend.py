@@ -13,6 +13,8 @@ from pydantic import ValidationError
 from psychneuro.w04.policy_v2 import IntegrityError, Permit, PolicyError, PolicyRecord, PolicyStore
 from psychneuro.w04.queue_v2 import JobConflict, QueueStore
 
+TEST_PERMIT_KEY = b"synthetic-only-test-hmac-key-never-use-in-production"
+
 
 def sha(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
@@ -20,7 +22,7 @@ def sha(data: bytes) -> str:
 
 @pytest.fixture
 def policy(tmp_path: Path) -> tuple[PolicyStore, PolicyRecord]:
-    store = PolicyStore(tmp_path / "shared.sqlite")
+    store = PolicyStore(tmp_path / "shared.sqlite", permit_key=TEST_PERMIT_KEY)
     record = PolicyRecord(tenant="tenant-A", source_sha256=sha(b"invented data"),
                           actions=frozenset({"run", "read_aggregate"}),
                           attestation_ref="operator-verified-synthetic-registry-v1",
@@ -91,7 +93,7 @@ def test_policy_expiry_old_permit_and_schema_migration(policy, tmp_path):
     with sqlite3.connect(store.path) as db:
         db.execute("UPDATE p25_v2_meta SET v='9' WHERE k='version'")
     with pytest.raises(IntegrityError):
-        PolicyStore(store.path)
+        PolicyStore(store.path, permit_key=TEST_PERMIT_KEY)
 
 
 def test_policy_tamper_detected_and_independent_root(policy):
@@ -230,3 +232,15 @@ def test_invalid_inputs_and_queue_migration(tmp_path):
         db.execute("UPDATE w04_v2_meta SET v='999' WHERE k='version'")
     with pytest.raises(JobConflict):
         QueueStore(path)
+
+def test_forged_permit_rejected(policy):
+    store, _ = policy
+    real = permit(store)
+    forged = real.model_copy(update={"action": "export_aggregate"})
+    with pytest.raises(PolicyError, match="authentication tag"):
+        store.validate_permit(forged, now_ns=100_000_000_001)
+    other_process = PolicyStore(store.path, permit_key=b"a-different-out-of-band-hmac-secret-key!")
+    with pytest.raises(PolicyError, match="authentication tag"):
+        other_process.validate_permit(real, now_ns=100_000_000_001)
+    with pytest.raises(ValueError):
+        PolicyStore(store.path, permit_key=b"weak")
