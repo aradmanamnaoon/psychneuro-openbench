@@ -70,7 +70,10 @@ def create_app(*, db_path: Path, registry_path: Path,
             raise HTTPException(403, detail="run not accessible to tenant/owner") from exc
 
     def job_owner(principal: Principal) -> str:
-        return principal.tenant + "." + principal.subject
+        # Dotted principals are valid: ("a", "b.c") must not collide with
+        # ("a.b", "c"). A length-framed identity is unambiguous and versioned.
+        # Existing unframed metadata jobs are deliberately NOT silently migrated.
+        return f"v2:{len(principal.tenant)}:{principal.tenant}:{principal.subject}"
 
     def permit(principal: Principal, action: Action) -> Decision:
         result = decide(rights, principal, action)
