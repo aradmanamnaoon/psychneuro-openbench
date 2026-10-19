@@ -1,6 +1,8 @@
 """Real, synthetic-only strict product acceptance; no mock W03 runner."""
 from pathlib import Path
+
 from fastapi.testclient import TestClient
+
 from psychneuro.w03.contracts import ExperimentRequest
 from psychneuro.w04.durable_bridge import source_sha256
 from psychneuro.w04.policy_v2 import PolicyRecord, PolicyStore
@@ -9,8 +11,8 @@ from psychneuro.w04.strict_facade import create_strict_app
 
 KEY = b"test-key-for-only-fictional-private-policy-0000000"
 TOKEN = "private-test-token-1234567890-1234567890"
-REQ = dict(generator_seed=73, split_seed=42, n_participants=36,
-           trials_per_participant=12)
+REQ = {"generator_seed": 73, "split_seed": 42, "n_participants": 36,
+       "trials_per_participant": 12}
 
 
 def test_real_w03_run_and_p25_revocation(tmp_path: Path) -> None:
@@ -27,7 +29,8 @@ def test_real_w03_run_and_p25_revocation(tmp_path: Path) -> None:
         policy=policy)
     client = TestClient(app)
     h = {"X-Internal-Token": TOKEN}
-    assert client.post("/w04/v2/runs", json=REQ).status_code == 403
+    response = client.post("/w04/v2/runs", json=REQ)
+    assert response.status_code == 403, response.text
     created = client.post("/w04/v2/runs", json=REQ, headers=h)
     assert created.status_code == 201, created.text
     run_id = created.json()["run_id"]
