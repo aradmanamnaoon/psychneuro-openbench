@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any, Protocol
 
-from .anchor_v1 import AnchorV1
+from .anchor_v1 import AnchorV1, verify_anchor
 from .receipt_v3 import P13P25Receipt, ReceiptError, issue_receipt, verify_receipt
 
 
@@ -67,7 +67,7 @@ def import_authorized(receipt: P13P25Receipt, *, policy: PolicyLike,
 def import_authorized_anchored(
     receipt: P13P25Receipt,
     *,
-    anchor: "AnchorV1",
+    anchor: AnchorV1,
     pinned_public_keys: Mapping[str, bytes],
     min_sequence: int,
     policy: PolicyLike,
@@ -84,8 +84,6 @@ def import_authorized_anchored(
     This still cannot prove legal dataset-use rights. Import/persistence
     remains the caller's independently authorized responsibility.
     """
-    from .anchor_v1 import verify_anchor
-
     _check_scope(permit, tenant=tenant, subject=subject, action="read_aggregate")
     policy.validate_permit(permit, now_ns=now_ns)
     if receipt.policy_revision != permit.policy_revision:
