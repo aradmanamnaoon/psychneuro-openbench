@@ -6,7 +6,6 @@ from __future__ import annotations
 
 import json
 import platform
-import statistics
 import tempfile
 import time
 import tracemalloc
@@ -14,7 +13,7 @@ from hashlib import sha256
 from pathlib import Path
 
 from psychneuro.w04.jobs import JobStore
-from psychneuro.w04.rights import Action, Principal, W03_INTERNAL, decide
+from psychneuro.w04.rights import W03_INTERNAL, Action, Principal, decide
 
 
 def measure(func, n: int = 200) -> dict[str, float]:
