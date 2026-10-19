@@ -76,7 +76,7 @@ def parse_record(raw: bytes, *, expected_root: str | None = None) -> Review:
     if not isinstance(record, dict):
         raise ReviewError("aggregate must be an object")
     try:
-        root, run_id = verify_record(record)
+        run_id, root = verify_record(record)
         if expected_root is not None and root != expected_root:
             raise ReviewError("external root checksum mismatch")
         result = RunResult.model_validate(record["result"])
