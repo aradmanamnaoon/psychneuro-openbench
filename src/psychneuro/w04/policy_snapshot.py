@@ -1,5 +1,6 @@
 """Read validated P25 grant snapshot without trusting request-owned claims."""
 from __future__ import annotations
+
 from psychneuro.w04.policy_v2 import PolicyError, PolicyRecord, PolicyStore
 
 
