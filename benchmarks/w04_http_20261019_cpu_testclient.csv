@@ -1,0 +1,5 @@
+operation,n,warmup,concurrency,median_ms,p95_ms,observed_requests_per_second,peak_process_rss_kib,python,fastapi,scikit_learn,cpu,synthetic_participants,seed,split_seed,one_model_fit_seconds,caveat
+health_baseline,100,5,1,1.816,2.6504,524.24,182968,3.13.13,0.148.0,1.6.1,Intel(R) Xeon(R) Processor @ 2.60GHz,36,73,42,0.2008,in-process TestClient only; not browser/network/hosted load
+authorized_run_read,100,5,1,23.6287,46.3925,40.51,190828,3.13.13,0.148.0,1.6.1,Intel(R) Xeon(R) Processor @ 2.60GHz,36,73,42,0.2008,in-process TestClient only; not browser/network/hosted load
+authorized_p13_graph,100,5,1,56.5754,74.723,17.8,190828,3.13.13,0.148.0,1.6.1,Intel(R) Xeon(R) Processor @ 2.60GHz,36,73,42,0.2008,in-process TestClient only; not browser/network/hosted load
+authorized_artifact_export,60,5,1,76.3042,86.6828,12.9,190828,3.13.13,0.148.0,1.6.1,Intel(R) Xeon(R) Processor @ 2.60GHz,36,73,42,0.2008,in-process TestClient only; not browser/network/hosted load

@@ -1,0 +1,15 @@
+{
+  "name": "@psychneuro/w04-private-web-contracts",
+  "private": true,
+  "version": "0.4.2",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.build.json",
+    "build": "tsc -p tsconfig.build.json",
+    "test": "npm run build && node --test tests/*.test.mjs"
+  },
+  "devDependencies": {
+    "axe-core": "4.10.3",
+    "typescript": "5.9.3"
+  }
+}

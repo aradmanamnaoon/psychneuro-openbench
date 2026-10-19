@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import os
+from collections.abc import Callable
 from pathlib import Path
 
 from .contracts import ExperimentRequest, RunResult
@@ -10,7 +11,8 @@ from .store import RunStore
 from .vault import digest, make_chain, portable_chain
 
 
-def execute(req: ExperimentRequest, registry_path: Path, store: RunStore) -> RunResult:
+def execute(req: ExperimentRequest, registry_path: Path, store: RunStore, *,
+            before_persist: Callable[[], None] | None = None) -> RunResult:
     # Import only on an explicit permitted run: fast API import never trains a model.
     from psychneuro.loaders import load_dataset
     from psychneuro.split import create_group_split, validate_group_split
@@ -55,6 +57,8 @@ def execute(req: ExperimentRequest, registry_path: Path, store: RunStore) -> Run
         {"benchmark": benchmark, "request": req.model_dump(mode="json"), "result_sha256": digest(result_fields)},
     )
     result = RunResult.model_validate({**result_fields, "provenance_root": chain[-1].sha256})
+    if before_persist is not None:
+        before_persist()  # Reject a revoked P25 grant before the durable write.
     store.put({"run_id": run_id, "provenance_root": chain[-1].sha256,
                "nodes": portable_chain(chain), "rights": "internal-synthetic-only",
                "result": result.model_dump(mode="json")})

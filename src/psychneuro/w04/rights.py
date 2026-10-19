@@ -23,6 +23,7 @@ class Action(str, Enum):
 class Principal(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
     subject: str = Field(min_length=1, max_length=80, pattern=r"^[A-Za-z0-9_.-]+$")
+    tenant: str = Field(default="local", min_length=1, max_length=64, pattern=r"^[A-Za-z0-9_.-]+$")
     role: Literal["viewer", "researcher", "maintainer"]
 
 
@@ -59,6 +60,7 @@ W03_INTERNAL = DatasetRights(
 
 def decide(rights: DatasetRights, principal: Principal, action: Action, *, today: date | None = None) -> Decision:
     """Deny by default. In particular, no human-data execution even if caller claims a license."""
+    reason: Literal["allowed", "no_review", "revoked", "expired", "consent", "action_not_granted", "role", "unapproved_source"]
     if rights.revoked:
         reason = "revoked"
     elif rights.expires_on is not None and (today or date.today()) > rights.expires_on:

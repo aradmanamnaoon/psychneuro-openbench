@@ -11,7 +11,9 @@ import re
 import sqlite3
 import time
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
+
+Row = tuple[Any, ...]
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -78,14 +80,21 @@ class QueueStore:
             raise ValueError("invalid identifier")
         return x
 
-    def _row(self, db: sqlite3.Connection, tenant: str, job_id: str) -> tuple | None:
+    def _row(self, db: sqlite3.Connection, tenant: str, job_id: str) -> Row | None:
         self._identifier(tenant)
         if not _SHA.fullmatch(job_id):
             raise ValueError("invalid job digest")
-        return db.execute("SELECT * FROM w04_v2_jobs WHERE id=? AND tenant=?", (job_id, tenant)).fetchone()
+        fetched = db.execute("SELECT * FROM w04_v2_jobs WHERE id=? AND tenant=?", (job_id, tenant)).fetchone()
+        return tuple(fetched) if fetched is not None else None
+
+    def _must_row(self, db: sqlite3.Connection, tenant: str, job_id: str) -> Row:
+        row = self._row(db, tenant, job_id)
+        if row is None:
+            raise JobConflict("missing job after write")
+        return row
 
     @staticmethod
-    def _item(row: tuple) -> QueueItem:
+    def _item(row: Row) -> QueueItem:
         return QueueItem(id=row[0], tenant=row[1], subject=row[2], dataset=row[3], state=row[6],
                          revision=row[7], fence=row[8], attempts=row[9], lease_until_ns=row[10],
                          next_attempt_ns=row[11], checkpoint_stage=row[12], checkpoint_sha256=row[13],
@@ -117,7 +126,7 @@ class QueueStore:
                 return self._item(row)
             db.execute("INSERT INTO w04_v2_jobs VALUES(?,?,?,?,?,?,'queued',0,0,0,0,?,NULL,NULL,NULL,NULL)",
                        (identity, tenant, subject, dataset, idempotency_key, payload_sha, now))
-            item = self._item(self._row(db, tenant, identity))
+            item = self._item(self._must_row(db, tenant, identity))
             self._event(db, item, subject, "enqueued", correlation, now)
             return item
 
@@ -148,7 +157,7 @@ class QueueStore:
             db.execute("UPDATE w04_v2_jobs SET state='running',revision=revision+1,fence=fence+1,"
                        "attempts=attempts+1,lease_until=?,worker=? WHERE id=? AND tenant=?",
                        (now + lease_ns, worker, job_id, tenant))
-            item = self._item(self._row(db, tenant, job_id))
+            item = self._item(self._must_row(db, tenant, job_id))
             self._event(db, item, worker, "claimed", correlation, now)
             return item
 
@@ -160,14 +169,15 @@ class QueueStore:
         with self._db() as db:
             db.execute("BEGIN IMMEDIATE")
             row = self._row(db, tenant, job_id)
-            self._require_worker(row, worker, fence, now)
+            row = self._require_worker(row, worker, fence, now)
             db.execute("UPDATE w04_v2_jobs SET lease_until=?,revision=revision+1 WHERE id=?", (now+lease_ns, job_id))
-            return self._item(self._row(db, tenant, job_id))
+            return self._item(self._must_row(db, tenant, job_id))
 
     @staticmethod
-    def _require_worker(row: tuple | None, worker: str, fence: int, now: int) -> None:
+    def _require_worker(row: Row | None, worker: str, fence: int, now: int) -> Row:
         if row is None or row[6] != "running" or row[8] != fence or row[15] != worker or row[10] <= now:
             raise JobConflict("stale or unauthorized worker lease")
+        return row
 
     def checkpoint(self, *, tenant: str, job_id: str, worker: str, fence: int,
                    stage: str, artifact_sha256: str, correlation: str,
@@ -178,7 +188,7 @@ class QueueStore:
         with self._db() as db:
             db.execute("BEGIN IMMEDIATE")
             row = self._row(db, tenant, job_id)
-            self._require_worker(row, worker, fence, now)
+            row = self._require_worker(row, worker, fence, now)
             if row[12] is not None:
                 current = _STAGES[row[12]]
                 if _STAGES[stage] < current:
@@ -187,7 +197,7 @@ class QueueStore:
                     raise JobConflict("checkpoint overwrite with different bytes")
             db.execute("UPDATE w04_v2_jobs SET checkpoint_stage=?,checkpoint_sha=?,"
                        "revision=revision+1 WHERE id=?", (stage, artifact_sha256, job_id))
-            item = self._item(self._row(db, tenant, job_id))
+            item = self._item(self._must_row(db, tenant, job_id))
             self._event(db, item, worker, "checkpoint", correlation, now)
             return item
 
@@ -199,12 +209,12 @@ class QueueStore:
         with self._db() as db:
             db.execute("BEGIN IMMEDIATE")
             row = self._row(db, tenant, job_id)
-            self._require_worker(row, worker, fence, now)
+            row = self._require_worker(row, worker, fence, now)
             if row[12] != "persisted" or row[13] != result_sha256:
                 raise JobConflict("final durable artifact checkpoint required")
             db.execute("UPDATE w04_v2_jobs SET state='succeeded',result_sha=?,revision=revision+1,"
                        "lease_until=0 WHERE id=?", (result_sha256, job_id))
-            item = self._item(self._row(db, tenant, job_id))
+            item = self._item(self._must_row(db, tenant, job_id))
             self._event(db, item, worker, "succeeded", correlation, now)
             return item
 
@@ -214,12 +224,12 @@ class QueueStore:
         with self._db() as db:
             db.execute("BEGIN IMMEDIATE")
             row = self._row(db, tenant, job_id)
-            self._require_worker(row, worker, fence, now)
+            row = self._require_worker(row, worker, fence, now)
             exhausted = row[9] >= max_attempts
             delay = min(2 ** max(row[9] - 1, 0), 64) * 1_000_000_000
             db.execute("UPDATE w04_v2_jobs SET state=?,lease_until=0,revision=revision+1,"
                        "next_attempt=? WHERE id=?", ("failed" if exhausted else "queued", now + delay, job_id))
-            item = self._item(self._row(db, tenant, job_id))
+            item = self._item(self._must_row(db, tenant, job_id))
             self._event(db, item, worker, "failed" if exhausted else "retry_scheduled", correlation, now)
             return item
 
@@ -239,7 +249,7 @@ class QueueStore:
             # Expire worker lease immediately: a stale worker can never commit a result.
             db.execute("UPDATE w04_v2_jobs SET state=?,revision=revision+1,lease_until=0,"
                        "fence=fence+1 WHERE id=?", (state, job_id))
-            item = self._item(self._row(db, tenant, job_id))
+            item = self._item(self._must_row(db, tenant, job_id))
             self._event(db, item, subject, state, correlation, now)
             return item
 
@@ -252,7 +262,7 @@ class QueueStore:
             if row is None or row[2] != subject or row[6] != "cancel_requested":
                 raise JobConflict("no pending cancellation")
             db.execute("UPDATE w04_v2_jobs SET state='cancelled',revision=revision+1 WHERE id=?", (job_id,))
-            item = self._item(self._row(db, tenant, job_id))
+            item = self._item(self._must_row(db, tenant, job_id))
             self._event(db, item, subject, "cancelled", correlation, now)
             return item
 
@@ -270,7 +280,7 @@ class QueueStore:
                 raise JobConflict("invalid resume")
             db.execute("UPDATE w04_v2_jobs SET state='queued',revision=revision+1,"
                        "next_attempt=?,lease_until=0 WHERE id=?", (now, job_id))
-            item = self._item(self._row(db, tenant, job_id))
+            item = self._item(self._must_row(db, tenant, job_id))
             self._event(db, item, subject, "resumed", correlation, now)
             return item
 
