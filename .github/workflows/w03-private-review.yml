@@ -1,31 +1,50 @@
-name: W03 private synthetic-engine review (manual opt-in)
+name: W03 private synthetic-engine exact-head review
 on:
+  push:
+    branches:
+      - review/w03-current-head-additive-20261019
+    paths:
+      - '.github/workflows/w03-private-review.yml'
+      - 'src/**'
+      - 'tests/**'
+      - 'data/**'
+      - 'configs/**'
+      - 'pyproject.toml'
+      - 'requirements.txt'
   workflow_dispatch:
+
 permissions:
   contents: read
+
+concurrency:
+  group: w03-private-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   quality:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 12
     strategy:
       fail-fast: false
       matrix:
         python-version: ['3.11', '3.12']
     steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
-      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Private W03 dependencies
-        run: python -m pip install --disable-pip-version-check -e '.[dev,benchmark,w03]'
-      - name: P1/P13 source/tests (including old regression tests)
+      - name: Install direct optional dependencies for full legacy and W03 tests
+        run: python -m pip install --disable-pip-version-check -e '.[dev,benchmark,w03,ui,parquet]'
+      - name: Verify dependency consistency
+        run: python -m pip check
+      - name: Full test suite including real-registry HTTP to P13 SQLite integration
         run: python -m pytest -q
-      - name: Lint
+      - name: Ruff source and test lint
         run: python -m ruff check .
-      - name: Strict typing
+      - name: Strict mypy
         run: python -m mypy src
-      - name: Environment provenance
+      - name: Reproducibility and environment
         run: |
-          echo "commit=${GITHUB_SHA}"
+          echo "exact_commit=${GITHUB_SHA}"
           python --version
           python -m pip freeze --disable-pip-version-check
