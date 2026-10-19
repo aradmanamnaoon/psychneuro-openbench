@@ -18,6 +18,7 @@ from psychneuro.w04.strict_facade import create_strict_app
 KEY = b"non-production-fixture-policy-signing-key-00000000000"
 A = "A" * 48
 B = "B" * 48
+M = "M" * 48
 REQ = {"generator_seed": 73, "split_seed": 42, "n_participants": 36,
        "trials_per_participant": 12}
 
@@ -42,6 +43,7 @@ def _app(tmp_path: Path) -> tuple[TestClient, Path]:
         credentials={
             A: Principal(tenant="local", subject="alice", role="researcher"),
             B: Principal(tenant="foreign", subject="bob", role="researcher"),
+            M: Principal(tenant="local", subject="operator", role="maintainer"),
         }, policy=policy,
     )
     return TestClient(app), database
@@ -79,6 +81,10 @@ def test_unsigned_artifact_import_never_claims_owner(tmp_path: Path) -> None:
     assert client.post(
         "/w04/v2/artifacts/import", headers=headers, json=receipt
     ).status_code == 403
+    # Even a maintainer cannot silently treat a SHA checksum as signer proof.
+    assert client.post(
+        "/w04/v2/artifacts/import", headers={"X-Internal-Token": M}, json=receipt
+    ).status_code == 403
     with sqlite3.connect(database) as conn:
         assert conn.execute("SELECT COUNT(*) FROM runs").fetchone()[0] == 1
 
@@ -103,3 +109,5 @@ def test_strict_csp_same_origin_assets_and_no_token_storage(tmp_path: Path) -> N
     assert "focus-visible" in css.text
     assert A not in page.text + js.text + css.text
     assert B not in page.text + js.text + css.text
+    assert M not in page.text + js.text + css.text
+    assert client.get("/w04/v2/catalog", headers={"X-Internal-Token": A}).json()["datasets"][0]["scope"] == "original-fictional-only"
