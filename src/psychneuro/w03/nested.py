@@ -49,6 +49,12 @@ def validate_isolation(rows: Sequence[TrialLike], train: Sequence[int], test: Se
     b = {rows[i].participant_id for i in test}
     if not a or not b or a & b:
         raise ValueError("participant contamination across train/test")
+    # P1 reserves a separate validation cohort. Every included participant must
+    # nevertheless contribute all of its rows, or selective omissions go unnoticed.
+    assigned = set(all_indices)
+    expected = {i for i, row in enumerate(rows) if row.participant_id in a | b}
+    if assigned != expected:
+        raise ValueError("missing rows for an assigned participant")
 
 
 def _arrays(rows: Sequence[TrialLike], indices: Sequence[int]) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
