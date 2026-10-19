@@ -41,7 +41,17 @@ export class W04ApiError extends Error {
 }
 /** Caller owns token lifetime; never put it in URLs or browser storage. */
 export class W04Client {
-  constructor(private readonly origin: string, private readonly token: () => string) {}
+  constructor(private readonly origin: string, private readonly token: () => string) {
+    const url = new URL(origin);
+    const loopback = url.hostname === "127.0.0.1" || url.hostname === "localhost" || url.hostname === "[::1]";
+    if (url.username || url.password || url.search || url.hash || url.pathname !== "/" ||
+        (url.protocol !== "https:" && !(loopback && url.protocol === "http:"))) {
+      throw new W04ApiError(0, "W04_BAD_ORIGIN", "Private API origin must use HTTPS or HTTP loopback");
+    }
+    if (typeof window !== "undefined" && url.origin !== window.location.origin) {
+      throw new W04ApiError(0, "W04_CROSS_ORIGIN", "Browser API must use its own origin");
+    }
+  }
   private async request<T>(path: string, body?: unknown): Promise<T> {
     const key = this.token();
     if (!key) throw new W04ApiError(0, "W04_NO_TOKEN", "Missing internal operator token");
@@ -52,8 +62,19 @@ export class W04Client {
       ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     });
     if (!response.ok) {
-      // Never mirror response bodies or tokens into logs.
-      throw new W04ApiError(response.status, "W04_HTTP_" + response.status, "Private API request denied");
+      // Only surface a bounded, known machine code; never expose raw server details or secrets.
+      let code = "W04_HTTP_" + response.status;
+      try {
+        const parsed: unknown = await response.json();
+        if (parsed !== null && typeof parsed === "object" && "detail" in parsed) {
+          const detail = parsed.detail;
+          if (detail !== null && typeof detail === "object" && "code" in detail &&
+              typeof detail.code === "string" && /^W04_[A-Z_]{2,40}$/.test(detail.code)) {
+            code = detail.code;
+          }
+        }
+      } catch { /* A malformed error response remains a generic rejection. */ }
+      throw new W04ApiError(response.status, code, "Private API request denied");
     }
     return await response.json() as T;
   }
