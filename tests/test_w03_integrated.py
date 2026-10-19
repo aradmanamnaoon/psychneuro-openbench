@@ -76,7 +76,8 @@ def test_contamination_sentinel_rejects_duplicate_and_cross_group() -> None:
 
 def sample_record() -> dict[str, object]:
     nodes = make_chain({"source_sha256": "a" * 64, "rights": "internal-synthetic-only"},
-                       {"split_sha256": "b" * 64}, {"score": 0.5, "result_sha256": digest({"score": 0.5})})
+                       {"split_sha256": "b" * 64}, {"model": "fictional-logistic"},
+                       {"score": 0.5, "result_sha256": digest({"score": 0.5})})
     return {"run_id": "c" * 64, "provenance_root": nodes[-1].sha256,
             "nodes": portable_chain(nodes), "rights": "internal-synthetic-only",
             "result": {"score": 0.5}}
@@ -110,7 +111,8 @@ def test_sqlite_idempotency_conflict_reopen_and_tamper(tmp_path: Path) -> None:
         store.put(changed)
     alternate = sample_record()
     chain = make_chain({"source_sha256": "a" * 64, "rights": "internal-synthetic-only"},
-                       {"split_sha256": "b" * 64}, {"score": 0.6, "result_sha256": digest({"score": 0.6})})
+                       {"split_sha256": "b" * 64}, {"model": "fictional-logistic"},
+                       {"score": 0.6, "result_sha256": digest({"score": 0.6})})
     alternate["nodes"] = portable_chain(chain)
     alternate["provenance_root"] = chain[-1].sha256
     alternate["result"] = {"score": 0.6}
@@ -118,7 +120,7 @@ def test_sqlite_idempotency_conflict_reopen_and_tamper(tmp_path: Path) -> None:
         store.put(alternate)
     with sqlite3.connect(file) as conn:
         tampered = json.loads(conn.execute("SELECT payload FROM runs").fetchone()[0])
-        tampered["nodes"][2]["metadata"]["score"] = 0.7
+        tampered["nodes"][3]["metadata"]["score"] = 0.7
         conn.execute("UPDATE runs SET payload=?", (json.dumps(tampered),))
     with pytest.raises(ValueError, match="integrity"):
         store.get(record["run_id"])
@@ -139,7 +141,8 @@ def test_api_contract_auth_validation_and_retrieval(tmp_path: Path, monkeypatch:
         response = result.model_dump(mode="json")
         unsigned = {k: v for k, v in response.items() if k != "provenance_root"}
         chain = make_chain({"source_sha256": "a" * 64, "rights": "internal-synthetic-only"},
-                           {"split_sha256": "b" * 64}, {"result_sha256": digest(unsigned)})
+                           {"split_sha256": "b" * 64}, {"model": "fictional-logistic"},
+                           {"result_sha256": digest(unsigned)})
         record["nodes"] = portable_chain(chain)
         record["provenance_root"] = chain[-1].sha256
         result = result.model_copy(update={"provenance_root": chain[-1].sha256})
@@ -160,7 +163,7 @@ def test_api_contract_auth_validation_and_retrieval(tmp_path: Path, monkeypatch:
     rid = created.json()["run_id"]
     assert client.get(f"/v1/runs/{rid}").status_code == 403
     assert client.get(f"/v1/runs/{rid}", headers=token).json() == created.json()
-    assert len(client.get(f"/v1/runs/{rid}/provenance", headers=token).json()["nodes"]) == 3
+    assert len(client.get(f"/v1/runs/{rid}/provenance", headers=token).json()["nodes"]) == 4
     assert client.get(f"/v1/runs/{'0'*64}", headers=token).status_code == 404
     assert client.get("/v1/runs/bad-id", headers=token).status_code == 422
 
