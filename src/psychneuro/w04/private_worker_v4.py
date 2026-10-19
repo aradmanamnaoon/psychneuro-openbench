@@ -20,7 +20,7 @@ import json
 import sqlite3
 import time
 from pathlib import Path
-from typing import Any, Protocol
+from typing import Any, Protocol, cast
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -110,10 +110,11 @@ class AtomicWorker:
         self.queue = queue
         self.registry_path = registry_path
         self.source_preflight = source_preflight or preflight_source
+        self.execute: Execution
         if execute is None:
             # Import is lazy; the actual W03 runner is used in production.
             from psychneuro.w03.service import execute as w03_execute
-            self.execute = w03_execute
+            self.execute = cast(Execution, w03_execute)
         else:
             self.execute = execute
         with self._db() as conn:

@@ -4,11 +4,13 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
+from fastapi import FastAPI
+
 from .api import create_app
 from .rights import Principal
 
 
-def app_factory():
+def app_factory() -> FastAPI:
     token = os.environ.get("W04_PRIVATE_TOKEN", "")
     # All evaluation is synthetic-only. Token presence is required on every launch.
     if len(token) < 32:

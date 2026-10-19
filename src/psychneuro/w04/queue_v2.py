@@ -6,11 +6,11 @@ output idempotently. Model fitting is resumable only at completed stage boundari
 from __future__ import annotations
 
 import hashlib
-import json
 import re
 import sqlite3
 import time
 from pathlib import Path
+from typing import Any, cast
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -78,14 +78,16 @@ class QueueStore:
             raise ValueError("invalid identifier")
         return x
 
-    def _row(self, db: sqlite3.Connection, tenant: str, job_id: str) -> tuple | None:
+    def _row(self, db: sqlite3.Connection, tenant: str, job_id: str) -> tuple[Any, ...] | None:
         self._identifier(tenant)
         if not _SHA.fullmatch(job_id):
             raise ValueError("invalid job digest")
-        return db.execute("SELECT * FROM w04_v2_jobs WHERE id=? AND tenant=?", (job_id, tenant)).fetchone()
+        return cast(tuple[Any, ...] | None, db.execute("SELECT * FROM w04_v2_jobs WHERE id=? AND tenant=?", (job_id, tenant)).fetchone())
 
     @staticmethod
-    def _item(row: tuple) -> QueueItem:
+    def _item(row: tuple[Any, ...] | None) -> QueueItem:
+        if row is None:
+            raise JobConflict("job missing after durable transition")
         return QueueItem(id=row[0], tenant=row[1], subject=row[2], dataset=row[3], state=row[6],
                          revision=row[7], fence=row[8], attempts=row[9], lease_until_ns=row[10],
                          next_attempt_ns=row[11], checkpoint_stage=row[12], checkpoint_sha256=row[13],
@@ -160,14 +162,15 @@ class QueueStore:
         with self._db() as db:
             db.execute("BEGIN IMMEDIATE")
             row = self._row(db, tenant, job_id)
-            self._require_worker(row, worker, fence, now)
+            row = self._require_worker(row, worker, fence, now)
             db.execute("UPDATE w04_v2_jobs SET lease_until=?,revision=revision+1 WHERE id=?", (now+lease_ns, job_id))
             return self._item(self._row(db, tenant, job_id))
 
     @staticmethod
-    def _require_worker(row: tuple | None, worker: str, fence: int, now: int) -> None:
+    def _require_worker(row: tuple[Any, ...] | None, worker: str, fence: int, now: int) -> tuple[Any, ...]:
         if row is None or row[6] != "running" or row[8] != fence or row[15] != worker or row[10] <= now:
             raise JobConflict("stale or unauthorized worker lease")
+        return row
 
     def checkpoint(self, *, tenant: str, job_id: str, worker: str, fence: int,
                    stage: str, artifact_sha256: str, correlation: str,
@@ -178,7 +181,7 @@ class QueueStore:
         with self._db() as db:
             db.execute("BEGIN IMMEDIATE")
             row = self._row(db, tenant, job_id)
-            self._require_worker(row, worker, fence, now)
+            row = self._require_worker(row, worker, fence, now)
             if row[12] is not None:
                 current = _STAGES[row[12]]
                 if _STAGES[stage] < current:
@@ -199,7 +202,7 @@ class QueueStore:
         with self._db() as db:
             db.execute("BEGIN IMMEDIATE")
             row = self._row(db, tenant, job_id)
-            self._require_worker(row, worker, fence, now)
+            row = self._require_worker(row, worker, fence, now)
             if row[12] != "persisted" or row[13] != result_sha256:
                 raise JobConflict("final durable artifact checkpoint required")
             db.execute("UPDATE w04_v2_jobs SET state='succeeded',result_sha=?,revision=revision+1,"
@@ -214,7 +217,7 @@ class QueueStore:
         with self._db() as db:
             db.execute("BEGIN IMMEDIATE")
             row = self._row(db, tenant, job_id)
-            self._require_worker(row, worker, fence, now)
+            row = self._require_worker(row, worker, fence, now)
             exhausted = row[9] >= max_attempts
             delay = min(2 ** max(row[9] - 1, 0), 64) * 1_000_000_000
             db.execute("UPDATE w04_v2_jobs SET state=?,lease_until=0,revision=revision+1,"
