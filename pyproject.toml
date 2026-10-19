@@ -12,7 +12,7 @@ authors = [{ name = "PsychNeuro OpenBench contributors" }]
 dependencies = []
 
 [project.optional-dependencies]
-dev = ["pytest>=8,<10", "ruff>=0.9,<1", "mypy>=1.12,<2"]
+dev = ["pytest>=8,<10", "ruff>=0.9,<1", "mypy>=1.12,<2", "httpx2>=2,<3"]
 parquet = ["pyarrow>=17"]
 benchmark = ["scikit-learn>=1.5,<2"]
 ui = ["streamlit>=1.65,<2", "altair>=5,<7"]
