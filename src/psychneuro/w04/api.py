@@ -21,6 +21,7 @@ from .jobs import Job, JobStore, RevisionConflict, State
 from .ledger import LedgerStore
 from .rights import Action, DatasetRights, Decision, Principal, W03_INTERNAL, decide
 from .ui import PAGE
+from .product import install_product_routes
 
 
 class JobTransition(BaseModel):
@@ -48,7 +49,7 @@ def create_app(*, db_path: Path, registry_path: Path,
     jobs = JobStore(db_path)
     policy_audit = LedgerStore(db_path)
     app = FastAPI(title="W04 private benchmark + provenance + rights", version="0.4.0",
-                  docs_url=None, redoc_url=None)
+                  docs_url=None, redoc_url=None, openapi_url="/w04/openapi.json")
 
     def actor(x_internal_token: str | None = Header(default=None)) -> Principal:
         # no caller-supplied role header; all roles are server-side secrets mapping
@@ -200,6 +201,9 @@ def create_app(*, db_path: Path, registry_path: Path,
     def audit(job_id: str, principal: Principal = Depends(actor)) -> list[dict[str, object]]:
         get_job(job_id, principal)
         return jobs.audit(job_id)
+
+    install_product_routes(app, db_path=db_path, runs=runs, rights=rights,
+                           actor=actor, execute_request=lambda request: execute(request, registry_path, runs))
 
     return app
 
