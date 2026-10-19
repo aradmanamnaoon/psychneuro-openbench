@@ -33,8 +33,8 @@ code{word-break:break-all}table{border-collapse:collapse;width:100%}th,td{paddin
 <section aria-labelledby="jobs-title"><h2 id="jobs-title">Manual durable job-state protocol</h2>
 <p>No background worker. Cancel/resume are metadata transitions and do not interrupt an active model fit.</p>
 <label for="job-id">Job ID (64-character lowercase hex)</label><input id="job-id" size="64">
-<button id="job-create">Create metadata job</button><button id="job-status">Get status</button>
-<button id="job-cancel">Request cancellation</button><button id="job-resume">Requeue failed/cancelled</button>
+<button id="job-create">Create metadata job</button><button id="job-start">Start metadata job</button><button id="job-status">Get status</button>
+<button id="job-cancel">Request cancellation</button><button id="job-ack">Acknowledge cancellation</button><button id="job-resume">Requeue failed/cancelled</button>
 <p id="job-display" role="status" aria-live="polite"></p></section>
 </main><script>
 'use strict';
@@ -55,7 +55,8 @@ $('load').addEventListener('click',async()=>{
     $('scores').appendChild(table);
     const graph=await readJson('/w04/v2/runs/'+ids[0]+'/graph',token);
     if(!Array.isArray(graph.nodes)||graph.nodes.length!==4)throw new Error('Unexpected provenance graph shape');
-    graph.nodes.forEach(n=>{const li=add($('graph'),'li',n.kind+' — '+n.sha256);add(li,'p','Parents: '+(n.parents.join(', ')||'none'));if(n.kind==='split')add(li,'p','Train groups: '+n.metadata.train_groups+'; test groups: '+n.metadata.test_groups);});
+    graph.nodes.forEach(n=>{const li=add($('graph'),'li',n.kind+' — '+n.sha256);add(li,'p','Parents: '+(n.parents.join(', ')||'none'));if(n.kind==='split')add(li,'p','Train groups: '+n.metadata.train_groups+'; test groups: '+n.metadata.test_groups);
+     add(li,'pre',JSON.stringify(n.metadata,null,2));});
     $('alert').textContent='Loaded '+records.length+' aggregate run(s); provenance root '+graph.root;
   }catch(e){$('scores').replaceChildren();$('graph').replaceChildren();$('alert').textContent=e.message||'Request failed';}
 });
@@ -69,6 +70,8 @@ $('verify').addEventListener('click',async()=>{try{const file=$('receipt').files
 async function jobStatus(){const id=$('job-id').value.trim();if(!valid(id))throw new Error('Invalid job ID');const job=await readJson('/w04/v1/jobs/'+id,$('token').value);$('job-display').textContent='State: '+job.state+'; revision: '+job.revision+'; attempts: '+job.attempts+'; checkpoint: '+(job.checkpoint||'none');return job;}
 $('job-create').addEventListener('click',async()=>{try{const id=$('job-id').value.trim();if(!valid(id))throw new Error('Invalid job ID');await postJson('/w04/v1/jobs/'+id,$('token').value,{});await jobStatus();}catch(e){notifyError(e);}});
 $('job-status').addEventListener('click',async()=>{try{await jobStatus();}catch(e){notifyError(e);}});
+$('job-start').addEventListener('click',async()=>{try{const j=await jobStatus();if(j.state!=='queued')throw new Error('Only queued metadata jobs can start');await postJson('/w04/v1/jobs/'+j.job_id+'/transition',$('token').value,{revision:j.revision,target:'running'});await jobStatus();}catch(e){notifyError(e);}});
+$('job-ack').addEventListener('click',async()=>{try{const j=await jobStatus();if(j.state!=='cancel_requested')throw new Error('Cancellation must be requested first');await postJson('/w04/v1/jobs/'+j.job_id+'/transition',$('token').value,{revision:j.revision,target:'cancelled'});await jobStatus();}catch(e){notifyError(e);}});
 $('job-cancel').addEventListener('click',async()=>{try{const j=await jobStatus();if(j.state!=='running')throw new Error('Only running protocol jobs can request cancel');await postJson('/w04/v1/jobs/'+j.job_id+'/transition',$('token').value,{revision:j.revision,target:'cancel_requested'});await jobStatus();}catch(e){notifyError(e);}});
 $('job-resume').addEventListener('click',async()=>{try{const j=await jobStatus();if(j.state!=='failed'&&j.state!=='cancelled')throw new Error('Only failed/cancelled jobs can be requeued');await postJson('/w04/v1/jobs/'+j.job_id+'/transition',$('token').value,{revision:j.revision,target:'queued'});await jobStatus();}catch(e){notifyError(e);}});
 </script></body></html>'''
