@@ -23,6 +23,7 @@ from .policy_v2 import PolicyStore
 from .product import ImportResult, RunComparison, SplitSummary, TenantRunACL
 from .rights import W03_INTERNAL, Action, Decision, Principal
 from .ui import PAGE
+from .worker_routes_v5 import install_worker_routes
 
 
 class Catalog(BaseModel):
@@ -196,4 +197,6 @@ def create_strict_app(*, db_path: Path, registry_path: Path,
         return RunComparison(left=a, right=b,
                              balanced_accuracy_difference=a.outer_balanced_accuracy -
                              b.outer_balanced_accuracy)
+    install_worker_routes(app, database=db_path, registry=registry_path,
+                          policy=policy, actor=principal)
     return app
