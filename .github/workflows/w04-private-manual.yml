@@ -41,11 +41,11 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
-      - name: Install fixed TypeScript compiler (review environment; lockfile not yet generated)
-        run: npm install --no-save --ignore-scripts --no-audit --no-fund typescript@5.9.3
+      - name: Install exact lockfile-based TypeScript and axe dependencies
+        run: npm ci --prefix apps/web --ignore-scripts --no-audit --no-fund
       - name: Check typed browser contracts and scientific summaries
         run: |
-          ./node_modules/.bin/tsc -p apps/web/tsconfig.build.json
-          node --test apps/web/tests/*.test.mjs
+          npm run typecheck --prefix apps/web
+          npm test --prefix apps/web
           node --version
           echo "exact_sha=${GITHUB_SHA}"
