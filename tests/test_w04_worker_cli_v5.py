@@ -45,6 +45,7 @@ def test_one_shot_dry_run_and_bounded_execution_with_doubles(tmp_path, monkeypat
     db.touch(mode=0o600); db.chmod(0o600); registry.write_text("{}")
     monkeypatch.setenv("W04_PERMIT_KEY_HEX", "ab" * 32)
     calls: list[str] = []
+    maintenance_calls: list[tuple[str, str]] = []
     fake_policy = types.ModuleType("psychneuro.w04.policy_v2")
     fake_queue = types.ModuleType("psychneuro.w04.queue_v2")
     fake_worker = types.ModuleType("psychneuro.w04.private_worker_v4")
@@ -54,6 +55,10 @@ def test_one_shot_dry_run_and_bounded_execution_with_doubles(tmp_path, monkeypat
     class QueueStore:
         def __init__(self, path):
             assert path == db
+
+        def reconcile_terminal(self, *, tenant: str, correlation: str) -> int:
+            maintenance_calls.append((tenant, correlation))
+            return 0
     class AtomicWorker:
         def __init__(self, *, database, policy, queue, registry_path):
             assert database == db and registry_path == registry
@@ -72,7 +77,9 @@ def test_one_shot_dry_run_and_bounded_execution_with_doubles(tmp_path, monkeypat
         monkeypatch.setitem(sys.modules, name, module)
     assert cli.main(_args(db, registry) + ["--dry-run"]) == 0
     assert calls == []
+    assert maintenance_calls == []  # No maintenance writes in dry-run mode.
     assert json.loads(capsys.readouterr().out)["due"] == 1
     assert cli.main(_args(db, registry) + ["--limit", "2"]) == 0
+    assert maintenance_calls == [("tenant-A", "operator-scan")]
     assert calls == ["id1", "id2"]
     assert json.loads(capsys.readouterr().out)["succeeded"] == 2
