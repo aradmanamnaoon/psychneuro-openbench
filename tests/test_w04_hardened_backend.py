@@ -269,3 +269,41 @@ def test_policy_snapshot_rehashed_but_unlinked_event_refused(policy):
         store.authorize(tenant=rec.tenant, dataset=rec.dataset, subject="researcher",
                         role="researcher", action="run", purpose=rec.purpose,
                         correlation_id="audit-forge")
+
+def test_cancelled_resume_fails_closed_on_separate_policy_database(policy, tmp_path):
+    store, _ = policy
+    queue = QueueStore(tmp_path / "other.sqlite")
+    job = create_job(queue)
+    queue.cancel(tenant="tenant-A", job_id=job.id, subject="researcher",
+                 correlation="cancel-before-running", now_ns=1_000_000_001)
+    with pytest.raises(JobConflict, match="atomic shared policy database"):
+        queue.resume_cancelled(tenant="tenant-A", job_id=job.id, subject="researcher",
+                               correlation="resume", permit=permit(store, now=3_000_000_000),
+                               policy_store=store, now_ns=3_000_000_001)
+    assert queue.get(tenant="tenant-A", job_id=job.id, subject="researcher").state == "cancelled"
+
+
+def test_cancelled_resume_detects_revoke_between_precheck_and_lock(policy, monkeypatch):
+    store, _ = policy
+    queue = QueueStore(store.path)
+    job = create_job(queue)
+    queue.cancel(tenant="tenant-A", job_id=job.id, subject="researcher",
+                 correlation="cancel-before-running", now_ns=1_000_000_001)
+    p = permit(store, now=3_000_000_000)
+    validate = store.validate_permit
+    count = [0]
+
+    def revoke_after_precheck(provided, *, now_ns=None):
+        count[0] += 1
+        validate(provided, now_ns=now_ns)
+        if count[0] == 1:
+            store.revoke(tenant="tenant-A", dataset="w03-original-synthetic",
+                         operator="maintainer")
+
+    monkeypatch.setattr(store, "validate_permit", revoke_after_precheck)
+    with pytest.raises(PolicyError, match="stale or revoked"):
+        queue.resume_cancelled(tenant="tenant-A", job_id=job.id, subject="researcher",
+                               correlation="resume", permit=p, policy_store=store,
+                               now_ns=3_000_000_001)
+    assert count[0] == 2
+    assert queue.get(tenant="tenant-A", job_id=job.id, subject="researcher").state == "cancelled"
