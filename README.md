@@ -1,252 +1,248 @@
 <div align="center">
 
-# PsychNeuro OpenBench
+# 🧠 PsychNeuro OpenBench
 
 ### From behavioral trials to defensible research evidence.
 
-**A reproducibility-first research-software project for behavioral psychology and computational neuroscience ML.**
+**A synthetic-first, reproducibility-oriented research workbench for psychology and computational neuroscience.**
 
-*Know the data. Protect the holdout. Explain every score.*
+*Know the source. Keep participants apart. Trace every result.*
+
+[Explore the workflow](#a-workbench-that-explains-its-decisions) · [Quick start](#run-a-local-synthetic-experiment) · [Offline evidence review](#generate-a-private-review-page) · [Architecture](#architecture) · [Scientific limitations](#scientific-boundaries)
 
 </div>
 
 > [!IMPORTANT]
-> **Private development — not publicly released.** This repository must remain private until the **full product is completed**, its [release gates](docs/release-gates.md) are verified, and the owner **explicitly authorizes making it public**. A polished README, prototype, or passing fixture tests do not authorize publication.
+> **PRIVATE ENGINEERING PREVIEW — NOT A RELEASE.** This repository and its W04 integration remain private, unmerged and unsuitable for public hosting, human datasets, clinical decisions or publication claims. No user adoption, independent external review, or end-to-end production validation is asserted. Review the [release gates](docs/release-gates.md) and [W04 independent reviewer packet](docs/week4/W04_INDEPENDENT_REVIEWER_PACKET.md). Changing repository visibility requires separate explicit authorization.
 
+## Why this exists
 
-> **What if a behavioral ML benchmark could explain not just *how well* a model scored, but also exactly *what it was allowed to learn from*?**
+Imagine two researchers forecasting whether a person will answer a behavioral task correctly. Both get an impressive score. One accidentally trains on trials from people also present in their test data; the other holds out entire people. One includes reaction time measured **after** the response.
 
-PsychNeuro OpenBench is an emerging **nonclinical, reproducibility-first benchmarking workbench** for behavioral psychology and computational neuroscience research. It is being built for people who want to move from trial tables to defensible model comparisons—without leaking the same participant across training and test data, mistaking post-response measurements for predictors, or losing track of dataset rights.
+Those numbers do not answer the same question.
 
-**Current stage: private engineering preview, not a finished benchmark, published package, or validated/deployed browser app.**
-**PM-15 deployment gate: BLOCKED. No hosted demo URL exists.** A private-host
-configuration and directly pinned Python requirements have been committed
-for a later owner-approved review; their installation and compatibility are
-**NOT VERIFIED**. The preceding PM-10–14 exact-branch CI and browser checks
-are **NOT RUN**. No public release, app deployment, private GitHub OAuth
-grant, paid runner use, or visitor invitation has been authorized.
-[Private-host runbook](docs/pm15-host-runbook.md) ·
-[20-case browser acceptance script](docs/pm15-browser-smoke.md) ·
-[Source-level security/privacy/license audit](docs/pm15-security-privacy-audit.md) ·
-[Daily honest change log](docs/pm15-changelog.md).
+**PsychNeuro OpenBench makes the decisions surrounding a number inspectable.** The project couples synthetic data provenance, participant-level separation, interpretable baselines, immutable aggregate records, policy gates, and skeptical scientific reporting. It is designed for researchers who prefer an explicit refusal over a misleading metric.
 
-The source generates and validates wholly fictional behavioral trials and
-contains **unexecuted private-review** grouped baseline training/evaluation.
-No current-commit hosted model run, browser smoke, scored scientific result
-or publicly released demonstration is verified here.
+It is also a practical platform for experimenting with scientific software architecture: typed Python contracts, FastAPI endpoints, SQLite transaction boundaries, a separate fenced worker, browser interfaces and adversarial regression tests.
 
-[Start with the synthetic example](#try-the-current-synthetic-foundation) · [What works today](#what-works-today) · [Scientific contract](docs/spec-v0.md) · [Research and engineering roadmap](#roadmap-with-real-issue-tracking) · [Release requirements](docs/release-gates.md)
+## A workbench that explains its decisions
 
----
+| Capability | What it does | Current evidence boundary |
+| :--- | :--- | :--- |
+| **Synthetic behavioral trial lab** | Generates deterministic fictional two-choice trials with schema and source digests | Implemented and previously exercised by CI |
+| **Source-rights gate** | Rejects unapproved external sources and post-response predictor fields | Source + negative tests; independent legal review pending |
+| **Group-safe ML baselines** | Compares a grouped dummy policy with logistic regression using nested group-aware selection and a sealed test partition | W03 source and prior synthetic tests; no human validity |
+| **Reproducibility graph** | Content-addressed source → split → model → benchmark chain with immutable SQLite records | Implemented; a hash is not a signature |
+| **Private W04 research API** | Authenticated synthetic runs, aggregate inspection and restricted routes | Integration on private branch; not publicly hosted |
+| **Rights-aware durable jobs** | SQLite leases, idempotency, cancellation fencing, retry accounting, separate operator worker | Code and negative tests; exact current-head hosted gate pending |
+| **Independent receipt verification** | Validates P13/P25 receipt identity and optional externally pinned Ed25519 root anchors | Keys and independent trust channel are an operator obligation |
+| **Offline evidence reviewer** | Verifies a local synthetic W03 aggregate; exports accessible, stand-alone HTML, Markdown or JSON | Added on this feature branch; exact-head CI pending |
+| **Reproducibility documentation** | Protocols, example limitations, tests, architecture, decision records and review gates | Extensive docs; some historical pages predate W04 |
 
-## The problem worth solving
+**Do not mistake implemented source or older-commit CI for a verified release candidate.** A run may have internally consistent hashes without being real, independent, authorized or reproducible on another machine.
 
-Imagine two labs publish models that predict trial correctness. One lab makes row-random train/test splits while participants each contribute dozens of trials; another uses a group-held-out split. One lab includes reaction time—the response has already happened—as a feature. Both report strong accuracy.
+## Who can use the approach?
 
-**Those results are not directly comparable.** A score alone cannot reveal whether the evaluation used independent participants, whether predictors existed at decision time, or whether the exact data and configuration can be reconstructed.
+- **Psychology and cognitive-science students:** see why row-shuffled evaluation and leakage can produce persuasive but invalid performance.
+- **Computational neuroscience researchers:** prototype scientific pipelines with explicit participants, labels, source rights and feature timing.
+- **ML engineers:** study deterministic data generation, group-aware nested CV, transaction-safe output, lineage and safe async coordination.
+- **Scientific reviewers and maintainers:** inspect every reported checksum and score alongside the exact assumptions and remaining limits.
 
-The intended OpenBench workflow makes those decisions inspectable: identify what the dataset is, reject invalid or unauthorized inputs, freeze the participant-level split, run transparent baselines, report uncertainty and limitations, and export a replayable evidence record.
+The current dataset is **entirely fictional**. There are no claims of validity for human emotion, mental health, behavioral phenotypes, EEG, fMRI or clinical prediction.
 
-This is a *research-software problem*, not a clinical prediction product. The initial milestone uses synthetic fixtures to test the software contract before considering lawful real research datasets.
+## Architecture
 
-## Who it is for
+~~~mermaid
+flowchart LR
+    A["Original synthetic generator"] --> B["Schema + feature timing"]
+    B --> C["Participant-disjoint split"]
+    C --> D["Nested group-aware CV"]
+    D --> E["Dummy + logistic models"]
+    E --> F["Sealed test evaluation"]
+    F --> G["Immutable W03 run + P13 provenance"]
+    P["P25 operator-reviewed rights"] --> W["Private W04 API and job queue"]
+    W --> D
+    G --> R["P13/P25 aggregate receipt"]
+    R --> V["Independent root verifier"]
+    G --> Q["Offline HTML/Markdown reviewer"]
+~~~
 
-| Research role | What they should eventually be able to do |
-| --- | --- |
-| **Psychology methods student** | Understand why a good-looking score can be wrong; compare baselines on identical held-out groups |
-| **Research assistant / data steward** | Check trial identifiers, source rights, missingness and transformation history before analysis |
-| **Computational neuroscience analyst** | Stress-test participant-level generalization and trace the provenance of derived behavioral features |
-| **ML reproducibility reviewer** | Inspect exact split identities, versions, metrics, warnings and hosted test evidence without trusting a notebook screenshot |
+A compact mental model:
 
-These are **intended users**, not evidence of interviews, adoption or institutional partnerships.
+**P1 = scientific data and evaluation · P13 = integrity and provenance · P25 = access and rights · W04 = private application and worker integration.**
 
-## What works today
+The SQL boundary matters: a W04 worker must not commit aggregate results after its lease expires, its job is cancelled or its P25 permission is revoked. A cancel cannot interrupt a CPU-bound scikit-learn fit already executing; it can fence the result from publication. The project is deliberately conservative about this distinction.
 
-| Component | Current reality | Evidence |
-| --- | --- | --- |
-| Synthetic two-choice trial generator | **Implemented** — local seeded RNG, invented participants, bounded trial count | [Source](src/psychneuro/synthetic.py) |
-| Structural checks | **Implemented** — duplicate keys, trial order, finite values, binary labels and response consistency | [Tests](tests/test_synthetic.py) |
-| Portable tabular export | **Implemented** — stable-column UTF-8 CSV and SHA-256 of exact serialized bytes | [Schema](docs/data-schema.md) |
-| Dataset card | **Implemented** — synthetic origin, seed, rights declaration, row/group counts and feature availability | [Source](src/psychneuro/synthetic.py) |
-| Fail-closed synthetic registry and rights-aware validation | **Implemented** — only synthetic source enabled; six public-study entries disabled, with versioned metadata, loader provenance checks, source SHA-256 and feature-timing safeguards | [Schema](src/psychneuro/schema.py), [registry loader](src/psychneuro/registry.py), [registry metadata](data/registry.json) |
-| PM-05 local CSV / optional Parquet ingestion | **Code added, CI not yet run on PM-05 commit** — only exact replays of original synthetic fixtures, fail-closed quality diagnostics and machine-readable raw/canonical SHA-256 provenance | [Loader](src/psychneuro/loaders.py), [quality gate](src/psychneuro/quality.py), [negative tests](tests/test_pm05_loaders.py), [scope & limitations](docs/pm05-data-ingestion.md) |
-| PM-06 data-quality tests and descriptive tooling | **Private branch source added; hosted tests/pilot NOT RUN** | [Tests](tests/test_loaders.py), [dataset card](docs/data-card.md), [evidence](docs/pm06-data-stage-changelog.md) |
-| PM-07 deterministic subject-held-out split | **Private review branch implementation, pytest/Ruff/mypy NOT RUN** — seeded participant partitions, duplicate/overlap/index/source-hash guards, prespecified evaluation protocol | [Split](src/psychneuro/split.py), [tests](tests/test_splits.py), [design](docs/split-design.md), [protocol](docs/evaluation-protocol.md) |
-| Engineering verification | **PM-03 verified:** 46 tests passed on both Python 3.11 and 3.12; **PM-04 final verified:** 80 tests passed on Python 3.11, Ruff passed and strict mypy passed on 4 source files | [PM-03 log](https://github.com/aradmanamnaoon/psychneuro-openbench/actions/runs/38864568384), [PM-04 final log](https://github.com/aradmanamnaoon/psychneuro-openbench/actions/runs/38874446677) |
-| PM-08 grouped baseline benchmarking | **Source code and regression tests committed on private review branch; execution, metrics, Ruff, mypy and CI NOT RUN.** Includes dummy prior, interpretable logistic model, participant-grouped CV, separate test holdout, JSON manifest | [Metrics](src/psychneuro/metrics.py), [baselines](src/psychneuro/baselines.py), [runner](src/psychneuro/experiments.py), [tests](tests/test_pm08_experiments.py), [protocol/evidence](docs/pm08-benchmark.md), [baseline issue #4](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/4) |
-| PM-09 versioned configuration, integration tests and model card | **Source committed; hosted pytest/Ruff/mypy and model run NOT VERIFIED.** Strict JSON configuration rejects rights/metric/model drift; CI remains manual-only | [Frozen configuration](configs/baseline.json), [validator](src/psychneuro/config.py), [integration tests](tests/test_experiments.py), [honest model card](docs/model-card.md), [Day-3 decisions](docs/decisions/day3-pm09.md) |
-| PM-10 synthetic repeat/statistical report | **Private branch source committed; pytest/Ruff/mypy and synthetic repeats NOT RUN.** Fixed-seed repeated cohort experiments; explicit SE/nominal t CI guards; minimum-participant subgroup suppression; report manifest | [Pipeline](src/psychneuro/pipeline.py), [uncertainty](src/psychneuro/uncertainty.py), [slices](src/psychneuro/slices.py), [tests](tests/test_uncertainty.py), [protocol](docs/pm10-statistical-pipeline.md) |
-| PM-11 report, lineage, browser shell | **Source-only private branch; hosted report execution, actual charts, export artifacts and browser QA NOT RUN.** Adds fail-closed real-artifact reader, per-repeat accessible chart/table, Markdown/JSON downloads and hash manifest | [Reporting](src/psychneuro/reporting.py), [UI shell](app.py), [regression tests](tests/test_reporting.py), [review specification](docs/pm11-report-exports.md) |
-| PM-12 synthetic explorer controls and smoke matrix | **Source-only private preview; no PM-12 hosted CI run, actual benchmark report, browser deployment, or verified metrics.** Fixed rights-cleared preview; artifact-only model filters; streamlit AppTest specifications; release NO-GO | [Explorer](src/psychneuro/explorer.py), [UI controls](app.py), [UI tests](tests/test_app.py), [Day-4 acceptance matrix](docs/pm12-explorer-smoke.md) |
-| PM-13 integrated in-app synthetic benchmark | **Source implemented on private branch; no run, UI QA, CI logs or measured output verified.** The browser can submit bounded fictional scenarios to the existing provenance-gated grouped pipeline, plot genuine computed values/nullable nominal repeat uncertainty, and export rights-constrained JSON/Markdown/lineage files | [Workflow runner](src/psychneuro/workflow.py), [UI](app.py), [tests](tests/test_workflow.py), [PM-13 methods and release gate](docs/pm13-live-workflow.md) |
-| PM-14 first-user UX, accessible chart alternatives, resilient errors, optional performance profiling | **Source-only, not verified in a real browser or hosted CI.** Adds a screenshot-free tutorial, labeled navigation guidance, static score tables, privacy-safe error messages, missing/invalid/restricted data test specifications and disabled-by-default 480-row hosted CPU/memory profiling. **No performance measurements exist.** | [Tutorial](docs/tutorial.md), [UX errors](src/psychneuro/ux.py), [tests](tests/test_pm14.py), [accessibility/errors/performance ledger](docs/pm14-a11y-errors-performance.md), [profiling](src/psychneuro/profiling.py) |
-| PM-15 hosted release-candidate and legal/security gates | **SOURCE-ONLY. NOT DEPLOYED; current branch CI, private-host build, browser/mobile smoke and performance UNVERIFIED.** Direct requirements pinned as candidates, no full transitive lock or vulnerability scan; Apache-2.0/NOTICE present, release/public permission withheld | [Host configuration](.streamlit/config.toml), [direct pins](requirements.txt), [preflight tests](tests/test_deployment.py), [private host/approval runbook](docs/pm15-host-runbook.md), [20-case browser script](docs/pm15-browser-smoke.md), [security and rights audit](docs/pm15-security-privacy-audit.md), [changelog](docs/pm15-changelog.md) |
-| PM-16 reproducibility, research use cases and private contributor onboarding | **Documentation SOURCE ONLY: no clean hosted PM-16 run, verified app, screenshot, new PR or release.** Source-audited reproduction commands, FAQ, scoped use cases, contributor science/privacy/review policy and proposed issue/PR templates on a private feature branch; one actual private small [good first issue #7](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/7) created and label confirmed | [Reproducibility](docs/reproducibility.md), [Use cases](docs/use-cases.md), [FAQ](docs/faq.md), [Contributing](CONTRIBUTING.md), [Real issue index](docs/pm16-issue-map.md), [Private onboarding QA](tests/test_contributor_docs.py) |
-| PM-17 real upstream OSS and responsible specialist-discovery research | **PRIVATE SOURCE-ONLY:** eight active upstream repos with real issue/license/guideline links, two scoped improvements, an unsubmitted skrub new-file Python example plus conventional reviewable upstream patch and 12 publicly evidenced expert feedback prospects. **No upstream PR/fork, outreach, runtime tests, maintainer approval or collaboration claim.** | [Upstream issue/license research](docs/pm17-upstream-targets.md), [private skrub patch and gate](docs/pm17-upstream-patch-review.md), [12 opt-in research prospects](docs/pm17-feedback-prospects.md), [reviewable Python source](upstream-prototypes/skrub/1170_group_aware_cross_validation.py), [actual new-file git patch](upstream-prototypes/skrub/1170_group_aware_cross_validation.patch), [static source tests](tests/test_pm17_patch.py) |
-| Real dataset **ingestion**, browser UI, third-party reproducibility study | **Not implemented / not validated** | [Rights issue #5](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/5), [manifest issue #6](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/6) |
+## Run a local synthetic experiment
 
-**Important distinction:** passing unit tests on invented records validates specific engineering behaviors, **not** research impact, statistical generalizability or brain/behavior modeling accuracy.
+The code is currently maintained on **private review branches**, rather than fully integrated into `main`. These commands target a checked-out branch containing W03/W04. Use an isolated, operator-approved development environment; no cloud provider or paid model is required.
 
-## From trials to trustworthy comparisons
+**Requirements:** Python 3.11 or 3.12; a local environment with permission to install open-source packages; no real participant data.
 
-```mermaid
-flowchart TD
-    A["Synthetic-only trial source (implemented)"] --> B["Schema + provenance checks (implemented)"]
-    B --> C["Participant-group split (code committed, CI pending)"]
-    C --> D["Training-only preprocessing (PM-08 source committed; CI pending)"]
-    D --> E["Dummy vs logistic baseline (PM-08 source committed; CI pending)"]
-    E --> F["Metrics, uncertainty + failure review (planned)"]
-    F --> G["Versioned reproducibility manifest (planned)"]
-```
-
-**Design commitments**
-
-1. **Participants are the unit of independence.** Repeated trials from the same synthetic participant must not cross training, validation and test boundaries when participant generalization is claimed.
-2. **No tomorrow's information in today's prediction.** For correctness predicted before a response, `response`, `response_time_ms`, outcome-derived summaries and identifiers are not permissible predictors.
-3. **A dummy model belongs in the report.** A classifier should not be called useful merely because it beats no baseline.
-4. **Rights are part of the experiment.** A software license does not grant permission to use a dataset; unverified real datasets are denied by default.
-5. **A failure is evidence.** An invalid input, insufficient group count, undefined metric or unreproducible run should produce an explicit failure—not a fabricated number.
-
-The normative research and reproducibility proposal lives in [`docs/spec-v0.md`](docs/spec-v0.md). That document remains subject to review and is **not** proof that the planned benchmark engine already exists.
-
-## Try the current synthetic foundation
-
-The public-facing browser experience is **not available yet**. These steps are for future technical contributors using an independently authorized development environment; the project owner is not expected to install or run anything locally.
-
-**Requirements:** Python 3.11+; no model API, GPU, patient dataset or paid cloud endpoint. The current generator uses only the Python standard library at runtime.
-
-```sh
-python -m pip install -e '.[dev]'
+~~~bash
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install -e '.[benchmark,w03,dev]'
 python -m pytest -q
 python -m ruff check .
 python -m mypy src
-```
+~~~
 
-In Python:
+On Windows activate with `.venv\Scripts\activate`. Installation and exact-head tests on this new branch **have not yet been independently verified**. Hosted CI must prove compatibility before release.
 
-```python
-from psychneuro.synthetic import (
-    SyntheticConfig,
-    dataset_card,
-    generate_trials,
-    to_csv_text,
-)
+### 1. Generate a fictional dataset
 
-config = SyntheticConfig(
-    seed=42,
-    n_participants=24,
-    trials_per_participant=20,
-)
+~~~python
+from psychneuro.synthetic import SyntheticConfig, dataset_card, generate_trials
+
+config = SyntheticConfig(seed=73, n_participants=36, trials_per_participant=12)
 trials = generate_trials(config)
-csv_text = to_csv_text(trials)
 card = dataset_card(config, trials)
 
-print(f"Rows: {len(trials)}")
-print(f"Fictional participants: {card['n_participants']}")
-print(f"Synthetic: {card['synthetic']}")
-print(f"Input SHA-256: {card['source_sha256']}")
-```
+print("Synthetic rows:", len(trials))
+print("Source fingerprint:", card["source_sha256"])
+~~~
 
-With this configuration, the **record-count contract is 24 × 20 = 480 synthetic trials**, subject to successful generation. Each record includes a fictional participant, a session and trial key, pre-response condition/difficulty, synthetic correctness, a generated response, and reaction time in **milliseconds**. The exact digest depends on the code, configuration and runtime; it is calculated instead of hard-coded in this README.
+The contract specifies 36 fictional participants and 12 trials each. The records are simulated, not observations collected from people.
 
-### What a dataset card means
+### 2. Execute a grouped W03 benchmark
 
-A card records the dataset ID, schema/generator version, seed, row counts, rights basis, raw-export SHA-256, feature definitions and limitations. The current card says `synthetic-original`; it does **not** authorize use of any future real dataset and does **not** establish a software source-code license.
+This example is **only a local scientific development smoke test**, not a production P25-authorized API or proof of model performance.
 
-[Read the full field contract](docs/data-schema.md) for keys, units, missing/invalid-value rules and predictor restrictions.
+~~~python
+import json
+from pathlib import Path
 
-## Reproducibility: what is demonstrated vs still to prove
+from psychneuro.w03.contracts import ExperimentRequest
+from psychneuro.w03.service import execute
+from psychneuro.w03.store import RunStore
 
-**Demonstrated in hosted CI for the current generator and supplemental PM-03 tests:** [run #38864568384](https://github.com/aradmanamnaoon/psychneuro-openbench/actions/runs/38864568384) completed successfully on **Python 3.11 and 3.12**: **46 pytest cases passed per version**, Ruff passed, and strict mypy reported no issues in two source files. The audited test file was integrated onto `main` using its exact Git blob. The earlier [31-pass PM-02 run](https://github.com/aradmanamnaoon/psychneuro-openbench/actions/runs/38863471313) remains available as history. These are engineering test results, **not** evidence of ML benchmark validity.
+storage = RunStore(Path("private-synthetic-experiments.sqlite"))
+result = execute(
+    ExperimentRequest(generator_seed=73, split_seed=42),
+    Path("data/registry.json"),
+    storage,
+)
 
-**Not yet demonstrated:** out-of-group ML generalization, train-only preprocessing, baseline score comparison, participant bootstrap intervals, cross-platform replay, real participant privacy controls, or the complete v0 reproducibility manifest. The planned contract calls for repeat runs, explicit input checksums, frozen folds and environment information before those claims become appropriate.
+record = storage.get(result.run_id)
+assert record is not None
+Path("private-w03-aggregate.json").write_text(
+    json.dumps(record, sort_keys=True), encoding="utf-8"
+)
 
-The default-branch [Actions workflow](.github/workflows/ci.yml) is manual-only to avoid recurring private-repository runner use. The verification branch exists separately and is not an automatic release pipeline.
+print("Run ID:", result.run_id)
+print("Sealed test balanced accuracy:", result.test_balanced_accuracy)
+~~~
 
-## Project structure
+The executable path performs actual grouped model fitting on **invented** data. No illustrative score is hard-coded as a claimed outcome. For protected W04 workflows, use the P25-authorized product path rather than directly exporting storage contents.
 
-```text
-.
-├── docs/
-│   ├── spec-v0.md           # Scientific scope and acceptance gates
-│   ├── data-schema.md       # Trial-level fields, types, units and restrictions
-│   ├── dataset-candidate-audit.md # Six real-source candidates, none enabled
-│   ├── license-policy.md    # Software vs dataset rights
-│   ├── release-gates.md     # Privacy, verification and publication requirements
-│   └── decisions/week1.md   # Engineering choices and actual CI evidence
+### 3. Inspect the result independently
+
+~~~bash
+python -m psychneuro.w04.reviewer \
+  --record private-w03-aggregate.json \
+  --format html \
+  --output private-research-review.html
+~~~
+
+Open the generated HTML file locally. It includes a readable metric table, source/split/run fingerprints and limitations. The page contains **no JavaScript, remote fonts, trackers, third-party assets or network requests**.
+
+For a second separately authorized aggregate:
+
+~~~bash
+python -m psychneuro.w04.reviewer \
+  --record private-w03-aggregate.json \
+  --compare second-authorized-aggregate.json \
+  --format markdown \
+  --output internal-comparison.md
+~~~
+
+Comparisons check whether source and split digests match. If not, the report explicitly refuses to frame the metrics as a controlled head-to-head comparison. Even matching hashes do **not** provide paired predictions or a significance test. Output files are created privately and never overwritten silently.
+
+**Important:** the reviewer accepts an optional `--expected-root` checksum provided through a separate trusted channel, but does not prove provenance authenticity. Signed-root verification remains the job of [`anchor_v1.py`](src/psychneuro/w04/anchor_v1.py), with independently managed public keys and sequence floors. A check against a checksum copied from the same untrusted JSON document is not an independent trust signal.
+
+## Private application and durable jobs
+
+For an explicitly approved local review, the strict FastAPI entrypoint is:
+
+~~~text
+psychneuro.w04.server_strict:app_factory
+~~~
+
+It expects separate 32+-character operator-provisioned `W04_PRIVATE_TOKEN` and `W04_P25_PERMIT_KEY`, a private SQLite path (`W04_DB_PATH`), and `W04_REGISTRY_PATH`. The P25 source policy must be installed before privileged use. A static token is **not production identity management**. The server must not be exposed to the public Internet.
+
+The separate operator-only queue runner is:
+
+~~~bash
+python -m psychneuro.w04.worker_cli_v5 --help
+~~~
+
+A full usage and negative-testing guide lives in [W04 review](docs/W04_REVIEW.md) and the [reviewer packet](docs/week4/W04_INDEPENDENT_REVIEWER_PACKET.md). These are not permissions to launch a host, install policies on behalf of others, or process real human records.
+
+## Project map
+
+~~~text
+psychneuro-openbench/
 ├── src/psychneuro/
-│   ├── __init__.py
-│   ├── synthetic.py         # RNG, validation, CSV and dataset card
-│   ├── schema.py            # Fail-closed rights and predictor validation
-│   ├── registry.py          # Typed source registry and synthetic-only safe loader
-│   └── py.typed
-├── tests/
-│   ├── test_synthetic.py    # Base generator contract tests
-│   ├── test_synthetic_pm03.py # Additional validated edge cases
-│   ├── test_schema.py       # Synthetic provenance and leakage-field gates
-│   └── test_registry.py     # Source-rights deny-by-default regression tests
-├── data/registry.json      # Only the synthetic generator is enabled
-├── .github/workflows/ci.yml
-├── pyproject.toml
-└── README.md
-```
+│   ├── synthetic.py, schema.py, registry.py     # Fictional data and fail-closed sourcing
+│   ├── split.py, baselines.py, experiments.py    # Evaluation integrity and baselines
+│   ├── reporting.py, workflow.py                 # Research report tooling
+│   ├── w03/                                      # Strict grouped engine / record vault
+│   └── w04/                                      # P25 policy, leases, receipts, APIs, reviewer
+├── apps/web/                                     # TypeScript client/scientific view checks
+├── tests/                                        # Python negative, science and integrity tests
+├── benchmarks/                                   # Auditable scripts and explicitly marked evidence
+├── docs/                                         # Methods, decisions, release gates, W04 audit
+├── data/registry.json                           # Synthetic enabled; third-party data disabled
+├── app.py                                        # Private Streamlit exploration pathway
+├── pyproject.toml                                # Python package, development extras
+└── .github/workflows/                            # Private review/manual quality workflows
+~~~
 
-The tree above describes the **main** branch. An alternative multi-session design on `pm-02/synthetic-foundation` is **preserved for history, not merged**: [PM-02 ADR-0001](docs/decisions/pm02-reconciliation.md) selects the hosted-tested `main` API and documents the incompatible fields and versioning rules.
+There are multiple historical private branches and draft PRs. **Do not merge divergent W04 branches without first reconciling their exact commits, test evidence and release conditions.** The primary integrated but unmerged feature line is [W04 unified draft PR #24](https://github.com/aradmanamnaoon/psychneuro-openbench/pull/24).
 
-## Data-source selection: synthetic first, rights before ingestion
+## Scientific boundaries that do not go away
 
-Six actual public neuroscience/behavioral dataset candidates have been documented in the [PM-04 primary-source rights and suitability audit](docs/dataset-candidate-audit.md), including fixed version links, published licenses, reported participant counts, modality differences and exclusions. **None has been loaded or approved for v0.** Open licensing does not by itself establish complete ethical, privacy, model-feature, or task-suitability clearance.
+1. **Independence:** trials from one fictional participant must not appear on both sides of a held-out-person evaluation. Do not confuse trial-level and subject-level generalization.
+2. **Timing:** response and reaction-time outcomes are not legitimate pre-response predictors.
+3. **Baselines:** compare under the same source, grouping and evaluation conditions; the dummy policy matters.
+4. **Uncertainty:** group-aware CV is not proof of calibration, causal inference or real-population external validity.
+5. **Integrity vs authenticity:** SHA-256 alone only detects changes relative to known expected values. It is not a digital signature.
+6. **Rights:** open-source software licensing does not establish consent, clinical approval, or rights to use third-party human data.
+7. **Safety:** no medical diagnosis, treatment guidance, mental-health classification or patient-facing decisions.
 
-The [typed fail-closed registry loader](src/psychneuro/registry.py) and [synthetic-only registry](data/registry.json) permit **only** the project's original invented trial generator; [`validate_synthetic_dataset`](src/psychneuro/schema.py) rejects external/unauthorized cards, bad checksums, incompatible generator metadata, inconsistent counts, and missing feature-timing declarations. [`validate_predictor_columns`](src/psychneuro/schema.py) permits only `difficulty` and `stimulus_condition` as pre-response predictors. The [final hosted PM-04 CI](https://github.com/aradmanamnaoon/psychneuro-openbench/actions/runs/38874446677) recorded **80 passing tests**, Ruff success and strict mypy success on Python 3.11. This is engineering evidence, **not approval for real research data ingestion**.
+Read the [data schema](docs/data-schema.md), [grouped evaluation protocol](docs/evaluation-protocol.md), [research contract](docs/spec-v0.md), and [independent science/security audit](docs/week4/INDEPENDENT_SCIENCE_SECURITY_AUDIT.md).
 
-## Roadmap with real issue tracking
+## Engineering verification and release gate
 
-This is intentionally a sequence of acceptance gates, not a feature wish list dressed up as delivered software.
+The repository contains **historical hosted test evidence**, including a W04 Chat3 ancestor run that reported 491 Python tests per version and a successful TypeScript job. That result belongs to its **specific ancestor commit**, not this branch or the current unified W04 integration. W04 also has reported prior failures and subsequently committed corrections. Never infer success without a matching run SHA.
 
-| Milestone | Evidence needed | Issue |
-| --- | --- | --- |
-| Foundation | Complete schema and rights card validation for synthetic trials | [#1](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/1) |
-| Repeatability | Seed, key, edge-case and CSV/hash tests with hosted logs | [#2](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/2) |
-| Evaluation integrity | Pairwise-disjoint subject groups, deterministic split digests, negative leakage fixtures | [#3](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/3) |
-| Meaningful modeling | Matched held-out folds for DummyClassifier and LogisticRegression, transparent metrics | [#4](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/4) |
-| Lawful sources | Deny-by-default permitted-source registry and complete provenance cards | [#5](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/5) |
-| Audit-ready replay | Canonical manifest, failure warnings, identical controlled reruns and actual CI logs | [#6](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/6) |
+- [ ] Exact-head Python 3.11/3.12 pytest, Ruff and strict mypy.
+- [ ] Exact-head Node/TypeScript tests and build.
+- [ ] Real bounded operator-worker crash/recovery/backup and concurrency checks.
+- [ ] Independent root trust and retention of signature/sequence floors.
+- [ ] Rights/dependency/security assessment beyond toy fixtures.
+- [ ] Private browser accessibility, keyboard, mobile, security and failure-case audit.
+- [ ] Independent human scientific/security review and publication approval.
 
-The full envisioned platform may later add an accessible browser workbench, real datasets with verified rights, and external review. **None of those should be described as available before implementation and direct validation.**
+Until then: **private development, no deployment, no data rights escalation, no clinical claim, no external public release.** See [release gates](docs/release-gates.md) and [W04 reviewer handoff](docs/week4/W04_INDEPENDENT_REVIEWER_PACKET.md).
 
-## Browser-only reviewer route
+## Contributing and reproducibility
 
-For reviewers with access to this **private** repository:
+Contributions should preserve scientific meaning, fail closed when evidence is missing, use seeded synthetic fixtures for automated tests and include negative cases. A proposed feature should explain its independence unit, leakage risks, privacy model, exact execution evidence and compatibility with the frozen research contract.
 
-1. Start with the [v0 scientific contract](docs/spec-v0.md), [schema](docs/data-schema.md), and [implementation decision ledger](docs/decisions/week1.md).
-2. Check the actual [generator implementation](src/psychneuro/synthetic.py), [base tests](tests/test_synthetic.py), [additional PM-03 tests](tests/test_synthetic_pm03.py), and the [verified two-version hosted run](https://github.com/aradmanamnaoon/psychneuro-openbench/actions/runs/38864568384).
-3. Inspect the [PM-02 canonical schema decision](docs/decisions/pm02-reconciliation.md), [rights decisions](docs/license-policy.md), the [development issues](https://github.com/aradmanamnaoon/psychneuro-openbench/issues), and the [release gates](docs/release-gates.md).
-4. Treat a missing run, incomplete dataset permission, or missing split/metric evidence as **not verified**.
+Start with [CONTRIBUTING.md](CONTRIBUTING.md), [the tutorial](docs/tutorial.md), [reproducibility protocol](docs/reproducibility.md) and the [offline reviewer guide](docs/offline-reviewer.md). Please do not post real participant records, secrets or private operational logs in issues.
 
-No login-free interactive browser demo has been deployed. Browser inspection is a **review workflow**, not an actual web-based experiment runner.
+### License and research use
 
-## Research ethics, privacy and limitations
+Code and original documentation: [Apache License 2.0](LICENSE). That license does not automatically grant rights over separately sourced datasets or generated exports; consult the [license policy](docs/license-policy.md) and the open [data-rights decision issue #9](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/9).
 
-- **Synthetic only:** no real psychological-study participant data, clinical records, patient identifiers, diagnosis, treatment, or personalized neuroscience inference are processed in this milestone.
-- **No science claims from toy parameters:** accuracy and reaction-time distributions were chosen for software testing, not fitted to human cognitive behavior or externally validated.
-- **No claim of BIDS compatibility:** BIDS is an interoperability reference, not a certification of this initial CSV schema.
-- **Apache-2.0 code license:** the original project source and documentation are licensed under [Apache License 2.0](LICENSE), with attribution in [NOTICE](NOTICE). **The repository remains private** until the entire platform passes the [release gates](docs/release-gates.md) and the owner separately authorizes publication. Software licensing does not grant rights to any third-party research dataset.
-- **No public release or publicity:** do not change repository visibility, publish a release/package/demo, recruit users, or update professional profiles without a finished technical review and explicit owner approval.
+---
 
-See [the release gate checklist](docs/release-gates.md) and [rights policy](docs/license-policy.md).
+<div align="center">
 
-## Why build this openly *after* verification?
+**Better benchmarks should tell you not only what scored well — but what that score is allowed to mean.**
 
-Reproducibility software earns trust from decisions another lab can inspect: the data we were allowed to use, the subjects the model never saw, the baselines it had to beat, and the exact record of what ran. That is the objective of PsychNeuro OpenBench—not a leaderboard of attractive but unauditable scores.
+*PsychNeuro OpenBench · Private synthetic research engineering, not a clinical product.*
 
-**Development stays private until the agreed acceptance gates pass and the owner explicitly approves publication.** A polished README is preparation for that review, not evidence that the platform is finished.
-
-
-
-### Dated PM-18–PM-21 private CI verification — 2026-10-18
-
-**UPDATE (supersedes the earlier “CI NOT RUN” statements for this exact code candidate only):** [GitHub Actions run #39109383260](https://github.com/aradmanamnaoon/psychneuro-openbench/actions/runs/39109383260) **PASSED on commit `2479f0d322b3179c30b64673f8beac584a4ba162`**. Both Python 3.11 and 3.12 independently passed **318 pytest tests, Ruff, strict mypy over 20 source files, dependency installation/pip check**, and real rights-gated synthetic-only PM06/08/10/11/12/13 pipeline/export checks. Ten private CI artifacts were uploaded and are available while GitHub retains them. Review [draft internal PR #10](https://github.com/aradmanamnaoon/psychneuro-openbench/pull/10) and its explicit remaining merge gates; do **not** merge automatically.
-
-The PM10 report hash differs across interpreter versions **because Python version is part of the experiment manifest and its SHA**, while the compared metric summaries and baseline configuration hash matched. The within-Python report/export byte comparisons passed; no cross-platform identical-hash claim is made.
-
-**NO-GO FOR RELEASE remains unchanged.** No live app URL, 0/20 executed B01–B20 private browser/mobile/accessibility tests, no independent generated synthetic-export licensing decision, no real research subjects, no user feedback and no approved public deployment/release. The repo remains **PRIVATE**. See [PM19 audit](docs/pm19-independent-qa-2026-10-18.md), [PM20 gate](docs/pm20-competitive-release-gate-2026-10-18.md), [PM21 internal retrospective](docs/pm21-internal-pilot-retrospective-2026-10-18.md). This README addendum is AI-assisted; the linked hosted CI is real.
+</div>
