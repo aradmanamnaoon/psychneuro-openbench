@@ -5,10 +5,9 @@ Synthetic fixtures only; no network services, keys, clinical or human data.
 from __future__ import annotations
 
 import sqlite3
-
-import pytest
 from pathlib import Path
 
+import pytest
 from fastapi.testclient import TestClient
 
 from psychneuro.w03.contracts import ExperimentRequest
