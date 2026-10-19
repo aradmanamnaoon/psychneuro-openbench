@@ -1,11 +1,13 @@
 """HTTP admission contract and adversarial authorization. W03 model fit not invoked."""
 from __future__ import annotations
-from pathlib import Path
+
 from hashlib import sha256
+from pathlib import Path
 
 from fastapi.testclient import TestClient
+
 from psychneuro.w04.api_hardened import Actor, create_hardened_app
-from psychneuro.w04.policy_v2 import PolicyStore, PolicyRecord
+from psychneuro.w04.policy_v2 import PolicyRecord, PolicyStore
 
 K = b"synthetic-only-test-hmac-key-never-use-in-production"
 TOK_R = "researcher-synthetic-local-test-token-000001"

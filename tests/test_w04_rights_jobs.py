@@ -8,8 +8,7 @@ from pathlib import Path
 import pytest
 
 from psychneuro.w04.jobs import JobStore, RevisionConflict
-from psychneuro.w04.rights import Action, DatasetRights, Principal, W03_INTERNAL, decide
-
+from psychneuro.w04.rights import W03_INTERNAL, Action, DatasetRights, Principal, decide
 
 RESEARCHER = Principal(subject="researcher", role="researcher")
 VIEWER = Principal(subject="viewer", role="viewer")
@@ -90,6 +89,7 @@ def test_fail_before_success_without_checkpoint(tmp_path: Path) -> None:
 
 def test_rights_ledger_event_chain_tamper_detection(tmp_path: Path) -> None:
     import sqlite3
+
     from psychneuro.w04.ledger import LedgerStore
 
     ledger = LedgerStore(tmp_path / "audit.sqlite")
@@ -102,7 +102,7 @@ def test_rights_ledger_event_chain_tamper_detection(tmp_path: Path) -> None:
         ledger.verify(trusted_root=first)
     with sqlite3.connect(ledger.path) as db:
         db.execute("UPDATE w04_rights_ledger SET event_json=? WHERE seq=1", ('{}',))
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError):
         ledger.verify()
 
 

@@ -11,7 +11,7 @@ from psychneuro.w03.vault import digest, make_chain, portable_chain
 from psychneuro.w04.api import create_app
 from psychneuro.w04.interop import Envelope, export_record, verify_envelope
 from psychneuro.w04.product import TenantRunACL
-from psychneuro.w04.rights import Principal, W03_INTERNAL
+from psychneuro.w04.rights import W03_INTERNAL, Principal
 
 M = Principal(subject="maintainer", role="maintainer")
 V = Principal(subject="viewer", role="viewer")

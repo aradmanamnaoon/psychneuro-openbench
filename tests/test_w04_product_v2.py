@@ -6,7 +6,7 @@ from pathlib import Path
 from fastapi.testclient import TestClient
 
 from psychneuro.w04.api import create_app
-from psychneuro.w04.rights import Principal, W03_INTERNAL
+from psychneuro.w04.rights import W03_INTERNAL, Principal
 
 A = Principal(subject="alice", tenant="team-a", role="researcher")
 B = Principal(subject="bob", tenant="team-b", role="researcher")

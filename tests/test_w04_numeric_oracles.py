@@ -1,7 +1,10 @@
 """Independent hand arithmetic against existing byte-identical W03 binary scorer."""
 from __future__ import annotations
+
 import random
+
 import pytest
+
 from psychneuro.metrics import score_binary
 
 
