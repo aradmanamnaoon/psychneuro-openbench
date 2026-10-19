@@ -1,3 +1,4 @@
+# ruff: noqa: B008, I001  # FastAPI dependency injection uses Depends defaults.
 """W04 v2 private product facade: P25 rights -> W03 P1 -> P13 provenance.
 
 Not production IAM: static internal tokens are operator-managed.
@@ -84,7 +85,7 @@ class TenantRunACL:
             raise ValueError("run and ACL stores must use the same SQLite file")
         run_id = record.get("run_id")
         if not isinstance(run_id, str):
-            raise ValueError("invalid run identity")
+            raise TypeError("invalid run identity")
         with runs._connect() as conn:
             conn.execute("BEGIN IMMEDIATE")
             owner = conn.execute(
