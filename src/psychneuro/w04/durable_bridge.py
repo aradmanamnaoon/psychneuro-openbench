@@ -6,12 +6,13 @@ No participant data, browser permits, or automatic grants.
 from __future__ import annotations
 
 import secrets
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable
 
 from psychneuro.w03.contracts import ExperimentRequest, RunResult
-from .policy_v2 import Permit, PolicyError, PolicyStore
+
 from .policy_snapshot import get_validated_policy
+from .policy_v2 import Permit, PolicyError, PolicyStore
 from .rights import Action, Principal
 
 
