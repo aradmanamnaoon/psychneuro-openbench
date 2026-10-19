@@ -185,15 +185,13 @@ def install_product_routes(
         authorize(principal, Action.EXPORT_AGGREGATE)
         if principal.role != "maintainer":
             _deny("W04_FORBIDDEN", "Maintainer role required", 403)
-        try:
-            record = verify_envelope(receipt)
-            acl.claim(receipt.run_id, principal)
-            runs.put(record)
-        except PermissionError:
-            _deny("W04_CONFLICT", "Run is owned by another principal", 409)
-        except (ValueError, TypeError):
-            _deny("W04_INVALID", "Artifact integrity or immutable store conflict", 422)
-        return ImportResult(run_id=receipt.run_id, provenance_root=receipt.provenance_root)
+        # Fail closed: the old route claimed run ownership before persisting the
+        # immutable run. A failed persist could strand an ACL entry, while a
+        # concurrent claimant could race the write. No atomic protocol exists yet.
+        # Verification remains available; imports must await a transactional
+        # migration/reconciliation design and independently anchored rights.
+        _deny("W04_IMPORT_DISABLED",
+              "Artifact import disabled pending atomic ownership and storage validation", 403)
 
     @app.get("/w04/v2/compare", response_model=RunComparison)
     def compare(left: str, right: str, principal: Principal = Depends(actor)) -> RunComparison:
