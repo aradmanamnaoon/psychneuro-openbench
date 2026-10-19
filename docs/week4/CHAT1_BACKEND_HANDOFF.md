@@ -3,7 +3,7 @@
 **Date:** 2026-10-19 (early work for the 2026-11-05–11 W04 mission)  
 **Repository:** `aradmanamnaoon/psychneuro-openbench` — verified **PRIVATE**; do not change visibility.  
 **Implementation branch:** `review/w04-chat1-independent-receipt-20261019`  
-**Exact code/test commit:** `50e166b93ac970ed6a367613043bbe29ed7eb02b` (four added Python files). This document is a subsequent documentation commit; local test claims attach to those exact **file blobs**, not a new CI run.  
+**Exact code/test commit:** `68ad1e3275629192c95734cc3c403b0174f06360` (four added Python files). This document is a subsequent documentation commit; local test claims attach to those exact **file blobs**, not a new CI run.  
 **Base:** `review/w04-chat1-durable-backend-20261019`, verified source commit `c45e36633efd84e9359249f50e30c13434602b5d`; that in turn descends from W03 integrated `8e511988e1feecce434eb7a5c109df5ebaf4ef90`.  
 **W03 exact historic CI:** [Actions run 39228198934](https://github.com/aradmanamnaoon/psychneuro-openbench/actions/runs/39228198934) tested **only** `4eeb17845dac7641b75d9a8164f125db6c213659`. No W04 exact-head hosted CI observed.
 
@@ -21,8 +21,8 @@ No real human datasets are enabled; the repository's Apache-2.0 **code** licence
 | --- | --- | --- |
 | `src/psychneuro/w04/receipt_v3.py` | Independent four-node W03 P13 verifier, source/split/model/result relationship checks, bounded aggregate-only `w04-p13-p25-receipt-3` | `fb1dbbaad921d794f4081ce15890585f55dd7e8c` / 8184 |
 | `src/psychneuro/w04/receipt_guard_v3.py` | Fail-closed permissioned export/import facade; live P25 permit validation before and after graph traversal, no browser routes | `c2099cc8ee4378556b004e35283886e52d5a0665` / 2740 |
-| `tests/test_w04_receipt_v3.py` | Five fixture seeds, 14 graph/metric mutations, root/tenant/replay adversarial checks, independent arithmetic oracle | `d0ed8df9b26392d9dc7cb07b4230a4689a65491e` / 6250 |
-| `tests/test_w04_receipt_guard_v3.py` | Test-only P25 validator double for scope, revocation timing, policy revision and identity checks | `64c0ef878cf7d57b786b5a3661fdfb11e376d933` / 4218 |
+| `tests/test_w04_receipt_v3.py` | Five fixture seeds, 14 graph/metric mutations, root/tenant/replay adversarial checks, independent arithmetic oracle | `68dd05b6d7ec563dc0445e8e4d5654a5da1eec81` / 6250 |
+| `tests/test_w04_receipt_guard_v3.py` | Test-only P25 validator double for scope, revocation timing, policy revision and identity checks | `680dd651f7d65ca59b654c4fb9e4060f9f1c1f41` / 4218 |
 
 All four remote blob SHAs were fetched back and matched locally tested exact Git object hashes. Existing W03/W02 source, database schema and CI workflows were **not modified** by this branch.
 
@@ -40,7 +40,7 @@ Commands run in a clean patch directory with precisely the four listed files:
 
 ```bash
 PYTHONPATH=/mnt/data/w04_chat1_patch/src python -m pytest -q /mnt/data/w04_chat1_patch/tests
-# 27 passed in 0.07s
+# 27 passed in 0.08s
 python -m compileall -q /mnt/data/w04_chat1_patch/src /mnt/data/w04_chat1_patch/tests
 # exit 0
 python -m pip check
@@ -58,8 +58,8 @@ Observed SHA-256 of local files, respectively:
 ```
 receipt_v3.py            9e4ddc032381ee6b91c0753cd935abd91f22b96bb7514a8076170754ac6dde4e
 receipt_guard_v3.py      2ccdb41d385e7397d08e3bdb500a9e016649bdee0643ac90ab8148dd2c207f69
-test_w04_receipt_v3.py   357f53e77bc5d6a815f89aa5cbaf4ac00417c73ad6cbd7c0c2a1cf672203eba7
-test_w04_receipt_guard_v3.py b8c25ce9a94b3108737227892173f91406b778e459c6b73f69260ecf762164d1
+test_w04_receipt_v3.py   d6462a0a6204e9bddd1b3fe02f2b38f3c8b61e2ae12ea376d721bf804d05793f
+test_w04_receipt_guard_v3.py 169d450da646a2fad0bbfc81979ef74199068dc14b386b19a8289abe5f6b9fc3
 ```
 
 ## Scientific oracles, threats, acceptance and budget
