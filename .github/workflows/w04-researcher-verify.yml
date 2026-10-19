@@ -49,3 +49,21 @@ jobs:
           npm run typecheck --prefix apps/web
           npm test --prefix apps/web
           echo "COMMIT_SHA=${GITHUB_SHA}"
+
+  browser-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.12'
+      - name: Install private browser fixture and backend
+        run: |
+          python -m pip install --disable-pip-version-check -e '.[w03,benchmark,dev]' 'uvicorn>=0.35,<1' 'playwright==1.64.0'
+          python -m playwright install --with-deps chromium-headless-shell
+          npm ci --prefix apps/web --ignore-scripts --no-audit --no-fund
+      - name: Exercise real loopback P25/W03/P13 browser workflow and axe
+        run: |
+          PYTHONPATH=src python scripts/w04_browser_audit.py --output-dir "$RUNNER_TEMP/w04-browser-private"
+          echo "COMMIT_SHA=${GITHUB_SHA}"
