@@ -3,12 +3,11 @@
 This application replaces the older v1 browser routes for the CPU-only local demo.
 No production IAM, human datasets, published service, or actual async worker.
 """
-from __future__ import annotations
 
 import hmac
 import json
 from pathlib import Path
-from typing import Literal
+from typing import Annotated, Any, Literal, NoReturn
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Response
 from fastapi.responses import HTMLResponse
@@ -17,11 +16,12 @@ from pydantic import BaseModel, ConfigDict
 from psychneuro.w03.contracts import ExperimentRequest, RunResult
 from psychneuro.w03.service import execute
 from psychneuro.w03.store import ConflictError, RunStore
+
 from .durable_bridge import DurableRightsBridge
 from .interop import Envelope, export_record, verify_envelope
 from .policy_v2 import PolicyStore
 from .product import ImportResult, RunComparison, SplitSummary, TenantRunACL
-from .rights import Action, Decision, Principal, W03_INTERNAL
+from .rights import W03_INTERNAL, Action, Decision, Principal
 from .ui import PAGE
 
 
@@ -52,7 +52,7 @@ def create_strict_app(*, db_path: Path, registry_path: Path,
             raise HTTPException(status_code=403, detail="private_access_denied")
         return actor
 
-    def refuse(status: int = 403) -> None:
+    def refuse(status: int = 403) -> NoReturn:
         raise HTTPException(status_code=status, detail={
             "schema_version": "w04-error-2", "code": "W04_FORBIDDEN",
             "message": "Private synthetic policy or owner denied"})
@@ -63,7 +63,7 @@ def create_strict_app(*, db_path: Path, registry_path: Path,
         except (PermissionError, ValueError):
             refuse()
 
-    def record(run_id: str, actor: Principal, action: Action) -> dict:
+    def record(run_id: str, actor: Principal, action: Action) -> dict[str, Any]:
         require(actor, action)
         try:
             acl.check(run_id, actor)
@@ -99,12 +99,12 @@ def create_strict_app(*, db_path: Path, registry_path: Path,
             "style-src 'unsafe-inline'; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'"})
 
     @app.get("/w04/v2/catalog", response_model=Catalog)
-    def catalog(actor: Principal = Depends(principal)) -> Catalog:
+    def catalog(actor: Annotated[Principal, Depends(principal)]) -> Catalog:
         require(actor, Action.READ_AGGREGATE)
         return Catalog()
 
     @app.get("/w04/v2/rights/preview", response_model=Decision)
-    def preview(actor: Principal = Depends(principal)) -> Decision:
+    def preview(actor: Annotated[Principal, Depends(principal)]) -> Decision:
         try:
             require(actor, Action.RUN)
             allowed = True
@@ -114,7 +114,7 @@ def create_strict_app(*, db_path: Path, registry_path: Path,
                         dataset_id=W03_INTERNAL.dataset_id, action=Action.RUN)
 
     @app.post("/w04/v2/runs", response_model=RunResult, status_code=201)
-    def run(req: ExperimentRequest, actor: Principal = Depends(principal)) -> RunResult:
+    def run(req: ExperimentRequest, actor: Annotated[Principal, Depends(principal)]) -> RunResult:
         try:
             check = gate.prepare_run(actor, req)
             result = execute(req, registry_path, store, before_persist=check)
@@ -129,11 +129,11 @@ def create_strict_app(*, db_path: Path, registry_path: Path,
             refuse(422)
 
     @app.get("/w04/v2/runs/{run_id}", response_model=RunResult)
-    def read_run(run_id: str, actor: Principal = Depends(principal)) -> RunResult:
+    def read_run(run_id: str, actor: Annotated[Principal, Depends(principal)]) -> RunResult:
         return RunResult.model_validate(record(run_id, actor, Action.READ_AGGREGATE)["result"])
 
     @app.get("/w04/v2/runs/{run_id}/split", response_model=SplitSummary)
-    def split(run_id: str, actor: Principal = Depends(principal)) -> SplitSummary:
+    def split(run_id: str, actor: Annotated[Principal, Depends(principal)]) -> SplitSummary:
         item = record(run_id, actor, Action.READ_AGGREGATE)
         result = RunResult.model_validate(item["result"])
         metadata = item["nodes"][1]["metadata"]
@@ -144,14 +144,14 @@ def create_strict_app(*, db_path: Path, registry_path: Path,
                             test_groups=result.n_test_groups, split_sha256=result.split_sha256)
 
     @app.get("/w04/v2/runs/{run_id}/graph")
-    def graph(run_id: str, actor: Principal = Depends(principal)) -> dict:
+    def graph(run_id: str, actor: Annotated[Principal, Depends(principal)]) -> dict[str, object]:
         item = record(run_id, actor, Action.READ_AGGREGATE)
         return {"schema_version": "w04-graph-2", "root": item["provenance_root"],
                 "nodes": item["nodes"], "verified": True,
                 "warning": "SHA hashes are not independent signatures."}
 
     @app.get("/w04/v2/runs/{run_id}/artifact")
-    def artifact(run_id: str, actor: Principal = Depends(principal)) -> Response:
+    def artifact(run_id: str, actor: Annotated[Principal, Depends(principal)]) -> Response:
         item = record(run_id, actor, Action.EXPORT_AGGREGATE)
         envelope = export_record(item, W03_INTERNAL, actor)
         return Response(
@@ -161,7 +161,7 @@ def create_strict_app(*, db_path: Path, registry_path: Path,
                      "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff"})
 
     @app.post("/w04/v2/artifacts/verify", response_model=ImportResult)
-    def verify(receipt: Envelope, actor: Principal = Depends(principal)) -> ImportResult:
+    def verify(receipt: Envelope, actor: Annotated[Principal, Depends(principal)]) -> ImportResult:
         try:
             item = verify_envelope(receipt)
             gate.check_record(actor, Action.READ_AGGREGATE, item)
@@ -172,7 +172,7 @@ def create_strict_app(*, db_path: Path, registry_path: Path,
         return ImportResult(run_id=receipt.run_id, provenance_root=receipt.provenance_root)
 
     @app.post("/w04/v2/artifacts/import", response_model=ImportResult)
-    def import_receipt(receipt: Envelope, actor: Principal = Depends(principal)) -> ImportResult:
+    def import_receipt(receipt: Envelope, actor: Annotated[Principal, Depends(principal)]) -> ImportResult:
         if actor.role != "maintainer":
             refuse()
         try:
@@ -190,7 +190,7 @@ def create_strict_app(*, db_path: Path, registry_path: Path,
 
     @app.get("/w04/v2/compare", response_model=RunComparison)
     def compare(left: str, right: str,
-                actor: Principal = Depends(principal)) -> RunComparison:
+                actor: Annotated[Principal, Depends(principal)]) -> RunComparison:
         a = RunResult.model_validate(record(left, actor, Action.READ_AGGREGATE)["result"])
         b = RunResult.model_validate(record(right, actor, Action.READ_AGGREGATE)["result"])
         return RunComparison(left=a, right=b,
