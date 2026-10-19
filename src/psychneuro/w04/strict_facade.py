@@ -132,9 +132,12 @@ def create_strict_app(*, db_path: Path, registry_path: Path,
     @app.post("/w04/v2/runs", response_model=RunResult, status_code=201)
     def run(req: ExperimentRequest, actor: Annotated[Principal, Depends(principal)]) -> RunResult:
         try:
-            check = gate.prepare_run(actor, req)
-            result = execute(req, registry_path, OwnerBoundRunStore(store, acl, actor),
-                             before_persist=check)
+            check, locked_check = gate.prepare_atomic_run(actor, req)
+            result = execute(
+                req, registry_path,
+                OwnerBoundRunStore(store, acl, actor, before_commit=locked_check),
+                before_persist=check,
+            )
             gate.check_result(actor, result)
             return result
         except PermissionError:
