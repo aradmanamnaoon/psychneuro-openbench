@@ -101,7 +101,11 @@ def audit(output: Path, *, screenshots: bool = False) -> dict[str, Any]:
                     )
                     errors: list[str] = []
                     page.on("pageerror", lambda err: errors.append(str(err)))
-                    page.goto(origin, wait_until="domcontentloaded")
+                    navigation = page.goto(origin, wait_until="domcontentloaded")
+                    assert navigation is not None
+                    csp = navigation.headers.get("content-security-policy", "")
+                    assert "script-src 'self'" in csp and "unsafe-inline" not in csp
+                    results["strict_csp"] = "same-origin JS/CSS; inline execution forbidden"
                     assert page.get_by_role("heading", name="PsychNeuro W04 — private explorer").count() == 1
                     assert page.locator("#create-form").count() == 1
                     page.keyboard.press("Tab")
@@ -197,12 +201,21 @@ def audit(output: Path, *, screenshots: bool = False) -> dict[str, Any]:
                     axe_file = root / "apps/web/node_modules/axe-core/axe.min.js"
                     if not axe_file.is_file():
                         raise RuntimeError("axe-core missing; install with npm ci --prefix apps/web")
-                    page.add_script_tag(path=str(axe_file))
-                    results["axe_violations"] = page.evaluate(
-                        "async () => { const r=await axe.run(document,{runOnly:"
-                        "{type:'tag',values:['wcag2a','wcag2aa','wcag21a','wcag21aa']}});"
-                        "return r.violations.map(v=>({id:v.id,impact:v.impact,nodes:v.nodes.length})); }"
-                    )
+                    # Keep the REAL workflow browser under CSP. For axe-core only,
+                    # use a separate local review context allowing injected audit JS.
+                    # This does not weaken the served application policy.
+                    axe_context = browser.new_context(bypass_csp=True)
+                    try:
+                        axe_page = axe_context.new_page()
+                        axe_page.goto(origin, wait_until="domcontentloaded")
+                        axe_page.add_script_tag(path=str(axe_file))
+                        results["axe_violations"] = axe_page.evaluate(
+                            "async () => { const r=await axe.run(document,{runOnly:"
+                            "{type:'tag',values:['wcag2a','wcag2aa','wcag21a','wcag21aa']}});"
+                            "return r.violations.map(v=>({id:v.id,impact:v.impact,nodes:v.nodes.length})); }"
+                        )
+                    finally:
+                        axe_context.close()
                     results["desktop_document_overflow"] = page.evaluate(
                         "document.documentElement.scrollWidth > document.documentElement.clientWidth"
                     )
