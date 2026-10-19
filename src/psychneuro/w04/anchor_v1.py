@@ -30,8 +30,8 @@ class AnchorError(ValueError):
 
 class ReceiptBinding(Protocol):
     tenant: str
-    dataset: str
-    purpose: str
+    dataset: Literal["w03-original-synthetic"]
+    purpose: Literal["internal-method-validation"]
     policy_revision: int
     policy_sha256: str
     run_id: str
