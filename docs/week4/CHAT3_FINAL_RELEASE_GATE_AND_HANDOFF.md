@@ -1,3 +1,17 @@
+# LATEST VERIFIED DELTA — W04 Chat3 exact-source QA, 2026-10-19
+
+**Release remains NO-GO.** The authoritative latest observed QA note is [CHAT3_EXECUTED_QA_EXACT_SOURCE_20261019.md](./CHAT3_EXECUTED_QA_EXACT_SOURCE_20261019.md); it supersedes stale statements in this original handoff about untested atomic regressions and missing local full-tree quality checks.
+
+- Private DRAFT [PR #22](https://github.com/aradmanamnaoon/psychneuro-openbench/pull/22), **not merged**.
+- The reviewed Python/git blob snapshot at `b3c5563f19e988173302f462df2b871fd1d97447` matched **83/83 tracked files** in the independent local source tree; additional commits changed private CI YAML and documentary evidence, not those Python sources.
+- **400 pytest PASSED, 247 WARNINGS**; strict mypy **47/47 files PASSED**; Ruff `check .` **0 findings** after committed lint changes. The same 400 tests passed after fixes. This is local Python 3.13.13 evidence, **not** current GitHub Actions 3.11/3.12 certification.
+- Actual fictional source: 36 groups ×12 records, group partitions **21 train+7 validation+8 test**, generator seeds 73–75; logistic/dummy/held-out BA all 0.500, chosen C 0.1. Full portable values and hashes in `benchmarks/w04_chat3_3seed_observed.json`.
+- Current manual CI TypeScript job updated to lockfile-based `npm ci`, but no hosted dispatch or independently witnessed mobile/browser/axe audit. Rights signatures/worker recovery/CI remain hard blockers.
+- W04 Status **In Progress**, Done **unchecked**; exactly one Career Thursday card scheduled **2026-11-05**. Academy not modified.
+- GA1–GA8: private research/career artifacts present; **PARTIAL** pending independent validation and/or authorized external work. No paper submitted or contact initiated.
+
+---
+
 # W04 Chat 3 — independent final release gate and handoff
 
 **Prepared:** 2026-10-19. **Scheduled W04:** Thursday 2026-11-05 through 2026-11-11.  
