@@ -84,12 +84,14 @@ def _deny(code: str, message: str, status: int) -> NoReturn:
 def install_product_routes(
     app: FastAPI, *, db_path: Path, runs: RunStore, rights: DatasetRights,
     actor: Callable[..., Principal], execute_request: Callable[[ExperimentRequest], RunResult],
+    audit_permission: Callable[[Principal, Action, Decision], None],
 ) -> None:
     """Add actual W03 backed endpoints to existing app, not a duplicate server."""
     acl = TenantRunACL(db_path)
 
     def authorize(principal: Principal, action: Action) -> Decision:
         verdict = decide(rights, principal, action)
+        audit_permission(principal, action, verdict)  # fail closed if P25 ledger unavailable
         if not verdict.allowed:
             _deny("W04_FORBIDDEN", "Policy denied: " + verdict.reason, 403)
         return verdict
