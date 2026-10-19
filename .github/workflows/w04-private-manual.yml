@@ -53,6 +53,8 @@ jobs:
                   json.dumps(app.openapi(), sort_keys=True, indent=2))
           PY
           W04_BENCHMARK_OUTPUT=artifacts/w04/http-testclient.csv python benchmarks/measure_w04_http.py
+          python benchmarks/w04_sbom.py > artifacts/w04/sbom.cdx.json
+          python -m pip freeze --disable-pip-version-check > artifacts/w04/pip-freeze.txt
           sha256sum artifacts/w04/*
       - name: Archive exact-commit OpenAPI and synthetic measurements
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
