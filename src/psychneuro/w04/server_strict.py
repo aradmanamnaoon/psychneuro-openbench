@@ -3,13 +3,14 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+from fastapi import FastAPI
 
 from .policy_v2 import PolicyStore
 from .rights import Principal
 from .strict_facade import create_strict_app
 
 
-def app_factory():
+def app_factory() -> FastAPI:
     token = os.environ.get("W04_PRIVATE_TOKEN", "")
     policy_key = os.environ.get("W04_P25_PERMIT_KEY", "")
     if min(len(token), len(policy_key)) < 32 or token == policy_key:
