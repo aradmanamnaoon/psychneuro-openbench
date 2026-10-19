@@ -34,6 +34,15 @@ export function validateAggregate(run: AggregateRun): void {
 export function compareAggregates(left: AggregateRun, right: AggregateRun): ComparisonSummary {
   validateAggregate(left);
   validateAggregate(right);
+  // One deterministic run ID cannot describe two different scientific reports.
+  const keys: (keyof AggregateRun)[] = [
+    'run_id', 'outer_balanced_accuracy', 'dummy_outer_balanced_accuracy',
+    'test_balanced_accuracy', 'n_train_groups', 'n_test_groups',
+    'split_sha256', 'provenance_root',
+  ];
+  if (left.run_id === right.run_id && keys.some(key => left[key] !== right[key])) {
+    throw new Error('Conflicting aggregate values for identical run identity');
+  }
   const difference = left.outer_balanced_accuracy - right.outer_balanced_accuracy;
   const rows: ScoreRow[] = [
     {label:'Run A: grouped outer balanced accuracy', value:left.outer_balanced_accuracy.toFixed(3), meaning:'Held-out fictional groups across cross-validation folds'},
@@ -48,16 +57,22 @@ export function compareAggregates(left: AggregateRun, right: AggregateRun): Comp
     : 'These are separate fictional-participant runs. Do not infer a paired effect, confidence interval, diagnostic ability, or population generalization.'};
 }
 
-/** Text graph alternative. Metadata is data, never interpreted as HTML. */
+/** Text graph alternative. Metadata is data, never interpreted as HTML.
+ * This validates display topology only; SHA content verification belongs to P13.
+ */
 export function graphText(nodes: readonly {kind: string; sha256: string; parents: readonly string[]}[]): string[] {
   if (nodes.length !== 4) throw new Error('Unexpected provenance graph size');
+  const kinds = ['source', 'split', 'model', 'benchmark'];
   const seen = new Set<string>();
   return nodes.map((node, index) => {
-    if (!SHA.test(node.sha256) || !node.parents.every(parent => SHA.test(parent) && seen.has(parent))) {
-      throw new Error('Invalid provenance ordering or predecessor');
+    if (!SHA.test(node.sha256) || seen.has(node.sha256) || node.kind !== kinds[index]) {
+      throw new Error('Invalid or duplicate provenance node');
     }
-    if (node.kind !== ['source', 'split', 'model', 'benchmark'][index]) {
-      throw new Error('Unexpected provenance node kind');
+    // W03 verifies a strict four-node linear chain, not arbitrary parent topology.
+    const expectedParents = index === 0 ? [] : [nodes[index - 1].sha256];
+    if (!Array.isArray(node.parents) || node.parents.length !== expectedParents.length ||
+        !node.parents.every((parent, i) => SHA.test(parent) && parent === expectedParents[i] && seen.has(parent))) {
+      throw new Error('Invalid provenance chain edge');
     }
     seen.add(node.sha256);
     return `${index + 1}. ${node.kind}: ${node.sha256}; parents: ${node.parents.join(', ') || 'none'}`;
