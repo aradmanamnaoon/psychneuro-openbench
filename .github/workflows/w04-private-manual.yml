@@ -1,6 +1,9 @@
 name: W04 private review only (manual / no publish)
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - review/w04-chat3-final-rebase-20261019
 permissions:
   contents: read
 concurrency:
