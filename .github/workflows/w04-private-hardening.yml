@@ -1,0 +1,124 @@
+# PRIVATE synthetic-only release hardening. No release/deploy, no registry push, no upload.
+name: W04 private SBOM, dependency audit and container smoke
+on:
+  push:
+    branches:
+      - review/w04-chat3-final-rebase-20261019
+    paths:
+      - .github/workflows/w04-private-hardening.yml
+      - infra/Dockerfile
+      - compose.yaml
+      - pyproject.toml
+      - src/**
+      - tests/**
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: w04-hardening-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  python-sbom-and-advisories:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # actions/checkout v6
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # actions/setup-python v6
+        with:
+          python-version: '3.12'
+      - name: Install review dependencies and pinned security tools
+        run: |
+          python -m pip install --disable-pip-version-check -e '.[dev,benchmark,w03,ui,parquet]'
+          python -m pip install --disable-pip-version-check 'pip-audit==2.10.1' 'cyclonedx-bom==7.5.0'
+          python -m pip check
+      - name: Build and validate private Python CycloneDX SBOM without artifact upload
+        run: |
+          cyclonedx-py environment --spec-version 1.6 --output-format JSON --output-file "$RUNNER_TEMP/w04-python-sbom.json"
+          python - "$RUNNER_TEMP/w04-python-sbom.json" <<'PY'
+          import json, sys
+          with open(sys.argv[1], encoding="utf-8") as stream:
+              manifest = json.load(stream)
+          assert manifest.get("bomFormat") == "CycloneDX"
+          assert manifest.get("specVersion") == "1.6"
+          assert len(manifest.get("components", [])) > 10
+          print("private_sbom_components:", len(manifest["components"]))
+          PY
+          sha256sum "$RUNNER_TEMP/w04-python-sbom.json"
+          echo "exact_sha=$GITHUB_SHA"
+      - name: Audit installed Python dependencies (fail closed on advisories)
+        run: |
+          set +e
+          pip-audit --local --format json --output "$RUNNER_TEMP/w04-python-audit.json"
+          status=$?
+          set -e
+          python - "$RUNNER_TEMP/w04-python-audit.json" <<'PY'
+          import json, pathlib, sys
+          path = pathlib.Path(sys.argv[1])
+          if not path.is_file():
+              print("audit_report_missing")
+              sys.exit(2)
+          report = json.loads(path.read_text(encoding="utf-8"))
+          deps = report.get("dependencies", [])
+          vulns = [(d.get("name"), v.get("id")) for d in deps for v in d.get("vulns", [])]
+          print("audited_python_packages:", len(deps))
+          print("known_python_advisories:", len(vulns))
+          for name, identifier in vulns[:25]:
+              print("advisory:", name, identifier)
+          PY
+          exit "$status"
+
+  local-only-container:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # actions/checkout v6
+      - name: Build private smoke image (no publish)
+        run: docker build --file infra/Dockerfile --tag "w04-private-smoke:${GITHUB_SHA}" .
+      - name: Start nonroot restricted instance on runner loopback and test health/auth
+        shell: bash
+        run: |
+          set -euo pipefail
+          token="$(python3 -c 'import secrets; print(secrets.token_urlsafe(48))')"
+          key="$(python3 -c 'import secrets; print(secrets.token_urlsafe(48))')"
+          volume="w04-private-smoke-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          cid=""
+          cleanup() {
+            if [ -n "$cid" ]; then docker rm -f "$cid" >/dev/null 2>&1 || true; fi
+            docker volume rm "$volume" >/dev/null 2>&1 || true
+          }
+          trap cleanup EXIT
+          docker volume create "$volume" >/dev/null
+          cid="$(docker run --detach --rm --read-only \
+            --tmpfs /tmp:rw,nosuid,nodev,noexec,size=64m \
+            --cap-drop=ALL --security-opt=no-new-privileges \
+            --pids-limit=128 --memory=768m --cpus=1 \
+            --mount "type=volume,source=$volume,target=/var/lib/psychneuro" \
+            -p '127.0.0.1::8000' \
+            -e "W04_PRIVATE_TOKEN=$token" \
+            -e "W04_P25_PERMIT_KEY=$key" \
+            "w04-private-smoke:${GITHUB_SHA}")"
+          bind="$(docker port "$cid" 8000/tcp)"
+          case "$bind" in 127.0.0.1:*) ;; *) echo "unsafe_bind"; exit 1;; esac
+          port="${bind##*:}"
+          ready=0
+          for attempt in $(seq 1 30); do
+            if curl --silent --fail --max-time 2 "http://127.0.0.1:$port/health" > "$RUNNER_TEMP/w04-health.json"; then
+              ready=1; break
+            fi
+            sleep 1
+          done
+          test "$ready" -eq 1
+          python3 - "$RUNNER_TEMP/w04-health.json" <<'PY'
+          import json, sys
+          with open(sys.argv[1], encoding="utf-8") as stream:
+              status = json.load(stream)
+          assert status == {"status": "private-only", "dataset": "original-synthetic"}
+          PY
+          anonymous="$(curl --silent --output /dev/null --write-out '%{http_code}' --max-time 5 "http://127.0.0.1:$port/w04/v2/catalog")"
+          authenticated="$(curl --silent --output /dev/null --write-out '%{http_code}' --max-time 5 -H "X-Internal-Token: $token" "http://127.0.0.1:$port/w04/v2/catalog")"
+          test "$anonymous" = "403"
+          test "$authenticated" = "403" # no P25 grant installed; deny by default
+          running_uid="$(docker exec "$cid" id -u)"
+          test "$running_uid" = "10001"
+          echo "healthy_private_loopback=1 anonymous_denied=1 no_policy_denied=1 nonroot=1 exact_sha=$GITHUB_SHA"
