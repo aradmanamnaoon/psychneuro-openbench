@@ -20,7 +20,7 @@ from psychneuro.w03.store import ConflictError, RunStore
 from .durable_bridge import DurableRightsBridge
 from .interop import Envelope, export_record, verify_envelope
 from .policy_v2 import PolicyStore
-from .product import ImportResult, RunComparison, SplitSummary, TenantRunACL
+from .product import ImportResult, OwnerBoundRunStore, RunComparison, SplitSummary, TenantRunACL
 from .rights import W03_INTERNAL, Action, Decision, Principal
 from .ui import PAGE
 from .worker_routes_v5 import install_worker_routes
@@ -109,9 +109,9 @@ def create_strict_app(*, db_path: Path, registry_path: Path,
     def run(req: ExperimentRequest, actor: Annotated[Principal, Depends(principal)]) -> RunResult:
         try:
             check = gate.prepare_run(actor, req)
-            result = execute(req, registry_path, store, before_persist=check)
+            result = execute(req, registry_path, OwnerBoundRunStore(store, acl, actor),
+                             before_persist=check)
             gate.check_result(actor, result)
-            acl.claim(result.run_id, actor)
             return result
         except PermissionError:
             refuse()
@@ -164,21 +164,13 @@ def create_strict_app(*, db_path: Path, registry_path: Path,
         return ImportResult(run_id=receipt.run_id, provenance_root=receipt.provenance_root)
 
     @app.post("/w04/v2/artifacts/import", response_model=ImportResult)
-    def import_receipt(receipt: Envelope, actor: Annotated[Principal, Depends(principal)]) -> ImportResult:
-        if actor.role != "maintainer":
-            refuse()
-        try:
-            item = verify_envelope(receipt)
-            gate.check_record(actor, Action.EXPORT_AGGREGATE, item)
-            acl.claim(receipt.run_id, actor)
-            store.put(item)
-        except PermissionError:
-            refuse()
-        except ConflictError:
-            refuse(409)
-        except (ValueError, TypeError):
-            refuse(422)
-        return ImportResult(run_id=receipt.run_id, provenance_root=receipt.provenance_root)
+    def import_receipt(
+        receipt: Envelope, actor: Annotated[Principal, Depends(principal)],
+    ) -> ImportResult:
+        # Deliberately unavailable: a matching SHA does not authenticate source,
+        # signer, legal rights or the externally retained trusted root.
+        # Never claim ownership of an untrusted uploaded aggregate.
+        refuse()
 
     @app.get("/w04/v2/compare", response_model=RunComparison)
     def compare(left: str, right: str,
