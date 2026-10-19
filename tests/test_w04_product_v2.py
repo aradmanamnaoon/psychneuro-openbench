@@ -64,7 +64,20 @@ def test_real_w03_product_rights_acl_graph_export_and_tamper(tmp_path: Path) -> 
     receipt = artifact.json()
     assert client.post("/w04/v2/artifacts/verify", headers=hdr(A), json=receipt).status_code == 200
     assert client.post("/w04/v2/artifacts/import", headers=hdr(A), json=receipt).status_code == 403
-    assert client.post("/w04/v2/artifacts/import", headers=hdr(M), json=receipt).status_code == 409
+    assert client.post("/w04/v2/artifacts/import", headers=hdr(M), json=receipt).status_code == 403
+    # Fail-closed verification is not an import. A new database must not acquire
+    # an ownership claim when a valid receipt is posted by a maintainer.
+    isolated_path = tmp_path / "import_closed.sqlite"
+    isolated_app = create_app(db_path=isolated_path,
+                              registry_path=repo_root / "data" / "registry.json",
+                              credentials=TOKENS)
+    isolated = TestClient(isolated_app)
+    blocked = isolated.post("/w04/v2/artifacts/import", headers=hdr(M), json=receipt)
+    assert blocked.status_code == 403
+    assert blocked.json()["detail"]["code"] == "W04_IMPORT_DISABLED"
+    import sqlite3
+    with sqlite3.connect(isolated_path) as connection:
+        assert connection.execute("SELECT count(*) FROM w04_run_acl").fetchone()[0] == 0
     receipt["payload"]["result"]["test_balanced_accuracy"] = 0.99
     assert client.post("/w04/v2/artifacts/verify", headers=hdr(A), json=receipt).status_code == 422
     revoked = create_app(db_path=tmp_path / "revoked.sqlite",
