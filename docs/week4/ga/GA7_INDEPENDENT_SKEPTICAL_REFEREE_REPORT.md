@@ -1,0 +1,27 @@
+# GA7 — skeptical referee, replication memo and falsification protocol
+**Disposition:** MAJOR REVISION / SOFTWARE RELEASE NO-GO. This is AI-assisted internal methodological review, not a human third-party peer review.
+
+## At least eight substantive falsification objections
+1. **Synthetic construct gap:** 432 fictional trials from 36 invented groups have no validated cognitive task, experimental manipulation or representativeness. Falsification: replicate on a genuinely authorized, independently held external study after ethics/rights approvals; until then, software claims only.
+2. **Group split necessary, not sufficient:** `GroupKFold` prevents same participant crossing folds, but may leave center/time/task-form or session-level leakage. Adversarial test: generate nested site+participant groups and shift site distributions; assert site-heldout evaluation separately.
+3. **Inner CV selection and test reuse:** Even if code nests tune/fit correctly, human-led iterative redesign against observed holdout numbers contaminates selection. Falsification: blind independent final test until precommitment and record all trial configurations.
+4. **Metric/sampling-unit mismatch:** pooled rowwise balanced accuracy weights participants with more trials differently, and class imbalance within folds can create undefined BA. Falsification: run subject-macro vs trial-micro metrics and vary trial counts, without treating rows as independent.
+5. **Degenerate dummy comparison:** logistic and dummy prior both report 0.5 on the archived synthetic run; no effect or superiority demonstrated. Falsification: known-signal synthetic case should exceed dummy; label-shuffle negative control should collapse.
+6. **Statistical dependence:** three outer folds share training groups; SD/sqrt(3) cannot be advertised as valid population SE. Falsification: introduce independent generators/cohorts or cluster-aware resampling after specifying estimand; no p-values currently.
+7. **Provenance forgery:** W03 content-hash chain and W04 event digest can be fully recomputed after malicious changes; no signer/immutable external anchor. Falsification: coherent rewrite of all digest nodes must fail against pinned independent root, authenticated signer and append-only log.
+8. **Rights bypass:** `rights_v1.py` relies on the caller saying `verified=True` and naming a license; revocation is local state not an enforceable persistent policy. Falsification: unauthorized principal attempts fresh and cached run following revocation; both must be denied, with immutable ledger checks.
+9. **Operational readiness:** no demonstrated job cancellation/resume under crash, transactional owner leases, backpressure, tenant ACL, adversarial rate limit, migration rollback, mobile/keyboard/screen reader E2E or hosted W04 exact-commit CI. Falsification: fault-injection suite and private deployment with externally observed logs.
+
+## Audit of code-level scientific choices
+`src/psychneuro/w03/nested.py` uses two fixed predictors and a fresh sklearn Pipeline. `_select` tunes C with grouped inner folds; outer `GroupKFold` and final heldout are separate in the inspected code. `validate_isolation` enforces group nonoverlap and no selective dropping for selected participants. **Unverified**: all real registry/CSV SHA bytes and same source branch integrated with W04. `src/psychneuro/metrics.py` explicitly returns undefined for empty or single-truth-class splits. W04 interop event's `accuracy` is externally supplied—not a measured output of W03 service. No W03↔W04 true API contract linkage demonstrated.
+
+**Independent simple mathematical oracle:** BA = 0.5×[TP/(TP+FN) + TN/(TN+FP)]. For illustrative TP=3,FN=1,TN=5,FP=1, BA=(3/4+5/6)/2=19/24 ≈0.791667. Always-negative prediction on test having both classes gives (0+1)/2=0.5. Unit-only arithmetic, not a measured experiment.
+
+## Next-experiment design with acceptance criteria
+- Pre-register software hypotheses and fixtures before any further scientific iteration.
+- Factorial synthetic challenge: group count {24,36,80}; trials/group {8,12,40}; class prevalence around {0.1,0.5,0.9}; within-group dependence levels; site/year confounding; 10 deterministic prespecified generator/split seed pairs; explicitly label this as proposed, not executed.
+- Evaluate logistic, same-fold dummy, and a fixed known-oracle simulated linear/logit signal with controlled Bayes difficulty. Report per-run group counts, class support, fold choices, train-only transforms, BA and confusion matrices; do not compute unjustified CI from 3 folds.
+- Negative threats: IDs intentionally overlap; partial participant omissions; target leakage via post-response features; tampered event with old digest and coherent rehash; revoked grant before execution; concurrent duplicate run; crash/resume; tenant replay; overlong payload; corrupted SQLite sidecar.
+- Required pass: every designed negative denied, expected positive succeeds, reproducible cross-version SHA semantics, exact current CI success, independent registry/rights attestation. Still no human/neuroscience conclusion.
+
+**Ethical bound:** no recruitment, re-identification, mental-health inference, clinical safety claim or human dataset import absent separate approvals. Source references: Cawley & Talbot (2010); Varma & Simon (2006); Varoquaux (2017, 2018); Roberts et al. (2017); Kapoor & Narayanan (2023), exact bibliographic links in GA1.

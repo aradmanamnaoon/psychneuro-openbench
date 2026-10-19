@@ -64,7 +64,7 @@ def test_real_w03_product_rights_acl_graph_export_and_tamper(tmp_path: Path) -> 
     receipt = artifact.json()
     assert client.post("/w04/v2/artifacts/verify", headers=hdr(A), json=receipt).status_code == 200
     assert client.post("/w04/v2/artifacts/import", headers=hdr(A), json=receipt).status_code == 403
-    assert client.post("/w04/v2/artifacts/import", headers=hdr(M), json=receipt).status_code == 409
+    assert client.post("/w04/v2/artifacts/import", headers=hdr(M), json=receipt).status_code == 403
     receipt["payload"]["result"]["test_balanced_accuracy"] = 0.99
     assert client.post("/w04/v2/artifacts/verify", headers=hdr(A), json=receipt).status_code == 422
     revoked = create_app(db_path=tmp_path / "revoked.sqlite",

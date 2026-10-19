@@ -40,11 +40,17 @@ class DatasetRights(BaseModel):
     revoked: bool = False
 
 
+DecisionReason = Literal[
+    "allowed", "no_review", "revoked", "expired", "consent",
+    "action_not_granted", "role", "unapproved_source",
+]
+
+
 class Decision(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
     schema_version: Literal["p25-decision-1"] = "p25-decision-1"
     allowed: bool
-    reason: Literal["allowed", "no_review", "revoked", "expired", "consent", "action_not_granted", "role", "unapproved_source"]
+    reason: DecisionReason
     dataset_id: str
     action: Action
 
@@ -60,7 +66,7 @@ W03_INTERNAL = DatasetRights(
 
 def decide(rights: DatasetRights, principal: Principal, action: Action, *, today: date | None = None) -> Decision:
     """Deny by default. In particular, no human-data execution even if caller claims a license."""
-    reason: Literal["allowed", "no_review", "revoked", "expired", "consent", "action_not_granted", "role", "unapproved_source"]
+    reason: DecisionReason
     if rights.revoked:
         reason = "revoked"
     elif rights.expires_on is not None and (today or date.today()) > rights.expires_on:

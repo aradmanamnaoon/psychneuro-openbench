@@ -1,3 +1,4 @@
+# ruff: noqa: B008, I001  # FastAPI Depends defaults are intentional.
 """Internal-only W04 FastAPI adapter for existing W03 runner and immutable ledger.
 
 Authentication secrets supplied by operator and mapped server-side to roles.
@@ -21,7 +22,7 @@ from .jobs import Job, JobStore, RevisionConflict, State
 from .ledger import LedgerStore
 from .rights import Action, DatasetRights, Decision, Principal, W03_INTERNAL, decide
 from .ui import PAGE
-from .product import TenantRunACL, install_product_routes
+from .product import OwnerBoundRunStore, TenantRunACL, install_product_routes
 
 
 class JobTransition(BaseModel):
@@ -101,12 +102,9 @@ def create_app(*, db_path: Path, registry_path: Path,
         permit(principal, Action.RUN)
         try:
             # Existing W03 domain service validates registry, rights and group isolation.
-            result = execute(req, registry_path, runs)
-            try:
-                acl.claim(result.run_id, principal)
-            except PermissionError as exc:
-                raise HTTPException(409, detail="run identity assigned to another owner") from exc
-            return result
+            return execute(req, registry_path, OwnerBoundRunStore(runs, acl, principal))
+        except PermissionError as exc:
+            raise HTTPException(409, detail="run identity assigned to another owner") from exc
         except ConflictError as exc:
             raise HTTPException(409, detail="run identity conflict") from exc
         except (ValueError, TypeError) as exc:
@@ -159,22 +157,12 @@ def create_app(*, db_path: Path, registry_path: Path,
 
     @app.post("/w04/v1/provenance/import", response_model=VerifiedReceipt)
     def import_record(receipt: Envelope, principal: Principal = Depends(actor)) -> VerifiedReceipt:
-        # Explicit maintainer-only; does not grant dataset import or widen license.
         if principal.role != "maintainer":
             raise HTTPException(403, detail="maintainer required")
         permit(principal, Action.EXPORT_AGGREGATE)
-        try:
-            record = verify_envelope(receipt)
-            try:
-                acl.claim(receipt.run_id, principal)
-            except PermissionError as exc:
-                raise HTTPException(409, detail="run ownership conflict") from exc
-            runs.put(record)
-        except ConflictError as exc:
-            raise HTTPException(409, detail="immutable run conflict") from exc
-        except (TypeError, ValueError) as exc:
-            raise HTTPException(422, detail="invalid provenance receipt") from exc
-        return VerifiedReceipt(run_id=receipt.run_id, provenance_root=receipt.provenance_root)
+        # Re-import could reassign mutable unanchored hash evidence to a new tenant.
+        # Deny instead of relying solely on a self-reported receipt root.
+        raise HTTPException(403, detail="W04_IMPORT_DISABLED: trusted root unavailable")
 
     @app.get("/w04/v1/rights/ledger")
     def rights_ledger(principal: Principal = Depends(actor)) -> dict[str, object]:
@@ -225,7 +213,7 @@ def create_app(*, db_path: Path, registry_path: Path,
         return jobs.audit(job_id)
 
     install_product_routes(app, db_path=db_path, runs=runs, rights=rights,
-                           actor=actor, execute_request=lambda request: execute(request, registry_path, runs))
+                           actor=actor, execute_request=lambda request, owned_store: execute(request, registry_path, owned_store))
 
     return app
 

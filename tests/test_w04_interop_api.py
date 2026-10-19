@@ -77,7 +77,7 @@ def test_private_api_auth_integrity_and_job_ownership(tmp_path: Path) -> None:
     verify = api.post("/w04/v1/provenance/verify", json=export.json(), headers={"X-Internal-Token": TOK_V})
     assert verify.status_code == 200
     assert api.post("/w04/v1/provenance/import", json=export.json(), headers={"X-Internal-Token": TOK_V}).status_code == 403
-    assert api.post("/w04/v1/provenance/import", json=export.json(), headers={"X-Internal-Token": TOK_M}).status_code == 200
+    assert api.post("/w04/v1/provenance/import", json=export.json(), headers={"X-Internal-Token": TOK_M}).status_code == 403
     tampered = export.json()
     tampered["payload"]["nodes"][0]["metadata"]["source_sha256"] = sha256(b"tampered").hexdigest()
     assert api.post("/w04/v1/provenance/verify", json=tampered, headers={"X-Internal-Token": TOK_M}).status_code == 422
