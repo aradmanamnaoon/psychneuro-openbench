@@ -87,3 +87,15 @@ Backend OpenAPI is declared FastAPI app `version=0.4.2`, `openapi_url=/w04/opena
 7. Release decision **NO-GO** until independent threshold, rights/legal clearance, authentication, actual browser security/accessibility proof, numerics and owner signoff. Do not merge or publish from this PR.
 
 **Operator approvals not present:** GitHub Actions runner spend/dispatch, real private host, public deployment, publication, external reviewers or outreach. All remain blocked. **Done remains unchecked.** Academy remains separate 40h/week; learner-focused work <=10 h/day total. R-course reminder only; three original videos/week optional, not claimed completed.
+
+
+## Post-handoff security and contract correction (private review only)
+
+After the original handoff was recorded at commit `285569d7e265c704810669ae1b210d2925885c6e`, two additive implementation changes were made:
+- `src/psychneuro/w04/product.py` now calls an injected persistent P25 audit callback for each v2 protected authorization verdict, including denied decisions; code change commit `d1f6a4591f039c7bee78c9eea156474ef65ebdd5`.
+- `src/psychneuro/w04/api.py` now binds that callback to the preexisting metadata `LedgerStore` (fail closed when auditing fails); code change commit `be34e787ec6049f7bee072ec00df65aec57b9b77`.
+- Added `tests/test_w04_acl_contract.py` at commit `260304253bff44919a440496e7f1d7f8194573a2` with concurrent ownership claim, schema-path and static accessibility assertions; **test source only, NOT run**.
+- Consequently, the earlier recorded `1b998c92...` code freeze is historical. The **latest pre-handoff-update source/test SHA** is `260304253bff44919a440496e7f1d7f8194573a2`. The final documentation-only commit follows this note. Neither SHA has exact-code hosted tests, lint, Docker, browser, accessibility or performance results.
+- The private PR is still a draft, all external release and hosted-run safety gates remain NO-GO.
+
+**Reviewer note:** The previous independent Chat 3 report in the W04 card predates these Chat 2 code changes. That report cannot serve as independent validation of this branch. A separate exact-code review and no-spend authorization are needed before any hosted action.
