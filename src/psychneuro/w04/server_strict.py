@@ -1,7 +1,9 @@
 """Strict local-only demo entrypoint; fails closed until a P25 policy is installed."""
 from __future__ import annotations
+
 import os
 from pathlib import Path
+
 from .policy_v2 import PolicyStore
 from .rights import Principal
 from .strict_facade import create_strict_app
