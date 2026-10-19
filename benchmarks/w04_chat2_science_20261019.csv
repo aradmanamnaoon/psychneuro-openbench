@@ -1,0 +1,2 @@
+scope,cpu,node,n,warmup,concurrency,median_us,p95_us,rss_bytes
+ts_presentation_only,"AMD EPYC 9V74 80-Core Processor",v22.16.0,10000,1000,1,1.141,2.383,32735232
