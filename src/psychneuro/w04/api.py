@@ -21,7 +21,7 @@ from .jobs import Job, JobStore, RevisionConflict, State
 from .ledger import LedgerStore
 from .rights import Action, DatasetRights, Decision, Principal, W03_INTERNAL, decide
 from .ui import PAGE
-from .product import install_product_routes
+from .product import TenantRunACL, install_product_routes
 
 
 class JobTransition(BaseModel):
@@ -46,6 +46,7 @@ def create_app(*, db_path: Path, registry_path: Path,
     if len(credentials) != len(set(credentials)):
         raise ValueError("duplicate token")
     runs = RunStore(db_path)
+    acl = TenantRunACL(db_path)
     jobs = JobStore(db_path)
     policy_audit = LedgerStore(db_path)
     app = FastAPI(title="W04 private benchmark + provenance + rights", version="0.4.0",
@@ -60,6 +61,15 @@ def create_app(*, db_path: Path, registry_path: Path,
         if selected is None:
             raise HTTPException(status_code=403, detail="forbidden")
         return selected
+
+    def guard_run(run_id: str, principal: Principal) -> None:
+        try:
+            acl.check(run_id, principal)
+        except PermissionError as exc:
+            raise HTTPException(403, detail="run not accessible to tenant/owner") from exc
+
+    def job_owner(principal: Principal) -> str:
+        return principal.tenant + "." + principal.subject
 
     def permit(principal: Principal, action: Action) -> Decision:
         result = decide(rights, principal, action)
@@ -91,7 +101,12 @@ def create_app(*, db_path: Path, registry_path: Path,
         permit(principal, Action.RUN)
         try:
             # Existing W03 domain service validates registry, rights and group isolation.
-            return execute(req, registry_path, runs)
+            result = execute(req, registry_path, runs)
+            try:
+                acl.claim(result.run_id, principal)
+            except PermissionError as exc:
+                raise HTTPException(409, detail="run identity assigned to another owner") from exc
+            return result
         except ConflictError as exc:
             raise HTTPException(409, detail="run identity conflict") from exc
         except (ValueError, TypeError) as exc:
@@ -100,6 +115,7 @@ def create_app(*, db_path: Path, registry_path: Path,
     @app.get("/w04/v1/benchmarks/{run_id}", response_model=RunResult)
     def benchmark_read(run_id: str, principal: Principal = Depends(actor)) -> RunResult:
         permit(principal, Action.READ_AGGREGATE)
+        guard_run(run_id, principal)
         try:
             item = runs.get(run_id)
         except ValueError as exc:
@@ -111,6 +127,7 @@ def create_app(*, db_path: Path, registry_path: Path,
     @app.get("/w04/v1/provenance/{run_id}")
     def graph(run_id: str, principal: Principal = Depends(actor)) -> dict[str, object]:
         permit(principal, Action.READ_AGGREGATE)
+        guard_run(run_id, principal)
         try:
             item = runs.get(run_id)
         except ValueError as exc:
@@ -122,6 +139,7 @@ def create_app(*, db_path: Path, registry_path: Path,
     @app.get("/w04/v1/provenance/{run_id}/export", response_model=Envelope)
     def export(run_id: str, principal: Principal = Depends(actor)) -> Envelope:
         permit(principal, Action.EXPORT_AGGREGATE)
+        guard_run(run_id, principal)
         try:
             item = runs.get(run_id)
         except ValueError as exc:
@@ -147,6 +165,10 @@ def create_app(*, db_path: Path, registry_path: Path,
         permit(principal, Action.EXPORT_AGGREGATE)
         try:
             record = verify_envelope(receipt)
+            try:
+                acl.claim(receipt.run_id, principal)
+            except PermissionError as exc:
+                raise HTTPException(409, detail="run ownership conflict") from exc
             runs.put(record)
         except ConflictError as exc:
             raise HTTPException(409, detail="immutable run conflict") from exc
@@ -167,7 +189,7 @@ def create_app(*, db_path: Path, registry_path: Path,
     def create_job(job_id: str, principal: Principal = Depends(actor), x_correlation_id: str | None = Header(default=None)) -> Job:
         permit(principal, Action.RUN)
         try:
-            return jobs.create(job_id, principal.subject, correlation=_correlation(x_correlation_id))
+            return jobs.create(job_id, job_owner(principal), correlation=_correlation(x_correlation_id))
         except (ValueError, RevisionConflict) as exc:
             raise HTTPException(409, detail="invalid or conflicting job") from exc
 
@@ -180,7 +202,7 @@ def create_app(*, db_path: Path, registry_path: Path,
             raise HTTPException(422, detail="invalid job ID") from exc
         if found is None:
             raise HTTPException(404, detail="unknown job")
-        if found.actor != principal.subject and principal.role != "maintainer":
+        if found.actor != job_owner(principal):
             raise HTTPException(403, detail="not job owner")
         return found
 
@@ -190,7 +212,7 @@ def create_app(*, db_path: Path, registry_path: Path,
         permit(principal, Action.RUN)
         try:
             return jobs.advance(job_id, expected_revision=cmd.revision, target=cmd.target,
-                                checkpoint=cmd.checkpoint, actor=principal.subject,
+                                checkpoint=cmd.checkpoint, actor=job_owner(principal),
                                 correlation=_correlation(x_correlation_id))
         except ValueError as exc:
             raise HTTPException(422, detail="invalid checkpoint") from exc
