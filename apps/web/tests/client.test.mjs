@@ -95,3 +95,45 @@ test('server detail is never surfaced; only allowlisted machine errors survive',
     });
   }
 });
+
+test('worker client submits canonical job contract, without implicit retries', async () => {
+  const request = {schema_version: 'w04-job-submit-5', idempotency_key: 'safe-retry-73',
+    experiment: {generator_seed: 73, split_seed: 42, n_participants: 36, trials_per_participant: 12}};
+  let calls = 0;
+  await withFetch(async (url, opts) => {
+    calls++;
+    assert.equal(url.pathname, '/w04/v3/jobs');
+    assert.equal(opts.method, 'POST');
+    assert.equal(opts.credentials, 'omit');
+    assert.equal(opts.headers['X-Internal-Token'], token);
+    assert.deepEqual(JSON.parse(opts.body), request);
+    assert.doesNotMatch(url.toString(), /safe-retry|token/);
+    return {ok: true, json: async () => ({schema_version: 'w04-job-2', id: hex, state: 'queued'})};
+  }, async () => {
+    assert.equal((await new W04Client('https://api.example.org', () => token).enqueueJob(request)).state, 'queued');
+  });
+  assert.equal(calls, 1);
+});
+
+test('worker control endpoints are bounded and invalid idempotency fails before fetch', async () => {
+  const calls = [];
+  const client = new W04Client('https://api.example.org', () => token);
+  await withFetch(async (url, opts) => {
+    calls.push([url.pathname, opts.method]);
+    return {ok: true, json: async () => ({id: hex, state: 'cancelled'})};
+  }, async () => {
+    await client.getJob(hex);
+    await client.cancelJob(hex);
+    await client.resumeJob(hex);
+    await client.getWorkerReceipt(hex);
+    assert.throws(() => client.getWorkerReceipt('../evil'), W04ApiError);
+    assert.throws(() => client.enqueueJob({schema_version:'w04-job-submit-5',
+      idempotency_key:'../../etc', experiment: {}}), W04ApiError);
+  });
+  assert.deepEqual(calls, [
+    ['/w04/v3/jobs/' + hex, 'GET'],
+    ['/w04/v3/jobs/' + hex + '/cancel', 'POST'],
+    ['/w04/v3/jobs/' + hex + '/resume', 'POST'],
+    ['/w04/v3/jobs/' + hex + '/receipt', 'GET'],
+  ]);
+});
