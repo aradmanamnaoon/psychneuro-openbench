@@ -23,6 +23,7 @@ class Action(str, Enum):
 class Principal(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
     subject: str = Field(min_length=1, max_length=80, pattern=r"^[A-Za-z0-9_.-]+$")
+    tenant: str = Field(default="local", min_length=1, max_length=64, pattern=r"^[A-Za-z0-9_.-]+$")
     role: Literal["viewer", "researcher", "maintainer"]
 
 

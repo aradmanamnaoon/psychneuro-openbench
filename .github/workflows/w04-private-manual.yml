@@ -24,7 +24,9 @@ jobs:
       - name: Exact-environment and package checks
         run: |
           python -m pip check
-          python -m pip freeze > w04-installed-dependencies.txt
+          mkdir -p artifacts/w04
+          python -m pip freeze > artifacts/w04/w04-installed-dependencies.txt
+          python -m pip list --format=json > artifacts/w04/python-dependency-inventory.json
       - name: Full tests including W03 and W04
         run: python -m pytest -q
       - name: Lint and strict typing
@@ -35,3 +37,66 @@ jobs:
         run: |
           python --version
           echo "exact_sha=${GITHUB_SHA}"
+      - name: Archive environment and dependency inventory (not a security certification)
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: w04-env-python-${{ matrix.python-version }}
+          path: artifacts/w04/
+          retention-days: 7
+          if-no-files-found: warn
+
+  typescript:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: TypeScript version and dependency install (NO transitive lock yet)
+        run: |
+          node --version
+          npm --version
+          npm install --prefix apps/web --no-save --no-package-lock --ignore-scripts typescript@5.8.3
+      - name: Strict typecheck (SDK, no browser E2E)
+        run: apps/web/node_modules/.bin/tsc -p apps/web/tsconfig.json
+  container_smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Build CPU-only private Docker image; no publish
+        run: docker build -f infra/Dockerfile -t w04-private:${GITHUB_SHA} .
+      - name: Run local-only health smoke (NO public or browser access)
+        shell: bash
+        run: |
+          set -euo pipefail
+          printf 'W04_PRIVATE_TOKEN=%s\n' "$(python -c 'import secrets; print(secrets.token_urlsafe(48))')" > .env
+          chmod 600 .env
+          trap 'docker compose --env-file .env down || true; rm -f .env' EXIT
+          docker compose --env-file .env up -d
+          for attempt in {1..25}; do
+            if curl --fail --silent --max-time 2 http://127.0.0.1:18080/health; then exit 0; fi
+            sleep 2
+          done
+          docker compose --env-file .env logs --tail=80
+          exit 1
+  advisory_scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+      - name: Advisory dependency audit (advisory job; never claim zero CVEs without results)
+        run: |
+          mkdir -p artifacts/w04
+          python -m pip install -e '.[w03]' 'pip-audit==2.9.0'
+          python -m pip_audit --format json --output artifacts/w04/pip-audit.json
+      - if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: w04-advisory-security-report
+          path: artifacts/w04/
+          retention-days: 7
+          if-no-files-found: warn

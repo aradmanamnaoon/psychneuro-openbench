@@ -9,6 +9,7 @@ from fastapi.testclient import TestClient
 from psychneuro.w03.store import RunStore
 from psychneuro.w03.vault import digest, make_chain, portable_chain
 from psychneuro.w04.api import create_app
+from psychneuro.w04.product import TenantRunACL
 from psychneuro.w04.interop import Envelope, export_record, verify_envelope
 from psychneuro.w04.rights import Principal, W03_INTERNAL
 
@@ -59,12 +60,16 @@ def test_private_api_auth_integrity_and_job_ownership(tmp_path: Path) -> None:
     RunStore(db).put(record)
     app = create_app(db_path=db, registry_path=tmp_path / "registry.json",
                      credentials={TOK_M: M, TOK_V: V})
+    TenantRunACL(db).claim(record["run_id"], M)
     api = TestClient(app)
     assert api.get("/w04/v1/rights").status_code == 403
     assert api.get("/w04/v1/rights", headers={"X-Internal-Token": TOK_V}).status_code == 200
     get = api.get(f"/w04/v1/benchmarks/{record['run_id']}", headers={"X-Internal-Token": TOK_V})
-    assert get.status_code == 200
-    assert get.json()["n_train_groups"] == 21
+    assert get.status_code == 403
+    owned = api.get("/w04/v1/benchmarks/" + record["run_id"],
+                    headers={"X-Internal-Token": TOK_M})
+    assert owned.status_code == 200
+    assert owned.json()["n_train_groups"] == 21
     graph = api.get(f"/w04/v1/provenance/{record['run_id']}", headers={"X-Internal-Token": TOK_M})
     assert [n["kind"] for n in graph.json()["nodes"]] == ["source", "split", "model", "benchmark"]
     export = api.get(f"/w04/v1/provenance/{record['run_id']}/export", headers={"X-Internal-Token": TOK_M})
