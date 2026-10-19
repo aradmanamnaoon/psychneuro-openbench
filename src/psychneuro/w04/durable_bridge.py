@@ -5,9 +5,13 @@ No participant data, browser permits, or automatic grants.
 """
 from __future__ import annotations
 
+import hmac
 import secrets
+import sqlite3
+import time
 from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
 from psychneuro.w03.contracts import ExperimentRequest, RunResult
 
@@ -63,6 +67,65 @@ class DurableRightsBridge:
             self.store.validate_permit(permit)
             self.assert_source(principal.tenant, digest)
         return before_persist
+
+    def prepare_atomic_run(
+        self, principal: Principal, request: ExperimentRequest,
+    ) -> tuple[Callable[[], None], Callable[[sqlite3.Connection, dict[str, Any]], None]]:
+        """Bind P25 authorization to the SAME SQLite transaction as W03 publication.
+
+        The outer check prevents unnecessary work. The inner check is the
+        authorization linearization point; it closes revoke/retention races
+        between the final fit and publication. The caller MUST acquire
+        BEGIN IMMEDIATE before invoking the inner callback, on the exact
+        PolicyStore/RunStore SQLite file.
+        """
+        permit = self.authorize(principal, Action.RUN)
+        source = source_sha256(request, self.registry)
+        self.assert_source(principal.tenant, source)
+
+        def before_persist() -> None:
+            self.store.validate_permit(permit)
+            self.assert_source(principal.tenant, source)
+
+        def before_commit(db: sqlite3.Connection, record: dict[str, Any]) -> None:
+            # Recheck all P25 audit and snapshots under the writer lock. Never
+            # accept a passed-in client claim as authority for the source.
+            self.store._verify_events(db)
+            self.store._verify_snapshots(db)
+            row = db.execute(
+                "SELECT revision,payload,sha FROM p25_v2_policy "
+                "WHERE tenant=? AND dataset=?",
+                (permit.tenant, permit.dataset),
+            ).fetchone()
+            if row is None:
+                raise PolicyError("unknown or revoked P25 policy")
+            policy = self.store._checked(permit.tenant, permit.dataset, *row)
+            now = time.time_ns()
+            result = record.get("result")
+            if not isinstance(result, dict):
+                raise PolicyError("invalid W03 record at policy boundary")
+            unsigned = permit.model_dump(mode="json", exclude={"mac_sha256"})
+            if (
+                not hmac.compare_digest(permit.mac_sha256, self.store._mac(unsigned))
+                or policy.revoked
+                or permit.tenant != principal.tenant
+                or permit.subject != principal.subject
+                or permit.action != Action.RUN.value
+                or permit.purpose != policy.purpose
+                or permit.policy_revision != row[0]
+                or not hmac.compare_digest(permit.policy_sha256, row[2])
+                or permit.expires_ns <= now
+                or policy.retention_until_ns <= now
+                or permit.expires_ns > policy.retention_until_ns
+                or Action.RUN.value not in policy.actions
+                or policy.origin != "original-synthetic"
+                or not hmac.compare_digest(policy.source_sha256, source)
+                or result.get("source_sha256") != source
+                or record.get("rights") != "internal-synthetic-only"
+            ):
+                raise PolicyError("stale, revoked or mismatched pre-publication policy")
+
+        return before_persist, before_commit
 
     def check_result(self, principal: Principal, result: RunResult) -> None:
         self.authorize(principal, Action.READ_AGGREGATE)

@@ -4,15 +4,20 @@ from __future__ import annotations
 import os
 from collections.abc import Callable
 from pathlib import Path
+from typing import Any, Protocol
 
 from .contracts import ExperimentRequest, RunResult
 from .nested import nested_grouped_benchmark
-from .store import RunStore
 from .vault import digest, make_chain, portable_chain
 
 
-def execute(req: ExperimentRequest, registry_path: Path, store: RunStore, *,
-            before_persist: Callable[[], None] | None = None) -> RunResult:
+class RunSink(Protocol):
+    def put(self, record: dict[str, Any]) -> None: ...
+
+
+def execute(req: ExperimentRequest, registry_path: Path, store: RunSink, *,
+            before_persist: Callable[[], None] | None = None,
+            on_fit_complete: Callable[[RunResult], None] | None = None) -> RunResult:
     # Import only on an explicit permitted run: fast API import never trains a model.
     from psychneuro.loaders import load_dataset
     from psychneuro.split import create_group_split, validate_group_split
@@ -57,6 +62,8 @@ def execute(req: ExperimentRequest, registry_path: Path, store: RunStore, *,
         {"benchmark": benchmark, "request": req.model_dump(mode="json"), "result_sha256": digest(result_fields)},
     )
     result = RunResult.model_validate({**result_fields, "provenance_root": chain[-1].sha256})
+    if on_fit_complete is not None:
+        on_fit_complete(result)
     if before_persist is not None:
         before_persist()  # Reject a revoked P25 grant before the durable write.
     store.put({"run_id": run_id, "provenance_root": chain[-1].sha256,

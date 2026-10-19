@@ -20,15 +20,16 @@ from psychneuro.w03.store import ConflictError, RunStore
 from .durable_bridge import DurableRightsBridge
 from .interop import Envelope, export_record, verify_envelope
 from .policy_v2 import PolicyStore
-from .product import ImportResult, RunComparison, SplitSummary, TenantRunACL
+from .product import ImportResult, OwnerBoundRunStore, RunComparison, SplitSummary, TenantRunACL
 from .rights import W03_INTERNAL, Action, Decision, Principal
 from .ui import PAGE
+from .worker_routes_v5 import install_worker_routes
 
 
 class Catalog(BaseModel):
     model_config = ConfigDict(extra="forbid")
     schema_version: Literal["w04-strict-catalog-1"] = "w04-strict-catalog-1"
-    datasets: list[dict[str, str]] = [{"id": "w03-original-synthetic"}]
+    datasets: list[dict[str, str]] = [{"id": "w03-original-synthetic", "scope": "original-fictional-only"}]
     limitation: str = "Synthetic-only, one attested fixture per tenant; no human-data claims"
 
 
@@ -81,22 +82,37 @@ def create_strict_app(*, db_path: Path, registry_path: Path,
     def health() -> dict[str, str]:
         return {"status": "private-only", "dataset": "original-synthetic"}
 
+    # Extract immutable first-party browser assets from the original source.
+    # The served HTML contains NO inline script/style: a strict CSP is enforceable.
+    head, remainder = PAGE.split("<style>", 1)
+    style, remainder = remainder.split("</style>", 1)
+    body, remainder = remainder.split("<script>", 1)
+    script, tail = remainder.split("</script>", 1)
+    page = (head + '<link rel="stylesheet" href="/w04/private/style.css">' + body
+            + '<script src="/w04/private/app.js" defer></script>' + tail)
+    headers = {
+        "Cache-Control": "no-store",
+        "X-Content-Type-Options": "nosniff",
+        "Content-Security-Policy": (
+            "default-src 'none'; script-src 'self'; style-src 'self'; "
+            "connect-src 'self'; img-src 'self' blob:; object-src 'none'; "
+            "base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
+        ),
+    }
+
     @app.get("/", response_class=HTMLResponse, include_in_schema=False)
     def home() -> Response:
-        # Existing semantic UI; remove unsafe metadata-only job controls.
-        page = PAGE
-        start = page.find('<section aria-labelledby="jobs-title">')
-        if start >= 0:
-            end = page.find("</section>", start)
-            if end >= 0:
-                page = page[:start] + page[end + len("</section>"):]
-        # Exclude all now-irrelevant v1 job-control handlers.
-        pos = page.find("async function jobStatus()")
-        if pos >= 0:
-            page = page[:pos] + "</script></body></html>"
-        return HTMLResponse(page, headers={"Cache-Control": "no-store",
-            "Content-Security-Policy": "default-src 'none'; script-src 'unsafe-inline'; "
-            "style-src 'unsafe-inline'; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'"})
+        return HTMLResponse(page, headers=headers)
+
+    @app.get("/w04/private/style.css", include_in_schema=False)
+    def stylesheet() -> Response:
+        return Response(style, media_type="text/css",
+                        headers={"Cache-Control": "no-store", "X-Content-Type-Options": "nosniff"})
+
+    @app.get("/w04/private/app.js", include_in_schema=False)
+    def browser_script() -> Response:
+        return Response(script, media_type="application/javascript",
+                        headers={"Cache-Control": "no-store", "X-Content-Type-Options": "nosniff"})
 
     @app.get("/w04/v2/catalog", response_model=Catalog)
     def catalog(actor: Annotated[Principal, Depends(principal)]) -> Catalog:
@@ -116,10 +132,13 @@ def create_strict_app(*, db_path: Path, registry_path: Path,
     @app.post("/w04/v2/runs", response_model=RunResult, status_code=201)
     def run(req: ExperimentRequest, actor: Annotated[Principal, Depends(principal)]) -> RunResult:
         try:
-            check = gate.prepare_run(actor, req)
-            result = execute(req, registry_path, store, before_persist=check)
+            check, locked_check = gate.prepare_atomic_run(actor, req)
+            result = execute(
+                req, registry_path,
+                OwnerBoundRunStore(store, acl, actor, before_commit=locked_check),
+                before_persist=check,
+            )
             gate.check_result(actor, result)
-            acl.claim(result.run_id, actor)
             return result
         except PermissionError:
             refuse()
@@ -172,21 +191,13 @@ def create_strict_app(*, db_path: Path, registry_path: Path,
         return ImportResult(run_id=receipt.run_id, provenance_root=receipt.provenance_root)
 
     @app.post("/w04/v2/artifacts/import", response_model=ImportResult)
-    def import_receipt(receipt: Envelope, actor: Annotated[Principal, Depends(principal)]) -> ImportResult:
-        if actor.role != "maintainer":
-            refuse()
-        try:
-            item = verify_envelope(receipt)
-            gate.check_record(actor, Action.EXPORT_AGGREGATE, item)
-            acl.claim(receipt.run_id, actor)
-            store.put(item)
-        except PermissionError:
-            refuse()
-        except ConflictError:
-            refuse(409)
-        except (ValueError, TypeError):
-            refuse(422)
-        return ImportResult(run_id=receipt.run_id, provenance_root=receipt.provenance_root)
+    def import_receipt(
+        receipt: Envelope, actor: Annotated[Principal, Depends(principal)],
+    ) -> ImportResult:
+        # Deliberately unavailable: a matching SHA does not authenticate source,
+        # signer, legal rights or the externally retained trusted root.
+        # Never claim ownership of an untrusted uploaded aggregate.
+        refuse()
 
     @app.get("/w04/v2/compare", response_model=RunComparison)
     def compare(left: str, right: str,
@@ -196,4 +207,6 @@ def create_strict_app(*, db_path: Path, registry_path: Path,
         return RunComparison(left=a, right=b,
                              balanced_accuracy_difference=a.outer_balanced_accuracy -
                              b.outer_balanced_accuracy)
+    install_worker_routes(app, database=db_path, registry=registry_path,
+                          policy=policy, actor=principal)
     return app

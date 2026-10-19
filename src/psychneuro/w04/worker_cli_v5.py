@@ -61,6 +61,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         queue = QueueStore(db)
         worker = AtomicWorker(database=db, policy=policy, queue=queue,
                               registry_path=registry)
+        # A dry run is read-only. During real operator execution, repair
+        # terminal states left behind by a fenced cancel or worker SIGKILL.
+        if not args.dry_run:
+            queue.reconcile_terminal(tenant=args.tenant, correlation="operator-scan")
         due = worker.due(tenant=args.tenant, limit=args.limit)
         if args.dry_run:
             print(json.dumps({"schema_version": "w04-worker-cli-5", "mode": "dry-run",
