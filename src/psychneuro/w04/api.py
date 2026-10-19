@@ -224,8 +224,14 @@ def create_app(*, db_path: Path, registry_path: Path,
         get_job(job_id, principal)
         return jobs.audit(job_id)
 
+    def audit_v2(principal: Principal, action: Action, verdict: Decision) -> None:
+        policy_audit.append(event_type="permission_evaluated", dataset_id=rights.dataset_id,
+                            action=action.value, allowed=verdict.allowed,
+                            actor_pseudonym=principal.subject, correlation_id=secrets.token_hex(16))
+
     install_product_routes(app, db_path=db_path, runs=runs, rights=rights,
-                           actor=actor, execute_request=lambda request: execute(request, registry_path, runs))
+                           actor=actor, execute_request=lambda request: execute(request, registry_path, runs),
+                           audit_permission=audit_v2)
 
     return app
 
