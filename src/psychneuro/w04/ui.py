@@ -11,6 +11,7 @@ code{word-break:break-all}table{border-collapse:collapse;width:100%}th,td{paddin
 #alert{white-space:pre-wrap;font-weight:600;color:#8a1b05}li{margin:.5rem 0} @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 
 /* Mobile and keyboard-safe layout: long SHA digests must never widen the page. */
+#graph pre{white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;max-width:100%}
 *,*::before,*::after{box-sizing:border-box}
 html,body,main,section{max-width:100%;min-width:0}
 li,p,td,th,#alert,#graph{overflow-wrap:anywhere}
