@@ -11,6 +11,7 @@ from typing import Callable
 
 from psychneuro.w03.contracts import ExperimentRequest, RunResult
 from .policy_v2 import Permit, PolicyError, PolicyStore
+from .policy_snapshot import get_validated_policy
 from .rights import Action, Principal
 
 
@@ -47,7 +48,7 @@ class DurableRightsBridge:
         return permit
 
     def assert_source(self, tenant: str, source: str) -> None:
-        policy = self.store.read_policy(tenant=tenant)
+        policy = get_validated_policy(self.store, tenant=tenant)
         if policy.revoked or policy.source_sha256 != source:
             raise PolicyError("source not covered by P25 grant")
 
