@@ -14,7 +14,7 @@ from typing import Any, Literal, NoReturn
 from fastapi import Depends, FastAPI, HTTPException, Response
 from pydantic import BaseModel, ConfigDict, Field
 from psychneuro.w03.contracts import ExperimentRequest, RunResult
-from psychneuro.w03.store import RunStore
+from psychneuro.w03.store import ConflictError, RunStore
 from psychneuro.w03.vault import verify_serialized
 from .interop import Envelope, export_record, verify_envelope
 from .rights import Action, DatasetRights, Decision, Principal, decide
@@ -74,6 +74,49 @@ class TenantRunACL:
         ):
             raise PermissionError("run not accessible")
 
+    def put_owned(self, runs: RunStore, record: dict[str, Any], principal: Principal) -> None:
+        """Atomically bind an immutable W03 record and its W04 tenant owner.
+
+        A preexisting run without an owner requires explicit audited migration.
+        No importer or benchmark can claim an orphaned legacy record.
+        """
+        if self.path.resolve() != runs.path.resolve():
+            raise ValueError("run and ACL stores must use the same SQLite file")
+        run_id = record.get("run_id")
+        if not isinstance(run_id, str):
+            raise ValueError("invalid run identity")
+        with runs._connect() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            owner = conn.execute(
+                "SELECT tenant, owner FROM w04_run_acl WHERE run_id=?", (run_id,)
+            ).fetchone()
+            if owner is None:
+                existing = conn.execute(
+                    "SELECT 1 FROM runs WHERE run_id=?", (run_id,)
+                ).fetchone()
+                if existing is not None:
+                    raise PermissionError("unowned existing run needs trusted migration")
+            elif owner != (principal.tenant, principal.subject):
+                raise PermissionError("run is already assigned to another principal")
+            runs.put_in_connection(conn, record)
+            if owner is None:
+                conn.execute(
+                    "INSERT INTO w04_run_acl (run_id, tenant, owner) VALUES (?, ?, ?)",
+                    (run_id, principal.tenant, principal.subject),
+                )
+
+
+class OwnerBoundRunStore(RunStore):
+    """Only the authorized request principal can persist the W03 output."""
+
+    def __init__(self, runs: RunStore, acl: TenantRunACL, principal: Principal) -> None:
+        self.path = runs.path
+        self._acl = acl
+        self._principal = principal
+
+    def put(self, record: dict[str, Any]) -> None:
+        self._acl.put_owned(self, record, self._principal)
+
 
 def _deny(code: str, message: str, status: int) -> NoReturn:
     raise HTTPException(status_code=status, detail={
@@ -83,7 +126,7 @@ def _deny(code: str, message: str, status: int) -> NoReturn:
 
 def install_product_routes(
     app: FastAPI, *, db_path: Path, runs: RunStore, rights: DatasetRights,
-    actor: Callable[..., Principal], execute_request: Callable[[ExperimentRequest], RunResult],
+    actor: Callable[..., Principal], execute_request: Callable[[ExperimentRequest, RunStore], RunResult],
 ) -> None:
     """Add actual W03 backed endpoints to existing app, not a duplicate server."""
     acl = TenantRunACL(db_path)
@@ -125,11 +168,11 @@ def install_product_routes(
     def create_run(req: ExperimentRequest, principal: Principal = Depends(actor)) -> RunResult:
         authorize(principal, Action.RUN)
         try:
-            result = execute_request(req)
-            acl.claim(result.run_id, principal)
-            return result
+            return execute_request(req, OwnerBoundRunStore(runs, acl, principal))
         except PermissionError:
             _deny("W04_CONFLICT", "Run ID belongs to a different owner", 409)
+        except ConflictError:
+            _deny("W04_CONFLICT", "Run identity has conflicting evidence", 409)
         except (ValueError, TypeError):
             _deny("W04_INVALID", "Invalid synthetic request or stored provenance", 422)
 
@@ -185,15 +228,9 @@ def install_product_routes(
         authorize(principal, Action.EXPORT_AGGREGATE)
         if principal.role != "maintainer":
             _deny("W04_FORBIDDEN", "Maintainer role required", 403)
-        try:
-            record = verify_envelope(receipt)
-            acl.claim(receipt.run_id, principal)
-            runs.put(record)
-        except PermissionError:
-            _deny("W04_CONFLICT", "Run is owned by another principal", 409)
-        except (ValueError, TypeError):
-            _deny("W04_INVALID", "Artifact integrity or immutable store conflict", 422)
-        return ImportResult(run_id=receipt.run_id, provenance_root=receipt.provenance_root)
+        # Even coherent SHA-256 receipts can be forged if the root is not anchored.
+        # Leave imports disabled until a trusted signer/root and rights owner exist.
+        _deny("W04_IMPORT_DISABLED", "Trusted provenance and rights anchor missing", 403)
 
     @app.get("/w04/v2/compare", response_model=RunComparison)
     def compare(left: str, right: str, principal: Principal = Depends(actor)) -> RunComparison:
