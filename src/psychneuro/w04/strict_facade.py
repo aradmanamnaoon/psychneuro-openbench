@@ -84,17 +84,8 @@ def create_strict_app(*, db_path: Path, registry_path: Path,
 
     @app.get("/", response_class=HTMLResponse, include_in_schema=False)
     def home() -> Response:
-        # Existing semantic UI; remove unsafe metadata-only job controls.
+        # v3 controls use real authenticated fenced queue endpoints.
         page = PAGE
-        start = page.find('<section aria-labelledby="jobs-title">')
-        if start >= 0:
-            end = page.find("</section>", start)
-            if end >= 0:
-                page = page[:start] + page[end + len("</section>"):]
-        # Exclude all now-irrelevant v1 job-control handlers.
-        pos = page.find("async function jobStatus()")
-        if pos >= 0:
-            page = page[:pos] + "</script></body></html>"
         return HTMLResponse(page, headers={"Cache-Control": "no-store",
             "Content-Security-Policy": "default-src 'none'; script-src 'unsafe-inline'; "
             "style-src 'unsafe-inline'; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'"})
