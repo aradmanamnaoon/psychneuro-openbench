@@ -10,21 +10,30 @@ from dataclasses import dataclass
 from typing import Protocol
 
 import numpy as np
-from sklearn.compose import ColumnTransformer
-from sklearn.dummy import DummyClassifier
-from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import GroupKFold
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from sklearn.compose import ColumnTransformer  # type: ignore[import-untyped]
+from sklearn.dummy import DummyClassifier  # type: ignore[import-untyped]
+from sklearn.linear_model import LogisticRegression  # type: ignore[import-untyped]
+from sklearn.model_selection import GroupKFold  # type: ignore[import-untyped]
+from sklearn.pipeline import Pipeline  # type: ignore[import-untyped]
+from sklearn.preprocessing import OneHotEncoder, StandardScaler  # type: ignore[import-untyped]
 
 from psychneuro.metrics import score_binary
 
 
 class TrialLike(Protocol):
-    participant_id: str
-    difficulty: float
-    stimulus_condition: str
-    correct: int
+    """Read-only attributes allow a frozen TrialRecord with narrower Literal fields."""
+
+    @property
+    def participant_id(self) -> str: ...
+
+    @property
+    def difficulty(self) -> float: ...
+
+    @property
+    def stimulus_condition(self) -> str: ...
+
+    @property
+    def correct(self) -> int: ...
 
 
 @dataclass(frozen=True)
@@ -102,7 +111,7 @@ def _select(x: np.ndarray, y: np.ndarray, groups: np.ndarray, folds: int) -> flo
             scores.append(_score(y[val], est.predict(x[val])))
         scored.append((float(np.mean(scores)), c))
     # Frozen tie policy: prefer simpler stronger regularization C=0.1.
-    return sorted(scored, key=lambda it: (-it[0], it[1]))[0][1]
+    return min(scored, key=lambda it: (-it[0], it[1]))[1]
 
 
 def nested_grouped_benchmark(

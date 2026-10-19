@@ -1,8 +1,8 @@
 """Integrate the existing source-gated P1 loader/split with P13's provenance chain."""
 from __future__ import annotations
 
-from pathlib import Path
 import os
+from pathlib import Path
 
 from .contracts import ExperimentRequest, RunResult
 from .nested import nested_grouped_benchmark

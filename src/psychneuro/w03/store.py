@@ -25,7 +25,7 @@ def _check_record(record: dict[str, Any]) -> None:
         raise ValueError("unlicensed or external source")
     result = record.get("result")
     if not isinstance(result, dict):
-        raise ValueError("invalid result record")
+        raise TypeError("invalid result record")
     if "provenance_root" in result and result["provenance_root"] != record["provenance_root"]:
         raise ValueError("result root inconsistent")
     unsigned = {key: value for key, value in result.items() if key != "provenance_root"}
