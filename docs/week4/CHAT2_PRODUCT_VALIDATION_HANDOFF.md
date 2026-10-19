@@ -4,10 +4,12 @@
 
 ## Exact durable pointers and ancestry
 
+PR #17 was superseded and closed **without merge** when Chat 1 advanced its head. The canonical dependent **private draft is PR #18**; its initial base is Chat 1 final head `e0a32b00843ae1346dc3382908de436b497c7cb0`. Its original one-commit overlay had `ahead=1`, `behind=0`; always inspect latest PR head before release or tests.
+
 - Private repository: https://github.com/aradmanamnaoon/psychneuro-openbench
-- **Dependent DRAFT PR:** https://github.com/aradmanamnaoon/psychneuro-openbench/pull/17, head branch `review/w04-chat2-integrated-product-20261019`, target `review/w04-chat1-durable-backend-20261019`. Review latest branch SHA in GitHub before doing any audit: this doc is added after the most recently inspected code SHA.
-- **Most recent source/test implementation SHA (before this evidence-only commit):** `b6ec936f3e17a52775ce7d587f55456eaf8a2875`. Underlying product TS origin protection code was committed `38bca3c296c9844709c9f7518e15275f1953422d`.
-- Chat 1 **latest verified source/handoff:** `4beeaf4246fd42c066f6bfee2cd82d7de137db4e`; handoff copied directly from its Git tree to `docs/week4/CHAT1_BACKEND_HANDOFF.md` along with exact policy_v2 tests and numeric oracle revisions. Previous Chat 1 source before final handoff: `8fbfb1ed27d4ac22ea46fa859951e0cd4f5b647f`.
+- **Dependent DRAFT PR:** https://github.com/aradmanamnaoon/psychneuro-openbench/pull/18, head branch `review/w04-chat2-on-chat1-final-20261019`, target `review/w04-chat1-durable-backend-20261019`. Review latest branch SHA in GitHub before doing any audit: this doc is added after the most recently inspected code SHA.
+- **Clean dependent source/test overlay SHA at PR creation (not the final documentary HEAD):** `edafcb11a999b9e82733ee5cdc618a561767bb5f`. Underlying product TS origin protection code was committed `38bca3c296c9844709c9f7518e15275f1953422d`.
+- Chat 1 **latest verified source/handoff:** `e0a32b00843ae1346dc3382908de436b497c7cb0`; handoff copied directly from its Git tree to `docs/week4/CHAT1_BACKEND_HANDOFF.md` along with exact policy_v2 tests and numeric oracle revisions. Previous Chat 1 source before final handoff: `8fbfb1ed27d4ac22ea46fa859951e0cd4f5b647f`.
 - W03 draft PR #13 remains unmerged. Historical W03 Actions https://github.com/aradmanamnaoon/psychneuro-openbench/actions/runs/39228198934 PASS applied to **W03 SHA `4eeb17845dac7641b75d9a8164f125db6c213659` only**. W04 prior #14 draft remains separate/unmerged.
 - Github PR-triggered workflow query for Chat 1 original SHA and Chat 2 source SHA returned empty runs; combined status reported zero statuses. **W04 hosted QA = NOT RUN**; no CI URLs for a passed W04 check.
 
