@@ -82,13 +82,37 @@ def create_strict_app(*, db_path: Path, registry_path: Path,
     def health() -> dict[str, str]:
         return {"status": "private-only", "dataset": "original-synthetic"}
 
+    # Extract immutable first-party browser assets from the original source.
+    # The served HTML contains NO inline script/style: a strict CSP is enforceable.
+    head, remainder = PAGE.split("<style>", 1)
+    style, remainder = remainder.split("</style>", 1)
+    body, remainder = remainder.split("<script>", 1)
+    script, tail = remainder.split("</script>", 1)
+    page = (head + '<link rel="stylesheet" href="/w04/private/style.css">' + body
+            + '<script src="/w04/private/app.js" defer></script>' + tail)
+    headers = {
+        "Cache-Control": "no-store",
+        "X-Content-Type-Options": "nosniff",
+        "Content-Security-Policy": (
+            "default-src 'none'; script-src 'self'; style-src 'self'; "
+            "connect-src 'self'; img-src 'self' blob:; object-src 'none'; "
+            "base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
+        ),
+    }
+
     @app.get("/", response_class=HTMLResponse, include_in_schema=False)
     def home() -> Response:
-        # v3 controls use real authenticated fenced queue endpoints.
-        page = PAGE
-        return HTMLResponse(page, headers={"Cache-Control": "no-store",
-            "Content-Security-Policy": "default-src 'none'; script-src 'unsafe-inline'; "
-            "style-src 'unsafe-inline'; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'"})
+        return HTMLResponse(page, headers=headers)
+
+    @app.get("/w04/private/style.css", include_in_schema=False)
+    def stylesheet() -> Response:
+        return Response(style, media_type="text/css",
+                        headers={"Cache-Control": "no-store", "X-Content-Type-Options": "nosniff"})
+
+    @app.get("/w04/private/app.js", include_in_schema=False)
+    def browser_script() -> Response:
+        return Response(script, media_type="application/javascript",
+                        headers={"Cache-Control": "no-store", "X-Content-Type-Options": "nosniff"})
 
     @app.get("/w04/v2/catalog", response_model=Catalog)
     def catalog(actor: Annotated[Principal, Depends(principal)]) -> Catalog:
