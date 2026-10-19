@@ -181,3 +181,47 @@ def test_repository_integration_with_real_registry(tmp_path: Path) -> None:
     assert one == two
     assert store.get(one.run_id) is not None
     assert one.n_train_groups >= 6 and one.n_test_groups >= 2
+
+def test_partial_group_rows_fail_but_entire_validation_group_can_be_reserved() -> None:
+    rows = trials()
+    train, test = groups(rows)
+    # Selective row omission within a participant invalidates the evaluation.
+    with pytest.raises(ValueError, match="missing rows"):
+        validate_isolation(rows, train[:-1], test)
+    # It is valid to reserve a whole independent participant for validation.
+    excluded = [i for i in train if rows[i].participant_id == "fictional-02"]
+    validate_isolation(rows, [i for i in train if i not in set(excluded)], test)
+
+
+def test_sqlite_provenance_sidecar_tamper_and_missing_index_fail_closed(tmp_path: Path) -> None:
+    path = tmp_path / "provenance.sqlite3"
+    store = RunStore(path)
+    record = sample_record()
+    store.put(record)
+    with sqlite3.connect(path) as conn:
+        rows = conn.execute("SELECT ordinal, kind FROM provenance_index ORDER BY ordinal").fetchall()
+        assert rows == [(0, "source"), (1, "split"), (2, "model"), (3, "benchmark")]
+        conn.execute("UPDATE provenance_index SET node_sha256=? WHERE ordinal=2", ("0" * 64,))
+    with pytest.raises(ValueError, match="sidecar integrity"):
+        RunStore(path).get(record["run_id"])
+    with pytest.raises(ValueError, match="sidecar integrity"):
+        RunStore(path).put(record)
+    with sqlite3.connect(path) as conn:
+        conn.execute("DELETE FROM provenance_index")
+    with pytest.raises(ValueError, match="sidecar integrity"):
+        RunStore(path).get(record["run_id"])
+
+
+def test_sqlite_concurrent_safe_atomic_conflict(tmp_path: Path) -> None:
+    # Contradictory lineage must not append or mutate the immutable run.
+    path = tmp_path / "atomic.sqlite3"
+    original = sample_record()
+    store = RunStore(path)
+    store.put(original)
+    other = json.loads(json.dumps(original))
+    other["result"]["score"] = 0.8
+    with pytest.raises(ValueError):
+        RunStore(path).put(other)
+    assert RunStore(path).get(original["run_id"]) == original
+    with sqlite3.connect(path) as conn:
+        assert conn.execute("SELECT COUNT(*) FROM provenance_index").fetchone()[0] == 4
