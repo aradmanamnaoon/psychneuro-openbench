@@ -1,3 +1,11 @@
+# W04 latest independent execution evidence — 2026-10-19
+
+See [executed exact-source QA delta](./CHAT3_EXECUTED_QA_EXACT_SOURCE_20261019.md) and [private draft PR #22](https://github.com/aradmanamnaoon/psychneuro-openbench/pull/22). Independent local test source **83/83 Git blobs matched** the review commit `b3c5563f19e988173302f462df2b871fd1d97447`. Subsequent committed pure Python lint changes were already included when the **400 pytest / 247 warnings**, **47-file mypy strict**, and **zero-finding full Ruff** tests passed. Previous sections saying Chat3 tests were NOT RUN or handoffs absent are historical branch-limited observations and are **superseded by these recent direct executions**.
+
+Actual W03 fictitious three-seed benchmark: **36 participants per run**, split **21 train+7 validation+8 test**; model/dummy/sealed test balanced accuracy **0.500** each; no neuro/clinical significance. The GitHub manual CI workflow was improved but is **not hosted-run-certified**. Authenticated report import remains intentionally disabled pending external root trust and source rights. Keep **NO-GO**, **Done false**, and public/clinical/academic release approval separate.
+
+---
+
 # W04 — Canonical Chat1×Chat2 scientific/security review update (19 October 2026)
 
 **Release: NO-GO.** This *current addendum* supersedes historical claims below wherever the reviewed integration differs. AI-performed internal adversarial review, **not** independent human security or neuroscience attestation.
