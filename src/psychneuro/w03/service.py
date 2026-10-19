@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import os
 
 from .contracts import ExperimentRequest, RunResult
 from .nested import nested_grouped_benchmark
@@ -46,6 +47,11 @@ def execute(req: ExperimentRequest, registry_path: Path, store: RunStore) -> Run
         {"source_sha256": source_hash, "rights": "internal-synthetic-only", "seed": req.generator_seed},
         {"split_sha256": split_hash, "seed": req.split_seed,
          "train_groups": len(split.train_participants), "test_groups": len(split.test_participants)},
+        {"estimator": "logistic_regression", "trained_model_bytes_hash": None,
+         "model_spec_only": True, "selected_c": nested.final_c,
+         "predictors": list(req.predictors), "solver": "lbfgs", "max_iter": 1000,
+         "code_sha": os.environ.get("GITHUB_SHA", "unattested"),
+         "selection": "inner-group-CV-train-only"},
         {"benchmark": benchmark, "request": req.model_dump(mode="json"), "result_sha256": digest(result_fields)},
     )
     result = RunResult.model_validate({**result_fields, "provenance_root": chain[-1].sha256})
