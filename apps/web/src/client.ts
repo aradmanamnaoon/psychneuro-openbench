@@ -34,6 +34,25 @@ export interface VerifiedArtifact {
   run_id: Hex64; provenance_root: Hex64; receipt_sha256: Hex64;
   rights_decision: "internal-aggregate-only"; payload: Record<string, unknown>;
 }
+export interface WorkerJob {
+  schema_version: "w04-job-2";
+  id: Hex64; tenant: string; subject: string; dataset: "w03-original-synthetic";
+  state: "queued" | "running" | "cancel_requested" | "cancelled" | "succeeded" | "failed";
+  revision: number; fence: number; attempts: number; lease_until_ns: number; next_attempt_ns: number;
+  checkpoint_stage: string | null; checkpoint_sha256: Hex64 | null; result_sha256: Hex64 | null;
+}
+export interface JobSubmission {
+  schema_version: "w04-job-submit-5";
+  idempotency_key: string;
+  experiment: ExperimentRequest;
+}
+export interface WorkerReceipt {
+  schema_version: "w04-p13-p25-receipt-3";
+  tenant: string; dataset: "w03-original-synthetic"; purpose: "internal-method-validation";
+  export_scope: "aggregate-internal-only"; policy_revision: number; policy_sha256: Hex64;
+  run_id: Hex64; provenance_root: Hex64; record: Record<string, unknown>;
+  receipt_sha256: Hex64;
+}
 export class W04ApiError extends Error {
   constructor(readonly status: number, readonly code: string, message: string) {
     super(message); this.name = "W04ApiError";
@@ -82,6 +101,15 @@ export class W04Client {
     if (!/^[0-9a-f]{64}$/.test(runId)) throw new W04ApiError(0, "W04_INVALID", "Invalid run ID");
     return runId;
   }
+  enqueueJob(submission: JobSubmission): Promise<WorkerJob> {
+    if (!/^[A-Za-z0-9_.-]{1,80}$/.test(submission.idempotency_key))
+      throw new W04ApiError(0, "W04_INVALID", "Invalid idempotency key");
+    return this.request("/w04/v3/jobs", submission);
+  }
+  getJob(id: string): Promise<WorkerJob> { return this.request("/w04/v3/jobs/" + this.id(id)); }
+  cancelJob(id: string): Promise<WorkerJob> { return this.request("/w04/v3/jobs/" + this.id(id) + "/cancel", {}); }
+  resumeJob(id: string): Promise<WorkerJob> { return this.request("/w04/v3/jobs/" + this.id(id) + "/resume", {}); }
+  getWorkerReceipt(id: string): Promise<WorkerReceipt> { return this.request("/w04/v3/jobs/" + this.id(id) + "/receipt"); }
   createRun(request: ExperimentRequest): Promise<RunResult> { return this.request("/w04/v2/runs", request); }
   getRun(id: string): Promise<RunResult> { return this.request("/w04/v2/runs/" + this.id(id)); }
   getSplit(id: string): Promise<SplitSummary> { return this.request("/w04/v2/runs/" + this.id(id) + "/split"); }

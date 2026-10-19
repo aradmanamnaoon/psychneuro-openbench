@@ -1,6 +1,12 @@
 name: W04 private review only (manual / no publish)
 on:
   workflow_dispatch:
+    inputs:
+      security_scan:
+        description: "Opt-in: external advisory lookup using pip-audit (additional runner/network use)"
+        required: false
+        default: false
+        type: boolean
 permissions:
   contents: read
 concurrency:
@@ -25,8 +31,38 @@ jobs:
         run: |
           python -m pip check
           python -m pip freeze > w04-installed-dependencies.txt
-      - name: Full tests including W03 and W04
+      - name: Full tests including real W03 worker, P25 fences and adversarial negatives
         run: python -m pytest -q
+      - name: Versioned OpenAPI and synthetic-only in-process benchmark
+        run: |
+          mkdir -p artifacts/w04
+          python - <<'PY'
+          import json, tempfile
+          from pathlib import Path
+          from psychneuro.w04.policy_v2 import PolicyStore
+          from psychneuro.w04.rights import Principal
+          from psychneuro.w04.strict_facade import create_strict_app
+          with tempfile.TemporaryDirectory() as t:
+              db = Path(t) / "private.sqlite"
+              policy = PolicyStore(db, permit_key=b"only-in-ci-unpublished-test-key-at-least-32-bytes")
+              app = create_strict_app(
+                  db_path=db, registry_path=Path("data/registry.json"),
+                  credentials={"ci-private-only-example-token-0000000000": Principal(
+                      subject="ci", role="maintainer")}, policy=policy)
+              Path("artifacts/w04/openapi.json").write_text(
+                  json.dumps(app.openapi(), sort_keys=True, indent=2))
+          PY
+          W04_BENCHMARK_OUTPUT=artifacts/w04/http-testclient.csv python benchmarks/measure_w04_http.py
+          python benchmarks/w04_sbom.py > artifacts/w04/sbom.cdx.json
+          python -m pip freeze --disable-pip-version-check > artifacts/w04/pip-freeze.txt
+          sha256sum artifacts/w04/*
+      - name: Archive exact-commit OpenAPI and synthetic measurements
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: w04-private-api-evidence-${{ matrix.python-version }}-${{ github.sha }}
+          path: artifacts/w04/
+          retention-days: 7
+          if-no-files-found: error
       - name: Lint and strict typing
         run: |
           python -m ruff check .
@@ -41,11 +77,70 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
-      - name: Install fixed TypeScript compiler (review environment; lockfile not yet generated)
-        run: npm install --no-save --ignore-scripts --no-audit --no-fund typescript@5.9.3
-      - name: Check typed browser contracts and scientific summaries
+      - name: Install locked TypeScript dependencies
+        run: npm ci --prefix apps/web --ignore-scripts --no-audit --no-fund
+      - name: Full client typecheck, build and scientific unit tests
         run: |
-          ./node_modules/.bin/tsc -p apps/web/tsconfig.build.json
-          node --test apps/web/tests/*.test.mjs
+          npm run typecheck --prefix apps/web
+          npm run test --prefix apps/web
           node --version
           echo "exact_sha=${GITHUB_SHA}"
+
+
+  private-container-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+      - name: Ephemeral non-public secret fixture (NEVER echoed)
+        run: |
+          python - <<'PY'
+          import secrets
+          from pathlib import Path
+          Path(".env").write_text(
+              "W04_PRIVATE_TOKEN=" + secrets.token_urlsafe(36) +
+              "\nW04_P25_PERMIT_KEY=" + secrets.token_urlsafe(36) + "\n"
+          )
+          PY
+          chmod 600 .env
+      - name: Compose config, private image build and health smoke
+        run: |
+          docker compose --env-file .env config -q
+          docker compose --env-file .env up --build -d
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:18080/health >/dev/null; then exit 0; fi
+            sleep 2
+          done
+          docker compose ps
+          exit 1
+      - name: Tear down ephemeral private test container
+        if: always()
+        run: |
+          docker compose --env-file .env down -v --remove-orphans || true
+          rm -f .env
+
+  opt-in-dependency-security:
+    if: ${{ inputs.security_scan }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.12'
+      - name: Dependency inventory plus advisory scan (findings fail gate)
+        run: |
+          python -m pip install --disable-pip-version-check -e '.[w03,dev,ui]' pip-audit
+          python -m pip freeze > w04-installed-dependencies.txt
+          python -m pip check
+          python -m pip_audit --format json --output w04-private-audit.json
+      - name: Archive inventory and scan output (including FAIL)
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: w04-private-dependency-audit-${{ github.sha }}
+          path: |
+            w04-installed-dependencies.txt
+            w04-private-audit.json
+          retention-days: 7
+          if-no-files-found: warn

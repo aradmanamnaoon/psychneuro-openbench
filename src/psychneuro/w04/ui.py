@@ -47,11 +47,14 @@ input{max-width:calc(100% - .6rem)}
 <p>For details and split counts, review each exported node. No participant-level rows are exposed.</p>
 <button id="download">Download A integrity-only JSON artifact</button><label for="receipt">Private JSON receipt to verify</label><input id="receipt" type="file" accept=".json,application/json"><button id="verify">Verify receipt</button>
 <p>Hashes detect changes but do not authenticate a signer or source.</p></section>
-<section aria-labelledby="jobs-title"><h2 id="jobs-title">Manual durable job-state protocol</h2>
-<p>No background worker. Cancel/resume are metadata transitions and do not interrupt an active model fit.</p>
-<label for="job-id">Job ID (64-character lowercase hex)</label><input id="job-id" size="64">
-<button id="job-create">Create metadata job</button><button id="job-start">Start metadata job</button><button id="job-status">Get status</button>
-<button id="job-cancel">Request cancellation</button><button id="job-ack">Acknowledge cancellation</button><button id="job-resume">Requeue failed/cancelled</button>
+<section aria-labelledby="jobs-title"><h2 id="jobs-title">Durable synthetic computation queue</h2>
+<p>The separate PRIVATE operator worker executes queued jobs. Browser requests cannot start a privileged worker.
+Cancelling an active fit invalidates its fenced result publication but cannot interrupt an in-flight scikit-learn CPU call;
+resuming a cancelled job requires a fresh P25 grant and restarts fitting from the synthetic source.</p>
+<label for="job-key">Idempotency key (reuse for exact retry)</label><input id="job-key" size="48" value="fictional-demo-job-1" maxlength="80">
+<label for="job-id">Durable job ID (64-character lowercase hex)</label><input id="job-id" size="64" pattern="[a-f0-9]{64}">
+<button id="job-create">Queue synthetic experiment</button><button id="job-status">Get durable status</button>
+<button id="job-cancel">Cancel queued/running job</button><button id="job-resume">Resume cancelled job</button><button id="job-receipt">Download verified worker receipt</button>
 <p id="job-display" role="status" aria-live="polite"></p></section>
 </main><script>
 'use strict';
@@ -86,11 +89,48 @@ $('rights').addEventListener('click',async()=>{try{const token=$('token').value;
 $('create-form').addEventListener('submit',async e=>{e.preventDefault();try{const token=$('token').value;const cat=await loadCatalog();if(!cat.datasets.some(x=>x.id===$('dataset').value))throw new Error('Select an authorized dataset');const asInt=(id,min,max)=>{const n=Number($(id).value);if(!Number.isSafeInteger(n)||n<min||n>max)throw new Error('Invalid '+id);return n;};$('alert').textContent='Running CPU benchmark (synchronously)';const run=await postJson('/w04/v2/runs',token,{generator_seed:asInt('generator-seed',0,4294967295),split_seed:asInt('split-seed',0,4294967295),n_participants:asInt('participants',24,80),trials_per_participant:asInt('trials',8,40)});$('run1').value=run.run_id;$('load').click();}catch(e){notifyError(e);}});
 $('download').addEventListener('click',async()=>{try{const id=$('run1').value.trim();if(!valid(id))throw new Error('Invalid run A ID');const data=await readJson('/w04/v2/runs/'+id+'/artifact',$('token').value);const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download='w04-'+id+'.json';document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);$('alert').textContent='Integrity-only artifact exported.';}catch(e){notifyError(e);}});
 $('verify').addEventListener('click',async()=>{try{const file=$('receipt').files[0];if(!file||file.size>250000)throw new Error('Choose JSON receipt under 250KB');const data=JSON.parse(await file.text());const verified=await postJson('/w04/v2/artifacts/verify',$('token').value,data);$('alert').textContent='Receipt hash verification OK (not independently signed): '+verified.provenance_root;}catch(e){notifyError(e);}});
-async function jobStatus(){const id=$('job-id').value.trim();if(!valid(id))throw new Error('Invalid job ID');const job=await readJson('/w04/v1/jobs/'+id,$('token').value);$('job-display').textContent='State: '+job.state+'; revision: '+job.revision+'; attempts: '+job.attempts+'; checkpoint: '+(job.checkpoint||'none');return job;}
-$('job-create').addEventListener('click',async()=>{try{const id=$('job-id').value.trim();if(!valid(id))throw new Error('Invalid job ID');await postJson('/w04/v1/jobs/'+id,$('token').value,{});await jobStatus();}catch(e){notifyError(e);}});
+function experimentSettings(){
+ const asInt=(id,min,max)=>{const n=Number($(id).value);if(!Number.isSafeInteger(n)||n<min||n>max)throw new Error('Invalid '+id);return n;};
+ return {generator_seed:asInt('generator-seed',0,4294967295),split_seed:asInt('split-seed',0,4294967295),
+ n_participants:asInt('participants',24,80),trials_per_participant:asInt('trials',8,40)};
+}
+async function jobStatus(){
+ const id=$('job-id').value.trim();if(!valid(id))throw new Error('Invalid durable job ID');
+ const job=await readJson('/w04/v3/jobs/'+id,$('token').value);
+ $('job-display').textContent='State: '+job.state+'; revision: '+job.revision+'; attempts: '+job.attempts+
+ '; checkpoint: '+(job.checkpoint_stage||'none')+
+ '. Queued jobs require the separately authorized private worker.';
+ return job;
+}
+$('job-create').addEventListener('click',async()=>{
+ try{
+ const key=$('job-key').value.trim();
+ if(!/^[A-Za-z0-9_.-]{1,80}$/.test(key))throw new Error('Invalid idempotency key');
+ const result=await postJson('/w04/v3/jobs',$('token').value,
+  {schema_version:'w04-job-submit-5',idempotency_key:key,experiment:experimentSettings()});
+ $('job-id').value=result.id;await jobStatus();
+ }catch(e){notifyError(e);}
+});
 $('job-status').addEventListener('click',async()=>{try{await jobStatus();}catch(e){notifyError(e);}});
-$('job-start').addEventListener('click',async()=>{try{const j=await jobStatus();if(j.state!=='queued')throw new Error('Only queued metadata jobs can start');await postJson('/w04/v1/jobs/'+j.job_id+'/transition',$('token').value,{revision:j.revision,target:'running'});await jobStatus();}catch(e){notifyError(e);}});
-$('job-ack').addEventListener('click',async()=>{try{const j=await jobStatus();if(j.state!=='cancel_requested')throw new Error('Cancellation must be requested first');await postJson('/w04/v1/jobs/'+j.job_id+'/transition',$('token').value,{revision:j.revision,target:'cancelled'});await jobStatus();}catch(e){notifyError(e);}});
-$('job-cancel').addEventListener('click',async()=>{try{const j=await jobStatus();if(j.state!=='running')throw new Error('Only running protocol jobs can request cancel');await postJson('/w04/v1/jobs/'+j.job_id+'/transition',$('token').value,{revision:j.revision,target:'cancel_requested'});await jobStatus();}catch(e){notifyError(e);}});
-$('job-resume').addEventListener('click',async()=>{try{const j=await jobStatus();if(j.state!=='failed'&&j.state!=='cancelled')throw new Error('Only failed/cancelled jobs can be requeued');await postJson('/w04/v1/jobs/'+j.job_id+'/transition',$('token').value,{revision:j.revision,target:'queued'});await jobStatus();}catch(e){notifyError(e);}});
+$('job-cancel').addEventListener('click',async()=>{
+ try{const job=await jobStatus();await postJson('/w04/v3/jobs/'+job.id+'/cancel',$('token').value,{});await jobStatus();}
+ catch(e){notifyError(e);}
+});
+$('job-resume').addEventListener('click',async()=>{
+ try{const job=await jobStatus();await postJson('/w04/v3/jobs/'+job.id+'/resume',$('token').value,{});await jobStatus();}
+ catch(e){notifyError(e);}
+});
+$('job-receipt').addEventListener('click',async()=>{
+ try {
+   const job=await jobStatus();
+   if(job.state!=='succeeded')throw new Error('No verified worker artifact published');
+   const receipt=await readJson('/w04/v3/jobs/'+job.id+'/receipt',$('token').value);
+   const url=URL.createObjectURL(new Blob([JSON.stringify(receipt,null,2)],{type:'application/json'}));
+   try {
+     const a=document.createElement('a');a.href=url;a.download='w04-worker-'+job.id+'.json';
+     document.body.appendChild(a);a.click();a.remove();
+   }finally {URL.revokeObjectURL(url);}
+   $('job-display').textContent='Worker receipt exported. Hash and P25 policy checks are not independent signer authenticity.';
+ }catch(e){notifyError(e);}
+});
 </script></body></html>'''
