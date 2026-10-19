@@ -6,6 +6,7 @@ This module never infers consent, licence permission or human data rights.
 from __future__ import annotations
 
 import hashlib
+import hmac
 import json
 import re
 import sqlite3
@@ -67,6 +68,7 @@ class Permit(BaseModel):
     policy_sha256: str
     expires_ns: int
     correlation_id: str
+    mac_sha256: str = Field(pattern=r"^[a-f0-9]{64}$")
 
 
 class PolicyStore:
@@ -76,7 +78,10 @@ class PolicyStore:
     independently authenticate the operator and validate attestation_ref.
     """
 
-    def __init__(self, path: Path):
+    def __init__(self, path: Path, *, permit_key: bytes):
+        if not isinstance(permit_key, bytes) or len(permit_key) < 32:
+            raise ValueError("out-of-band HMAC key of at least 32 bytes required")
+        self._permit_key = permit_key
         self.path = path
         path.parent.mkdir(parents=True, exist_ok=True)
         with self._db() as db:
@@ -204,6 +209,9 @@ class PolicyStore:
                              "dataset": dataset, "revision": return_revision, "operator": operator})
             return return_revision
 
+    def _mac(self, payload: dict[str, object]) -> str:
+        return hmac.new(self._permit_key, canonical(payload).encode("utf-8"), hashlib.sha256).hexdigest()
+
     def authorize(self, *, tenant: str, dataset: str, subject: str, role: str,
                   action: str, purpose: str, correlation_id: str, ttl_ns: int = 60_000_000_000,
                   now_ns: int | None = None) -> Permit:
@@ -231,15 +239,20 @@ class PolicyStore:
             self._event(db, {"version": "p25-event-2", "type": "decision", "tenant": tenant,
                              "dataset": dataset, "revision": row[0], "subject": subject,
                              "action": action[:64], "allowed": allowed, "correlation": correlation_id})
-            decision_permit = (Permit(tenant=tenant, dataset=dataset, subject=subject, action=action,
-                          purpose=purpose, policy_revision=row[0], policy_sha256=row[2],
-                          expires_ns=min(now + ttl_ns, policy.retention_until_ns), correlation_id=correlation_id)
-                          if allowed else None)
+            claim = {"version": "p25-permit-2", "tenant": tenant, "dataset": dataset,
+                     "subject": subject, "action": action, "purpose": purpose,
+                     "policy_revision": row[0], "policy_sha256": row[2],
+                     "expires_ns": min(now + ttl_ns, policy.retention_until_ns),
+                     "correlation_id": correlation_id}
+            decision_permit = Permit.model_validate({**claim, "mac_sha256": self._mac(claim)}) if allowed else None
         if decision_permit is None:
             raise PolicyError("not authorized")
         return decision_permit
 
     def validate_permit(self, permit: Permit, *, now_ns: int | None = None) -> None:
+        unsigned = permit.model_dump(mode="json", exclude={"mac_sha256"})
+        if not hmac.compare_digest(permit.mac_sha256, self._mac(unsigned)):
+            raise PolicyError("invalid permit authentication tag")
         now = time.time_ns() if now_ns is None else now_ns
         with self._db() as db:
             self._verify_events(db)
