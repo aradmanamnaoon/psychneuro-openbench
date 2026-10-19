@@ -45,3 +45,14 @@ PYTHONPATH=src python scripts/w04_browser_audit.py
 - **G6**: no release-grade multi-dataset licenses/consent, no human study, no official independent acceptance, no scientifically generalizable inference.
 
 **E1–E14 and GA1–GA8 remain preparatory deliverables; rubric threshold and all hard gates are not met. Always NO-GO.**
+
+## 2026-10-19 terminal-state recovery continuation (private PR #24)
+
+**Actual committed source and regression tests (not yet executed at this branch HEAD):**
+- `QueueStore.reconcile_terminal` performs bounded, tenant-specific SQLite `BEGIN IMMEDIATE` recovery: (a) finalizes already-fenced `cancel_requested` jobs to `cancelled`; (b) moves expired `running` / due `queued` jobs that consumed all three retries into terminal `failed`. Each transition increments the fence/revision and adds one durable audit event; repeat reconciliation does not duplicate events.
+- The one-shot operator CLI calls reconciliation only in execution mode, not `--dry-run`. The worker's due scan excludes jobs with three consumed attempts so it does not repeatedly advertise unclaimable jobs.
+- `tests/test_w04_terminal_lease_recovery_v6.py` adds four SQLite contract regressions for three-exhausted attempts, fenced cancellation, bounded/tenant-isolated repair, and invalid parameter denial.
+
+**Evidence boundaries:** Commit/file writes were confirmed through the connected private GitHub API; the full branch has **not** been checked out, installed, or tested after these commits. No claim of passing this new regression, mypy, Ruff, multiprocessing crash/recovery, browser testing, or hosted CI is made. The latest GitHub-hosted green run at [#39288865774](https://github.com/aradmanamnaoon/psychneuro-openbench/actions/runs/39288865774) verified **a different ancestor branch/commit** `c8b7d871d2d3f389b62888df97277a56e559c940`: Python 3.11 **491 passed**, Python 3.12 **491 passed**, Ruff PASS and strict mypy **52 source files** on both, TypeScript job SUCCESS. It is not evidence that unified PR #24 passed.
+
+**Hard blockers unchanged:** complete private unified HEAD QA, supervised real process SIGKILL/restart and actual workload latency/RSS, signed/externally anchored provenance, independent data rights/consent verification, independent scientific/security/accessibility signoff. This code only makes *operator-discovered terminal-state transitions* auditable; it does not promise arbitrary mid-fit checkpoints, host power-loss recovery, or clinical validity. **NO-GO.** No release, merge, private-run dispatch, data upload or Academy edit; career W04 Done stays unchecked.
