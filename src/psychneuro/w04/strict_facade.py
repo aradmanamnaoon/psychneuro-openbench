@@ -173,20 +173,13 @@ def create_strict_app(*, db_path: Path, registry_path: Path,
 
     @app.post("/w04/v2/artifacts/import", response_model=ImportResult)
     def import_receipt(receipt: Envelope, actor: Annotated[Principal, Depends(principal)]) -> ImportResult:
-        if actor.role != "maintainer":
-            refuse()
-        try:
-            item = verify_envelope(receipt)
-            gate.check_record(actor, Action.EXPORT_AGGREGATE, item)
-            acl.claim(receipt.run_id, actor)
-            store.put(item)
-        except PermissionError:
-            refuse()
-        except ConflictError:
-            refuse(409)
-        except (ValueError, TypeError):
-            refuse(422)
-        return ImportResult(run_id=receipt.run_id, provenance_root=receipt.provenance_root)
+        # A matching digest is not an externally authenticated provenance root.
+        # The legacy Envelope schema contains no independent signature/sequence
+        # and cannot meet the P13/P25 trust boundary, even for maintainers.
+        # Signed offline verification lives in receipt_guard_v3; no importer
+        # is enabled until a separately authenticated key/root authority exists.
+        _ = (receipt, actor)
+        refuse()
 
     @app.get("/w04/v2/compare", response_model=RunComparison)
     def compare(left: str, right: str,
