@@ -99,3 +99,44 @@ Compute budget: use existing free local/sandbox permitted CPU for bounded synthe
 No new schema tables or migrations introduced by this v3 patch. The inherited `p25_v2_meta` and `w04_v2_meta` require migration review and transaction-safe backup before future schema upgrades. Rollback v3 code by removing its additive imports; do not delete W03 SQLite records or silently downgrade policy revisions. Maintain event anchors outside the SQLite path. Do not redact failure evidence.
 
 **Notion scope:** Update only original W04 Thursday Career page, date `2026-11-05`; leave `Done=__NO__` and do not touch Academy or add calendar days.
+
+---
+
+## 2026-10-19 Chat 1 continuation: atomic W03 worker v4 (additive; new evidence)
+
+**Latest focused source+tests commits:** `97195f42244861f74397fd025646e5e0eb0fc3b4`, `173fa2e7f1ef7f6605958dc4264380aabefc9ccf`, `cd0f5d8c94a04bb2cfb8591ba17c15f615410def`. The documentation addendum commit is `ae408d9f9155ff41616e2ea4ca0e8665f5b0cd4d`; refer to the live branch HEAD for current tree. See the full [W04 v4 worker architecture, migration, security, real-run test and evidence](CHAT1_ATOMIC_WORKER_V4_ADDENDUM.md).
+
+**Implemented:** `src/psychneuro/w04/private_worker_v4.py` and two new test files. P25 scoped authorization BEFORE original W03 dataset preflight, pre-fit registered source SHA check, actual W03 nested-CV service adapter, in-memory-only fitting reports, single-SQLite-transaction job completion/immutable aggregate receipt/rights revision/fence and read-time P25 reauthorization. Original W03 and prior W04 modules were not modified. Restart retries recompute after fit interruption; mid-fit checkpoint/resume is NOT implemented.
+
+**Observed scoped tests only:** 38 passed (0.32s, Python 3.13.5); eleven new v4 tests use explicit W03/P25/queue doubles; `compileall` exit 0. `pip check` exit 1 due unrelated MoviePy/Pillow conflict. `tests/test_w04_worker_v4_real_w03_integration.py` is WRITTEN but **NOT RUN** against actual original source: full repository checkout unavailable in this container. Full repo pytest, Ruff, mypy, hosted CI, Docker/browser and independent attestation/signature all **NOT RUN/BLOCKED**. No fitted W04 numeric outcomes are claimed.
+
+**Security/release:** permit HMAC authenticates only the narrow v2 permit, not a signed receipt or legal rights. The v4 worker is trusted internal Python code without public privileged endpoints; external authentication, attestation, key rotation, model-run production proof and third-party audit remain release blockers. All E2/E3/E5–E8/E11/E13 remain **PARTIAL**, W04 **NO-GO**. Keep the sole original W04 Notion card dated 2026-11-05, Done false, Academy untouched.
+
+
+---
+
+## 2026-10-19 · Chat 1 v5 adversarial scientific verifier and operator CLI
+
+**Exact tested source/test tree head (before this handoff-only edit):** `588177909003274d1797270338e00b8e9a7cae18`. The source and tests are unchanged by this documentation-only update. **Private draft PR:** [#19](https://github.com/aradmanamnaoon/psychneuro-openbench/pull/19). Full v5 [scoped scientific and security audit](CHAT1_V5_SCIENCE_CONTRACT_AUDIT.md) and [machine-readable observed evidence](CHAT1_V5_SCOPED_OBSERVED_EVIDENCE.json).
+
+**New tested code and tests:** `receipt_v3.py` independently cross-checks W03's deterministic run ID against its request/source/split and compares the reported grouped outer/dummy means, final C, sealed-test metric, time-safe predictors, group/seed counts, method and actual P13 graph benchmark metadata; eight coordinated rehash attacks now fail. `tests/test_w04_synthetic_numerical_oracles_v5.py` compares mathematical balanced accuracy to real scikit-learn and GroupKFold versus row-wise KFold on five fixed, entirely fictional seeds. `worker_cli_v5.py` is an operator-only bounded one-shot worker (existing SQLite, synthetic registry, `W04_PERMIT_KEY_HEX` via environment, mode 0600 SQLite on POSIX, no privileged browser route). CLI tests use explicit doubles. No new real dataset rights are granted, no independent signer, no public endpoints.
+
+**Observed local command:** `PYTHONPATH=src python -m pytest -q tests/test_w04_receipt_v3.py tests/test_w04_receipt_guard_v3.py tests/test_w04_atomic_worker_v4_contract.py tests/test_w04_synthetic_numerical_oracles_v5.py tests/test_w04_worker_cli_v5.py` → **61 passed in 1.10s**, Python 3.13.5. `compileall` exit 0. Initial new numerical fixture run was **5 failed / 53 passed** because labels were expanded to 576 against 96 samples; fixed and rerun. Global `pip check` **FAIL** (MoviePy/Pillow incompatibility), unrelated to this package. Ruff/mypy **NOT INSTALLED / NOT RUN**. Exact-head full W03 project pytest, true registry→fitted CV→P13→P25 SQLite result, Actions CI, Docker, browser/keyboard, production auth, and independent human reviewer **NOT RUN**.
+
+**Byte identity:** all locally tested Python files now have exact local Git blob hashes matching the committed private GitHub blobs. An initial library-to-GitHub transfer silently omitted final newlines; this was detected and corrected before finalizing the source evidence. See JSON file SHA-256 values and commit tree.
+
+**Reviewer/Chat2 next action:** execute the already committed `tests/test_w04_worker_v4_real_w03_integration.py` against a real private checkout, then full pytest/Ruff/mypy 3.11/3.12 and refresh precise SHA logs; the integrated test is **unexecuted**. Validate P25 operator attestation, externally anchored P13 graph and key custody, permissions and cancellation with real SQLite store, and failure-injection migration/rollback. Do not treat a coherent graph or mock receipt as observed scientific model evaluation. The signed/attested data-rights release gate remains blocked. W04 date 2026-11-05 and Done unchecked; Academy untouched. **E2/E3/E5/E6/E7/E8/E11/E13 PARTIAL; release NO-GO.**
+
+
+---
+
+## 2026-10-19 · Exact-code replay evidence supplement
+
+Latest tested W04 source/test commit: `db3b63b72d12853bd5b9956369cdb32a8e9bb3fd`, [full scoped QA report](CHAT1_QA_REPLAY_20261019.md), [machine-readable evidence](CHAT1_QA_REPLAY_RESULTS.json). **92 targeted tests passed**, including actual fitted W03 P1→P13→P25 two synthetic seeds; Ruff pass, mypy strict 30-source pass, compileall pass, pip check pass in isolated Python 3.13.13 environment. Both genuine fitted synthetic benchmarks scored 0.50, equal to dummy 0.50: **no predictive improvement**. Earlier 61/38 test results are historical baseline only. The current SHA's entire repository test suite and hosted 3.11/3.12 CI, independent attestation, external trust root, real worker crash/restart and browser/Docker proof remain BLOCKED; no merge/release. Existing Notion date and Done unchanged.
+
+
+---
+
+## New 2026-10-19 real-fitter failure boundary regression
+
+[Recovery/cancellation evidence](CHAT1_REAL_RECOVERY_QA_20261019.md) and new `tests/test_w04_real_worker_recovery_v5.py` verify real W03 training interrupted *after fit/before publication* and cancellation/revocation of a running fence. Neither failed attempt publishes any artifact; a fresh authorized retry runs the genuine model again and publishes one deterministic run. Final scoped QA: **94 pytest PASS, Ruff PASS, strict mypy (30 staged modules) PASS, compileall PASS** in Python 3.13.13. This is boundary fault-injection, **NOT actual OS process kill**, external rights attestation, full 45-source repository hosted 3.11/3.12 CI or release. Maintain **NO-GO**.

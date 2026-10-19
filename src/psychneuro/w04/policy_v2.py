@@ -29,7 +29,7 @@ def digest(value: object) -> str:
     return hashlib.sha256(canonical(value).encode("utf-8")).hexdigest()
 
 
-def policy_payload(policy: "PolicyRecord") -> dict[str, object]:
+def policy_payload(policy: PolicyRecord) -> dict[str, object]:
     record: dict[str, object] = policy.model_dump(mode="json")
     record["actions"] = sorted(policy.actions)
     return record
@@ -222,8 +222,8 @@ class PolicyStore:
                 raise PolicyError("unknown policy")
             old = self._checked(tenant, dataset, *row)
             if old.revoked:
-                return row[0]
-            return_revision = row[0] + 1
+                return int(row[0])
+            return_revision = int(row[0]) + 1
             updated = old.model_copy(update={"revoked": True})
             payload = policy_payload(updated)
             db.execute("UPDATE p25_v2_policy SET revision=?,payload=?,sha=? WHERE tenant=? AND dataset=?", (

@@ -10,7 +10,13 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from psychneuro.w04.policy_v2 import IntegrityError, Permit, PolicyError, PolicyRecord, PolicyStore
+from psychneuro.w04.policy_v2 import (
+    IntegrityError,
+    Permit,
+    PolicyError,
+    PolicyRecord,
+    PolicyStore,
+)
 from psychneuro.w04.queue_v2 import JobConflict, QueueStore
 
 TEST_PERMIT_KEY = b"synthetic-only-test-hmac-key-never-use-in-production"
@@ -53,13 +59,13 @@ def test_unknown_foreign_or_unattested_denied(policy):
                      attestation_ref="fake-proof", retention_until_ns=10**20)
 
 
-@pytest.mark.parametrize("change", [dict(action="export_data"), dict(purpose="clinical-diagnosis"),
-                                     dict(role="viewer"), dict(action="export_aggregate")])
+@pytest.mark.parametrize("change", [{"action": "export_data"}, {"purpose": "clinical-diagnosis"},
+                                     {"role": "viewer"}, {"action": "export_aggregate"}])
 def test_scope_denial_is_audited(policy, change):
     store, _ = policy
-    kwargs = dict(tenant="tenant-A", dataset="w03-original-synthetic", subject="researcher",
-                  role="researcher", action="run", purpose="internal-method-validation",
-                  correlation_id="deny-1", now_ns=100)
+    kwargs = {"tenant": "tenant-A", "dataset": "w03-original-synthetic", "subject": "researcher",
+                  "role": "researcher", "action": "run", "purpose": "internal-method-validation",
+                  "correlation_id": "deny-1", "now_ns": 100}
     kwargs.update(change)
     before, _ = store.verify()
     with pytest.raises(PolicyError):
@@ -168,7 +174,7 @@ def test_claim_lease_fence_crash_recovery_and_stale_completion(tmp_path):
 
 def test_cancel_then_resume_requires_fresh_policy_and_rejects_old_worker(policy, tmp_path):
     store, _ = policy
-    q = QueueStore(tmp_path / "jobs.sqlite")
+    q = QueueStore(store.path)
     job = create_job(q)
     running = q.claim(tenant="tenant-A", job_id=job.id, worker="worker", correlation="go",
                       lease_ns=50_000_000, now_ns=2_000_000_000)
@@ -263,3 +269,41 @@ def test_policy_snapshot_rehashed_but_unlinked_event_refused(policy):
         store.authorize(tenant=rec.tenant, dataset=rec.dataset, subject="researcher",
                         role="researcher", action="run", purpose=rec.purpose,
                         correlation_id="audit-forge")
+
+def test_cancelled_resume_fails_closed_on_separate_policy_database(policy, tmp_path):
+    store, _ = policy
+    queue = QueueStore(tmp_path / "other.sqlite")
+    job = create_job(queue)
+    queue.cancel(tenant="tenant-A", job_id=job.id, subject="researcher",
+                 correlation="cancel-before-running", now_ns=1_000_000_001)
+    with pytest.raises(JobConflict, match="atomic shared policy database"):
+        queue.resume_cancelled(tenant="tenant-A", job_id=job.id, subject="researcher",
+                               correlation="resume", permit=permit(store, now=3_000_000_000),
+                               policy_store=store, now_ns=3_000_000_001)
+    assert queue.get(tenant="tenant-A", job_id=job.id, subject="researcher").state == "cancelled"
+
+
+def test_cancelled_resume_detects_revoke_between_precheck_and_lock(policy, monkeypatch):
+    store, _ = policy
+    queue = QueueStore(store.path)
+    job = create_job(queue)
+    queue.cancel(tenant="tenant-A", job_id=job.id, subject="researcher",
+                 correlation="cancel-before-running", now_ns=1_000_000_001)
+    p = permit(store, now=3_000_000_000)
+    validate = store.validate_permit
+    count = [0]
+
+    def revoke_after_precheck(provided, *, now_ns=None):
+        count[0] += 1
+        validate(provided, now_ns=now_ns)
+        if count[0] == 1:
+            store.revoke(tenant="tenant-A", dataset="w03-original-synthetic",
+                         operator="maintainer")
+
+    monkeypatch.setattr(store, "validate_permit", revoke_after_precheck)
+    with pytest.raises(PolicyError, match="stale or revoked"):
+        queue.resume_cancelled(tenant="tenant-A", job_id=job.id, subject="researcher",
+                               correlation="resume", permit=p, policy_store=store,
+                               now_ns=3_000_000_001)
+    assert count[0] == 2
+    assert queue.get(tenant="tenant-A", job_id=job.id, subject="researcher").state == "cancelled"

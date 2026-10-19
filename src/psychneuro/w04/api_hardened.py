@@ -14,7 +14,8 @@ from fastapi import Depends, FastAPI, Header, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 
 from psychneuro.w03.contracts import ExperimentRequest
-from .policy_v2 import PolicyError, PolicyStore
+
+from .policy_v2 import Permit, PolicyError, PolicyStore
 from .queue_v2 import JobConflict, QueueItem, QueueStore
 
 
@@ -61,7 +62,7 @@ def create_hardened_app(*, db_path: Path, credentials: dict[str, Actor],
             raise HTTPException(403, detail="forbidden")
         return found
 
-    def authorize(actor: Actor, action: str, correlation: str):
+    def authorize(actor: Actor, action: str, correlation: str) -> Permit:
         try:
             return policy.authorize(tenant=actor.tenant, dataset="w03-original-synthetic",
                                     subject=actor.subject, role=actor.role, action=action,
