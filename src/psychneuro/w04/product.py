@@ -9,7 +9,7 @@ import json
 import sqlite3
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, NoReturn
 
 from fastapi import Depends, FastAPI, HTTPException, Response
 from pydantic import BaseModel, ConfigDict, Field
@@ -75,7 +75,7 @@ class TenantRunACL:
             raise PermissionError("run not accessible")
 
 
-def _deny(code: str, message: str, status: int) -> None:
+def _deny(code: str, message: str, status: int) -> NoReturn:
     raise HTTPException(status_code=status, detail={
         "schema_version": "w04-error-2", "code": code, "message": message,
     })
