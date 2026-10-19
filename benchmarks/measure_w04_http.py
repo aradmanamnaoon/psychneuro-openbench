@@ -70,7 +70,7 @@ def main() -> None:
         headers = {"X-Internal-Token": TOKEN}
         started = time.perf_counter()
         run = client.post("/w04/v2/runs", headers=headers,
-                          json=REQUEST.model_dump(mode="json"))
+                          json=REQUEST.model_dump(mode="json", exclude={"predictors"}))
         if run.status_code != 201:
             raise RuntimeError(f"fixture run failed with HTTP {run.status_code}")
         fit_seconds = time.perf_counter() - started
