@@ -1,0 +1,42 @@
+{
+  "claims": "test-only, no empirical psychology/neuroscience finding",
+  "evidence_utc_date": "2026-10-19",
+  "files_sha256": {
+    "src/psychneuro/w04/receipt_v3.py": "805d9119371599e0558086c13296395699463a8de562ccc989d01601027e6228",
+    "tests/test_w04_receipt_v3.py": "91e074ee3ae6f04eb232a555c8196256dffc6f76179690c272ecb657eb55a00b",
+    "tests/test_w04_synthetic_numerical_oracles_v5.py": "2b812d062d358857a1b0190849aae4b3a20f04d5eb373397df5e4cdc1a737b64"
+  },
+  "full_W03_P1_evaluation": "NOT RUN",
+  "hosted_ci": "NOT RUN",
+  "mypy": "NOT RUN - unavailable",
+  "packages": {
+    "fastapi": "0.128.2",
+    "numpy": "2.3.5",
+    "pydantic": "2.13.5",
+    "pytest": "9.0.2",
+    "scikit_learn": "1.8.0"
+  },
+  "platform": "Linux-6.18.55-x86_64-with-glibc2.41",
+  "python": "3.13.5",
+  "receipt_verify_ms": {
+    "median": 0.107487,
+    "n": 500,
+    "p95": 0.269557
+  },
+  "rights": "original invented synthetic fixtures only; no redistribution authorized",
+  "ruff": "NOT RUN - unavailable",
+  "schema_version": "w04-v5-scoped-evidence-1",
+  "scope": "local four-file mock and sklearn oracle suite only; W03 real run unexecuted",
+  "synthetic_seeds": [
+    1,
+    42,
+    73,
+    101,
+    2026
+  ],
+  "tests": {
+    "command": "PYTHONPATH=src python -m pytest -q tests/test_w04_receipt_v3.py tests/test_w04_receipt_guard_v3.py tests/test_w04_atomic_worker_v4_contract.py tests/test_w04_synthetic_numerical_oracles_v5.py",
+    "new_numerical_and_tamper_regressions": 20,
+    "passed": 58
+  }
+}

@@ -21,7 +21,11 @@ def make_record(seed: int = 73):
     """Construct the documented W03 four-node contract, not a model evaluation."""
     s = hashlib.sha256(f"synthetic-source-{seed}".encode()).hexdigest()
     split = hashlib.sha256(f"synthetic-split-{seed}".encode()).hexdigest()
-    rid = hashlib.sha256(f"synthetic-run-{seed}".encode()).hexdigest()
+    request = {"generator_seed": seed, "split_seed": 42, "n_participants": 36,
+               "trials_per_participant": 12, "outer_folds": 3, "inner_folds": 2,
+               "predictors": ["difficulty", "stimulus_condition"]}
+    rid = v.digest({"contract": "w03-engine-1", "request": request,
+                    "source": s, "split": split})
     fields = {"schema_version": "w03-engine-1", "run_id": rid,
               "source_sha256": s, "split_sha256": split,
               "rights": "internal-synthetic-only", "n_train_groups": 21,
@@ -31,9 +35,15 @@ def make_record(seed: int = 73):
     chain = []
     metadata = [
         {"source_sha256": s, "rights": "internal-synthetic-only", "seed": seed},
-        {"split_sha256": split, "train_groups": 21, "test_groups": 8},
-        {"selected_c": 0.1, "model_spec_only": True},
-        {"result_sha256": v.digest(fields), "benchmark": {"test_only": True}},
+        {"split_sha256": split, "seed": 42, "train_groups": 21, "test_groups": 8},
+        {"selected_c": 0.1, "model_spec_only": True, "trained_model_bytes_hash": None,
+         "predictors": ["difficulty", "stimulus_condition"]},
+        {"result_sha256": v.digest(fields), "request": request,
+         "benchmark": {"outer_scores": [0.5, 0.5, 0.5],
+                       "dummy_outer_scores": [0.5, 0.5, 0.5],
+                       "outer_selected_c": [0.1, 0.1, 0.1], "final_c": 0.1,
+                       "sealed_test_balanced_accuracy": 0.5,
+                       "metric": "balanced_accuracy", "unit": "fictional_participant"}},
     ]
     for i, item in enumerate(metadata):
         parents = [chain[-1]["sha256"]] if chain else []
@@ -134,3 +144,61 @@ def test_receipt_checksum_is_not_authenticity():
         v.verify_receipt(attacker, tenant="tenant-A",
                             expected_policy_sha256=attacker.policy_sha256,
                             trusted_root=make_receipt(73).provenance_root)
+
+
+def _rehash_edited_record(record):
+    """Adversary rewrites all SHA-256 hashes coherently; no secret key involved."""
+    for n, node in enumerate(record["nodes"]):
+        node["parents"] = [] if n == 0 else [record["nodes"][n - 1]["sha256"]]
+        node["sha256"] = v.digest({"kind": node["kind"], "parents": node["parents"],
+                                   "metadata": node["metadata"]})
+    root = record["nodes"][-1]["sha256"]
+    record["provenance_root"] = root
+    record["result"]["provenance_root"] = root
+    return record
+
+
+@pytest.mark.parametrize("attack", ["run_id", "fit_score", "source_seed", "inner_grid",
+                                    "late_feature", "test_score", "group_count", "method"])
+def test_coherently_rehashed_but_inconsistent_scientific_claim_rejected(attack):
+    record = make_record(73)
+    b = record["nodes"][3]["metadata"]
+    if attack == "run_id":
+        new_id = "0" * 64
+        record["run_id"] = new_id
+        record["result"]["run_id"] = new_id
+        b["result_sha256"] = v.digest({k: x for k, x in record["result"].items()
+                                         if k != "provenance_root"})
+    elif attack == "fit_score":
+        record["result"]["outer_balanced_accuracy"] = 0.99
+        b["result_sha256"] = v.digest({k: x for k, x in record["result"].items()
+                                         if k != "provenance_root"})
+    elif attack == "source_seed":
+        record["nodes"][0]["metadata"]["seed"] = 9999
+    elif attack == "inner_grid":
+        b["benchmark"]["outer_selected_c"][0] = 3.0
+    elif attack == "late_feature":
+        record["nodes"][2]["metadata"]["predictors"] = ["reaction_time", "correct"]
+    elif attack == "test_score":
+        b["benchmark"]["sealed_test_balanced_accuracy"] = 0.99
+    elif attack == "group_count":
+        record["nodes"][1]["metadata"]["train_groups"] = 4
+    elif attack == "method":
+        b["benchmark"]["metric"] = "accuracy"
+    _rehash_edited_record(record)
+    with pytest.raises(v.ReceiptError):
+        v.verify_record(record)
+
+
+def test_coherently_rehashed_valid_looking_receipt_requires_independent_anchor():
+    """Hash consistency can never prove authorship or actual sklearn execution."""
+    good = make_record(73)
+    attacker = make_record(101)
+    assert v.verify_record(attacker)
+    anchor = good["provenance_root"]
+    tampered = v.issue_receipt(attacker, tenant="tenant-A", policy_revision=2,
+                               policy_sha256=hashlib.sha256(b"p25").hexdigest())
+    with pytest.raises(v.ReceiptError):
+        v.verify_receipt(tampered, tenant="tenant-A",
+                         expected_policy_sha256=tampered.policy_sha256,
+                         trusted_root=anchor)
