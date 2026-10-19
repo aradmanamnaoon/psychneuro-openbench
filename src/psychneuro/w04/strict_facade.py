@@ -29,7 +29,7 @@ from .worker_routes_v5 import install_worker_routes
 class Catalog(BaseModel):
     model_config = ConfigDict(extra="forbid")
     schema_version: Literal["w04-strict-catalog-1"] = "w04-strict-catalog-1"
-    datasets: list[dict[str, str]] = [{"id": "w03-original-synthetic"}]
+    datasets: list[dict[str, str]] = [{"id": "w03-original-synthetic", "scope": "original-fictional-only"}]
     limitation: str = "Synthetic-only, one attested fixture per tenant; no human-data claims"
 
 
