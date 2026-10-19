@@ -188,3 +188,33 @@ def test_cli_malformed_input_does_not_create_output(tmp_path: Path) -> None:
     destination = tmp_path / "should-not-exist.html"
     assert reviewer.main(["--record", str(wrong), "--output", str(destination)]) == 2
     assert not destination.exists()
+
+def test_actual_w03_grouped_fit_generates_offline_reviewer_artifact(tmp_path: Path) -> None:
+    """Exercise real W03 grouped fitting and reviewer integration on fictional trials."""
+    from psychneuro.w03.contracts import ExperimentRequest
+    from psychneuro.w03.service import execute
+    from psychneuro.w03.store import RunStore
+
+    registry = Path(__file__).parents[1] / "data" / "registry.json"
+    store = RunStore(tmp_path / "synthetic-only.sqlite")
+    result = execute(ExperimentRequest(generator_seed=73, split_seed=42), registry, store)
+    record = store.get(result.run_id)
+    assert record is not None
+    source = tmp_path / "private-aggregate.json"
+    source.write_text(json.dumps(record, sort_keys=True), encoding="utf-8")
+
+    checked = reviewer.load_record(source, expected_root=result.provenance_root)
+    assert checked.run_id == result.run_id
+    assert checked.source_sha256 == result.source_sha256
+    assert checked.split_sha256 == result.split_sha256
+    assert checked.train_groups == result.n_train_groups
+    assert checked.test_groups == result.n_test_groups
+    assert checked.sealed_test_balanced_accuracy == result.test_balanced_accuracy
+    assert checked.outer_balanced_accuracy == result.outer_balanced_accuracy
+    assert 0.0 <= checked.sealed_test_balanced_accuracy <= 1.0
+
+    html_output = tmp_path / "reproducibility-review.html"
+    reviewer.write_private_new(html_output, reviewer.as_html(checked))
+    page = html_output.read_text(encoding="utf-8")
+    assert result.run_id in page and result.provenance_root in page
+    assert "PRIVATE" in page and "not clinical evidence" in page
