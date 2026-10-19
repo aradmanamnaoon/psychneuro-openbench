@@ -1,0 +1,79 @@
+{
+  "scope": "actual private GitHub branch source and tests (40 files staged, 16 changes committed by exact blob hash)",
+  "source_commit": "db3b63b72d12853bd5b9956369cdb32a8e9bb3fd",
+  "date_utc": "2026-10-19",
+  "python": "3.13.13",
+  "versions": {
+    "pytest": "8.3.5",
+    "pydantic": "2.13.3",
+    "fastapi": "0.148.0",
+    "httpx": "0.28.1",
+    "scikit_learn": "1.6.1",
+    "numpy": "2.3.5",
+    "ruff": "0.17.1",
+    "mypy": "1.20.2"
+  },
+  "checks": {
+    "pytest": {
+      "passed": 92,
+      "warnings": 161,
+      "seconds": 3.04,
+      "status": "PASS",
+      "command": "PYTHONPATH=src python -m pytest -q --disable-warnings"
+    },
+    "ruff": {
+      "status": "PASS",
+      "command": "ruff check --no-cache src tests",
+      "scope": "staged source and tests only; B008 explicitly excepted for FastAPI Depends in two specific files"
+    },
+    "mypy": {
+      "status": "PASS",
+      "files": 30,
+      "command": "mypy --no-incremental --cache-dir=/tmp/w04_mypy_final --strict --python-version 3.11 src"
+    },
+    "compilation": {
+      "status": "PASS",
+      "command": "python -m compileall -q src tests"
+    },
+    "pip_check": {
+      "status": "PASS",
+      "command": "python -m pip check"
+    }
+  },
+  "synthetic_runs": [
+    {
+      "seed": 73,
+      "state": "succeeded",
+      "run_id": "b4a0f38b4c3302c56a1e75151813dc0bada8c1f95b45269eee9fe0914ba16844",
+      "provenance_root": "2579eb8213827b0fd434f3339f11b7651ca545562852d6a8742bd97fd11b38d2",
+      "source_sha256": "bc6f7b672193d4c4b4af13d1df25964454d3216d6e5c4b3c9c9c6099363412b8",
+      "train_groups": 21,
+      "test_groups": 8,
+      "outer_balanced_accuracy": 0.5,
+      "dummy_outer_balanced_accuracy": 0.5,
+      "heldout_balanced_accuracy": 0.5
+    },
+    {
+      "seed": 101,
+      "state": "succeeded",
+      "run_id": "efdd5c9151343531162cc8e963272805f36aadd46a2e3179346178f42af4f925",
+      "provenance_root": "913dbe00e98fae4e4221270c7dc52f22b79dda2c00b129cf450e3d87b84fc1aa",
+      "source_sha256": "c092716486a21bcc485f4516ca13f2f0f18ecb87136a7a10e249ae045d153164",
+      "train_groups": 21,
+      "test_groups": 8,
+      "outer_balanced_accuracy": 0.5,
+      "dummy_outer_balanced_accuracy": 0.5,
+      "heldout_balanced_accuracy": 0.5
+    }
+  ],
+  "gaps": [
+    "full exact-GitHub 45-source repository tests on this new head not run",
+    "Python 3.11/3.12 hosted manual CI not run",
+    "no real dataset rights, independent attestation or external provenance signer",
+    "no actual browser accessibility or Docker smoke",
+    "no independent human security/research review",
+    "no proof of restart-from-crash equivalence across a real interrupted fit"
+  ],
+  "release_decision": "NO-GO",
+  "data_scope": "original internal synthetic only"
+}

@@ -126,3 +126,10 @@ No new schema tables or migrations introduced by this v3 patch. The inherited `p
 **Byte identity:** all locally tested Python files now have exact local Git blob hashes matching the committed private GitHub blobs. An initial library-to-GitHub transfer silently omitted final newlines; this was detected and corrected before finalizing the source evidence. See JSON file SHA-256 values and commit tree.
 
 **Reviewer/Chat2 next action:** execute the already committed `tests/test_w04_worker_v4_real_w03_integration.py` against a real private checkout, then full pytest/Ruff/mypy 3.11/3.12 and refresh precise SHA logs; the integrated test is **unexecuted**. Validate P25 operator attestation, externally anchored P13 graph and key custody, permissions and cancellation with real SQLite store, and failure-injection migration/rollback. Do not treat a coherent graph or mock receipt as observed scientific model evaluation. The signed/attested data-rights release gate remains blocked. W04 date 2026-11-05 and Done unchecked; Academy untouched. **E2/E3/E5/E6/E7/E8/E11/E13 PARTIAL; release NO-GO.**
+
+
+---
+
+## 2026-10-19 · Exact-code replay evidence supplement
+
+Latest tested W04 source/test commit: `db3b63b72d12853bd5b9956369cdb32a8e9bb3fd`, [full scoped QA report](CHAT1_QA_REPLAY_20261019.md), [machine-readable evidence](CHAT1_QA_REPLAY_RESULTS.json). **92 targeted tests passed**, including actual fitted W03 P1→P13→P25 two synthetic seeds; Ruff pass, mypy strict 30-source pass, compileall pass, pip check pass in isolated Python 3.13.13 environment. Both genuine fitted synthetic benchmarks scored 0.50, equal to dummy 0.50: **no predictive improvement**. Earlier 61/38 test results are historical baseline only. The current SHA's entire repository test suite and hosted 3.11/3.12 CI, independent attestation, external trust root, real worker crash/restart and browser/Docker proof remain BLOCKED; no merge/release. Existing Notion date and Done unchanged.
