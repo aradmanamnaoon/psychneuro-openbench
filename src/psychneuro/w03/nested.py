@@ -102,7 +102,7 @@ def _select(x: np.ndarray, y: np.ndarray, groups: np.ndarray, folds: int) -> flo
             scores.append(_score(y[val], est.predict(x[val])))
         scored.append((float(np.mean(scores)), c))
     # Frozen tie policy: prefer simpler stronger regularization C=0.1.
-    return sorted(scored, key=lambda it: (-it[0], it[1]))[0][1]
+    return min(scored, key=lambda it: (-it[0], it[1]))[1]
 
 
 def nested_grouped_benchmark(
