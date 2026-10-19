@@ -34,3 +34,8 @@ line-length = 100
 [tool.mypy]
 python_version = "3.11"
 strict = true
+
+[tool.ruff.lint.per-file-ignores]
+"src/psychneuro/w04/api.py" = ["B008"]
+"src/psychneuro/w04/api_hardened.py" = ["B008"]
+"src/psychneuro/w04/product.py" = ["B008"]
