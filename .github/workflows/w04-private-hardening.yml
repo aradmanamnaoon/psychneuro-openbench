@@ -100,6 +100,8 @@ jobs:
             -p '127.0.0.1::8000' \
             -e "W04_PRIVATE_TOKEN=$token" \
             -e "W04_P25_PERMIT_KEY=$key" \
+            -e "W04_DB_PATH=/var/lib/psychneuro/aggregate.sqlite" \
+            -e "W04_REGISTRY_PATH=/opt/psychneuro/data/registry.json" \
             "w04-private-smoke:${GITHUB_SHA}")"
           bind="$(docker port "$cid" 8000/tcp)"
           case "$bind" in 127.0.0.1:*) ;; *) echo "unsafe_bind"; exit 1;; esac
