@@ -3,13 +3,16 @@
 No HTTP grant endpoint; no human data or inferred public redistribution rights.
 """
 from __future__ import annotations
+
 import argparse
 import os
 import time
 from pathlib import Path
+
+from psychneuro.w03.contracts import ExperimentRequest
+
 from .durable_bridge import source_sha256
 from .policy_v2 import PolicyRecord, PolicyStore
-from psychneuro.w03.contracts import ExperimentRequest
 
 
 def main() -> int:
