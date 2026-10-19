@@ -187,7 +187,8 @@ def as_markdown(left: Review, right: Review | None = None) -> bytes:
 
 def as_html(left: Review, right: Review | None = None) -> bytes:
     """Portable accessible static page: no JavaScript, CDN, images or network."""
-    esc = lambda value: html.escape(str(value), quote=True)
+    def esc(value: object) -> str:
+        return html.escape(str(value), quote=True)
     metrics = [
         ("Outer balanced accuracy", "outer_balanced_accuracy"),
         ("Grouped dummy baseline", "dummy_outer_balanced_accuracy"),
