@@ -283,6 +283,46 @@ class QueueStore:
             self._event(db, item, subject, "resumed", correlation, now)
             return item
 
+    def reconcile_terminal(self, *, tenant: str, correlation: str,
+                           now_ns: int | None = None, max_attempts: int = 3,
+                           limit: int = 100) -> int:
+        """Finalize fenced cancellations and jobs whose retry budget expired.
+
+        Operator-only maintenance, deliberately separate from read-only queue
+        discovery. A BEGIN IMMEDIATE transaction protects each transition and
+        its audit event against concurrent claim, cancel and publication.
+        Expired jobs with retries remaining are still available for reclaim.
+        """
+        self._identifier(tenant)
+        self._identifier(correlation)
+        if max_attempts not in range(1, 11) or not 1 <= limit <= 1000:
+            raise ValueError("invalid retry or reconciliation bound")
+        now = time.time_ns() if now_ns is None else now_ns
+        with self._db() as db:
+            db.execute("BEGIN IMMEDIATE")
+            rows = db.execute(
+                "SELECT id,state FROM w04_v2_jobs WHERE tenant=? AND "
+                "(state='cancel_requested' OR (attempts>=? AND "
+                "((state='running' AND lease_until<=?) OR "
+                "(state='queued' AND next_attempt<=?)))) "
+                "ORDER BY id LIMIT ?",
+                (tenant, max_attempts, now, now, limit),
+            ).fetchall()
+            for job_id, prior_state in rows:
+                cancelled = prior_state == "cancel_requested"
+                state = "cancelled" if cancelled else "failed"
+                event = "cancel_finalized" if cancelled else "retry_budget_exhausted"
+                # Increment fence too: no delayed process may publish after
+                # the terminal transition, even if its old lease is replayed.
+                db.execute(
+                    "UPDATE w04_v2_jobs SET state=?,revision=revision+1,"
+                    "fence=fence+1,lease_until=0 WHERE id=? AND tenant=?",
+                    (state, job_id, tenant),
+                )
+                item = self._item(self._must_row(db, tenant, job_id))
+                self._event(db, item, "w04-reconciler", event, correlation, now)
+            return len(rows)
+
     def audit(self, *, tenant: str, job_id: str, subject: str,
               maintainer: bool = False) -> list[dict[str, object]]:
         self.get(tenant=tenant, job_id=job_id, subject=subject, maintainer=maintainer)
