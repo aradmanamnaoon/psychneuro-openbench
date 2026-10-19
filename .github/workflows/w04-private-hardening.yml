@@ -11,6 +11,9 @@ on:
       - pyproject.toml
       - src/**
       - tests/**
+      - benchmarks/**
+      - apps/web/package-lock.json
+      - apps/web/package.json
   workflow_dispatch:
 permissions:
   contents: read
@@ -122,3 +125,45 @@ jobs:
           running_uid="$(docker exec "$cid" id -u)"
           test "$running_uid" = "10001"
           echo "healthy_private_loopback=1 anonymous_denied=1 no_policy_denied=1 nonroot=1 exact_sha=$GITHUB_SHA"
+
+  hosted-synthetic-latency:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # actions/checkout v6
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # actions/setup-python v6
+        with:
+          python-version: '3.12'
+      - name: Install fitted synthetic science and API dependencies
+        run: python -m pip install --disable-pip-version-check -e '.[w03]'
+      - name: Measure in-process TestClient/SQLite/real fitted synthetic run
+        run: |
+          W04_BENCHMARK_OUTPUT="$RUNNER_TEMP/w04-private-latency.csv" python benchmarks/measure_w04_http.py
+          python - "$RUNNER_TEMP/w04-private-latency.csv" <<'PY'
+          import csv, sys
+          with open(sys.argv[1], encoding="utf-8", newline="") as stream:
+              rows = list(csv.DictReader(stream))
+          assert len(rows) == 4
+          expected = {"health_baseline", "authorized_run_read", "authorized_p13_graph",
+                      "authorized_artifact_export"}
+          assert {row["operation"] for row in rows} == expected
+          for row in rows:
+              assert float(row["p95_ms"]) >= float(row["median_ms"]) >= 0
+              assert int(row["n"]) >= 60
+              print("measured:", row["operation"], "p50_ms=", row["median_ms"],
+                    "p95_ms=", row["p95_ms"],
+                    "rss_kiB=", row["peak_process_rss_kib"])
+          PY
+          echo "measurement_scope=in-process_testclient_not_network_or_production exact_sha=$GITHUB_SHA"
+
+  node-dependency-advisories:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # actions/checkout v6
+      - name: Install exact private TypeScript lockfile
+        run: npm ci --prefix apps/web --ignore-scripts --no-fund --no-audit
+      - name: Audit all locked browser/dev packages for high-or-critical advisories
+        run: |
+          npm audit --prefix apps/web --audit-level=high --no-fund
+          echo "npm_high_critical_gate=pass exact_sha=$GITHUB_SHA"
