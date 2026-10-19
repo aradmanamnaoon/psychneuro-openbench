@@ -29,6 +29,12 @@ def digest(value: object) -> str:
     return hashlib.sha256(canonical(value).encode("utf-8")).hexdigest()
 
 
+def policy_payload(policy: "PolicyRecord") -> dict[str, object]:
+    record: dict[str, object] = policy.model_dump(mode="json")
+    record["actions"] = sorted(policy.actions)
+    return record
+
+
 class PolicyError(PermissionError):
     """Fail-closed policy refusal; never expose sensitive policy internals to clients."""
 
@@ -126,13 +132,30 @@ class PolicyStore:
             parent, previous = current, seq
         return parent
 
+    def _verify_snapshots(self, db: sqlite3.Connection) -> None:
+        # Every mutable policy snapshot must be committed in the hash-linked audit.
+        latest: dict[tuple[str, str], tuple[int, str]] = {}
+        for (raw,) in db.execute("SELECT payload FROM p25_v2_events ORDER BY seq"):
+            event = json.loads(raw)
+            if event.get("type") in {"install", "revoke"}:
+                key = (event["tenant"], event["dataset"])
+                latest[key] = (event["revision"], event["policy_sha256"])
+        seen = set()
+        for tenant, dataset, revision, raw, stored_sha in db.execute(
+            "SELECT tenant,dataset,revision,payload,sha FROM p25_v2_policy"
+        ):
+            self._checked(tenant, dataset, revision, raw, stored_sha)
+            key = (tenant, dataset)
+            if key not in latest or latest[key] != (revision, stored_sha):
+                raise IntegrityError("policy snapshot detached from audit history")
+            seen.add(key)
+        if seen != set(latest):
+            raise IntegrityError("policy snapshot omitted from audit history")
+
     def verify(self, *, trusted_root: str | None = None) -> tuple[int, str]:
         with self._db() as db:
             root = self._verify_events(db)
-            for tenant, dataset, revision, raw, stored_sha in db.execute(
-                "SELECT tenant,dataset,revision,payload,sha FROM p25_v2_policy"
-            ):
-                self._checked(tenant, dataset, revision, raw, stored_sha)
+            self._verify_snapshots(db)
             count = db.execute("SELECT count(*) FROM p25_v2_events").fetchone()[0]
         if trusted_root is not None and (not _DIGEST.fullmatch(trusted_root) or trusted_root != root):
             raise IntegrityError("audit root differs from independently held anchor")
@@ -145,8 +168,8 @@ class PolicyStore:
         except ValueError as exc:
             raise IntegrityError("stored policy schema invalid") from exc
         if (parsed.tenant != tenant or parsed.dataset != dataset or revision < 1 or
-                canonical(parsed.model_dump(mode="json")) != raw or
-                digest({"revision": revision, "policy": parsed.model_dump(mode="json")}) != sha):
+                canonical(policy_payload(parsed)) != raw or
+                digest({"revision": revision, "policy": policy_payload(parsed)}) != sha):
             raise IntegrityError("stored policy corrupted")
         return parsed
 
@@ -176,13 +199,14 @@ class PolicyStore:
                 if expected_revision != row[0]:
                     raise PolicyError("revision conflict")
                 revision = row[0] + 1
-            payload = policy.model_dump(mode="json")
+            payload = policy_payload(policy)
             db.execute("INSERT INTO p25_v2_policy(tenant,dataset,revision,payload,sha) VALUES(?,?,?,?,?) "
                        "ON CONFLICT(tenant,dataset) DO UPDATE SET revision=excluded.revision, "
                        "payload=excluded.payload,sha=excluded.sha", (policy.tenant, policy.dataset, revision,
                        canonical(payload), digest({"revision": revision, "policy": payload})))
             self._event(db, {"version": "p25-event-2", "type": "install", "tenant": policy.tenant,
                              "dataset": policy.dataset, "revision": revision, "operator": operator,
+                             "policy_sha256": digest({"revision": revision, "policy": payload}),
                              "revoked": policy.revoked})
             return revision
 
@@ -201,12 +225,13 @@ class PolicyStore:
                 return row[0]
             return_revision = row[0] + 1
             updated = old.model_copy(update={"revoked": True})
-            payload = updated.model_dump(mode="json")
+            payload = policy_payload(updated)
             db.execute("UPDATE p25_v2_policy SET revision=?,payload=?,sha=? WHERE tenant=? AND dataset=?", (
                 return_revision, canonical(payload), digest({"revision": return_revision, "policy": payload}),
                 tenant, dataset))
             self._event(db, {"version": "p25-event-2", "type": "revoke", "tenant": tenant,
-                             "dataset": dataset, "revision": return_revision, "operator": operator})
+                             "dataset": dataset, "revision": return_revision, "operator": operator,
+                             "policy_sha256": digest({"revision": return_revision, "policy": payload})})
             return return_revision
 
     def _mac(self, payload: dict[str, object]) -> str:
@@ -223,6 +248,7 @@ class PolicyStore:
         with self._db() as db:
             db.execute("BEGIN IMMEDIATE")
             self._verify_events(db)
+            self._verify_snapshots(db)
             row = db.execute("SELECT revision,payload,sha FROM p25_v2_policy WHERE tenant=? AND dataset=?",
                              (tenant, dataset)).fetchone()
             # No audit entry on an unknown tenant/dataset: avoid revealing its existence.
@@ -256,6 +282,7 @@ class PolicyStore:
         now = time.time_ns() if now_ns is None else now_ns
         with self._db() as db:
             self._verify_events(db)
+            self._verify_snapshots(db)
             row = db.execute("SELECT revision,payload,sha FROM p25_v2_policy WHERE tenant=? AND dataset=?",
                              (permit.tenant, permit.dataset)).fetchone()
             if row is None:

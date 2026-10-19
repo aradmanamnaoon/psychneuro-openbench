@@ -244,3 +244,22 @@ def test_forged_permit_rejected(policy):
         other_process.validate_permit(real, now_ns=100_000_000_001)
     with pytest.raises(ValueError):
         PolicyStore(store.path, permit_key=b"weak")
+
+
+def test_policy_snapshot_rehashed_but_unlinked_event_refused(policy):
+    from psychneuro.w04.policy_v2 import canonical, digest
+    store, rec = policy
+    with sqlite3.connect(store.path) as db:
+        row = db.execute("SELECT revision,payload FROM p25_v2_policy WHERE tenant=? AND dataset=?",
+                         (rec.tenant, rec.dataset)).fetchone()
+        changed = json.loads(row[1])
+        changed["actions"] = ["read_aggregate"]
+        fake_digest = digest({"revision": row[0], "policy": changed})
+        db.execute("UPDATE p25_v2_policy SET payload=?, sha=? WHERE tenant=? AND dataset=?",
+                   (canonical(changed), fake_digest, rec.tenant, rec.dataset))
+    with pytest.raises(IntegrityError, match="detached from audit"):
+        store.verify()
+    with pytest.raises(IntegrityError, match="detached from audit"):
+        store.authorize(tenant=rec.tenant, dataset=rec.dataset, subject="researcher",
+                        role="researcher", action="run", purpose=rec.purpose,
+                        correlation_id="audit-forge")
