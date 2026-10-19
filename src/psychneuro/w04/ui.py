@@ -9,6 +9,20 @@ button:focus-visible,input:focus-visible{outline:3px solid #174ea6;outline-offse
 section{background:white;padding:1rem;margin:1rem 0;border:1px solid #aaa;border-radius:.5rem}
 code{word-break:break-all}table{border-collapse:collapse;width:100%}th,td{padding:.5rem;border:1px solid #aaa;text-align:left}
 #alert{white-space:pre-wrap;font-weight:600;color:#8a1b05}li{margin:.5rem 0} @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* Mobile and keyboard-safe layout: long SHA digests must never widen the page. */
+*,*::before,*::after{box-sizing:border-box}
+html,body,main,section{max-width:100%;min-width:0}
+li,p,td,th,#alert,#graph{overflow-wrap:anywhere}
+#scores{overflow-x:auto;max-width:100%}
+input{max-width:calc(100% - .6rem)}
+@media(max-width:640px){
+  body{padding:.65rem}
+  section{padding:.75rem}
+  input,button{display:block;width:100%;max-width:100%;margin:.35rem 0}
+  #scores table{min-width:33rem}
+  #scores{overflow-x:auto}
+}
 </style></head><body><main><h1>PsychNeuro W04 — private explorer</h1>
 <p>Original synthetic aggregates only. Hashes detect changes; they do not establish who created an artifact. No clinical inference.</p>
 <section><h2>Internal access</h2><label for="token">Internal access token (not saved)</label>
