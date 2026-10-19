@@ -6,8 +6,10 @@ The caller must authenticate the permit holder (no direct browser exposure).
 """
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import Any, Protocol
 
+from .anchor_v1 import AnchorV1, verify_anchor
 from .receipt_v3 import P13P25Receipt, ReceiptError, issue_receipt, verify_receipt
 
 
@@ -58,5 +60,44 @@ def import_authorized(receipt: P13P25Receipt, *, policy: PolicyLike,
     record = verify_receipt(receipt, tenant=tenant,
                             expected_policy_sha256=permit.policy_sha256,
                             trusted_root=trusted_root)
+    policy.validate_permit(permit, now_ns=now_ns)
+    return record
+
+
+def import_authorized_anchored(
+    receipt: P13P25Receipt,
+    *,
+    anchor: AnchorV1,
+    pinned_public_keys: Mapping[str, bytes],
+    min_sequence: int,
+    policy: PolicyLike,
+    permit: PermitLike,
+    tenant: str,
+    subject: str,
+    now_ns: int | None = None,
+) -> dict[str, Any]:
+    """Independently signed aggregate import validation without persistence.
+
+    Both the key mapping and nonrollback sequence floor MUST originate from a
+    separately authenticated operator-controlled channel; never deserialize
+    them from the receipt, anchor, user request or same application database.
+    This still cannot prove legal dataset-use rights. Import/persistence
+    remains the caller's independently authorized responsibility.
+    """
+    _check_scope(permit, tenant=tenant, subject=subject, action="read_aggregate")
+    policy.validate_permit(permit, now_ns=now_ns)
+    if receipt.policy_revision != permit.policy_revision:
+        raise ReceiptError("receipt came from an obsolete policy revision")
+    pinned_root = verify_anchor(
+        anchor, receipt,
+        pinned_public_keys=pinned_public_keys,
+        min_sequence=min_sequence, now_ns=now_ns,
+    )
+    record = verify_receipt(
+        receipt, tenant=tenant,
+        expected_policy_sha256=permit.policy_sha256,
+        trusted_root=pinned_root,
+    )
+    # A rights revocation during asymmetric crypto/content verification wins.
     policy.validate_permit(permit, now_ns=now_ns)
     return record

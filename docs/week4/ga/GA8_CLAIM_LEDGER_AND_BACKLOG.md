@@ -36,3 +36,15 @@ P2: independent held-site/simulated-confounding robustness study, effect-vs-dumm
 - **Academy:** untouched; 40 h/week, <=10 total focused h/day, R-course reminder and optional three original videos separate; no claim lessons completed.
 
 **Current recommendation:** NO-GO for merge, release, public scientific assertion or manuscript submission. Approval-ready drafts exist; scientific/rights/security gates remain blocked.
+
+## Updated claim ledger — 2026-10-19 Chat3 continuation (supersedes older rows above where they conflict)
+
+- **True integrated P1/P13/P25 synthetic worker is CODED and LOCALLY TESTED in a previous exact-source worker slice**: genuine W03 grouped model fitting with P25 policy, fenced SQLite jobs and P13 receipt; 66 prior worker tests passed on a historical exact-source subset. Earlier row calling all three systems `BLOCKED` reflects an older split-branch snapshot and is superseded. Full exact-current-head hosted integration remains **UNVERIFIED**, not GO.
+- **Real offline OS SIGKILL after fitted model / before publication:** new `tests/test_w04_sigkill_process_restart_v6.py`, committed, test **NOT YET EXECUTED**. It does not claim checkpointed training.
+- **SQLite online backup/restore and restored payload tamper regression:** `tests/test_w04_sqlite_backup_restore_v6.py`, committed, test **NOT YET EXECUTED**.
+- **Single-host concurrent independent worker claim fencing:** `tests/test_w04_concurrent_worker_race_v6.py`, committed, test **NOT YET EXECUTED**.
+- **Typed browser science + client safety tests:** reconciled latest Chat2 source and test files exactly by Git object SHA; historical Chat2 isolated 9 tests passed, but the new integrated branch has not passed hosted CI.
+- **Private PR branch divergence:** latest Chat2 base integrated via two-parent review-branch merge after checking all five changed files; GitHub says the private draft PR is now mergeable and behind by 0. This is not an approval to merge.
+- **CI:** private Python3.11/3.12 and TypeScript Actions jobs were queued as of latest check, no observed current-head success. Do not add separate historical test counts or count unrun tests as passed.
+- **Release decision:** NO-GO until externally authenticated provenance, independent data-rights authority, exact-HEAD hosted/OS-kill/recovery and full security/clinical/a11y reviews. No human data, release, deployment, academic submission, outreach or payments.
+- **Authoritative current addendum:** [CHAT3_CONTINUED_IMPLEMENTATION_AND_BLOCKERS_20261019.md](../CHAT3_CONTINUED_IMPLEMENTATION_AND_BLOCKERS_20261019.md).
