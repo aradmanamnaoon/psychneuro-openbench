@@ -28,7 +28,7 @@ class Node:
 
 
 def node(kind: str, parents: Sequence[str], metadata: Mapping[str, Any]) -> Node:
-    if kind not in {"source", "split", "benchmark"}:
+    if kind not in {"source", "split", "model", "benchmark"}:
         raise ValueError("unsupported provenance node")
     if any(not SHA.fullmatch(p) for p in parents) or len(parents) != len(set(parents)):
         raise ValueError("malformed provenance parent")
@@ -49,22 +49,23 @@ def verify(nodes: Sequence[Node], root: str) -> None:
         if node(item.kind, item.parents, item.metadata).sha256 != item.sha256:
             raise ValueError("provenance integrity mismatch")
         seen.add(item.sha256)
-    if len(nodes) != 3 or root != nodes[-1].sha256 or root not in seen:
+    if len(nodes) != 4 or root != nodes[-1].sha256 or root not in seen:
         raise ValueError("invalid provenance root or node count")
-    if [n.kind for n in nodes] != ["source", "split", "benchmark"]:
+    if [n.kind for n in nodes] != ["source", "split", "model", "benchmark"]:
         raise ValueError("unrecognized provenance chain")
     if nodes[0].parents or nodes[1].parents != (nodes[0].sha256,):
         raise ValueError("invalid source to split edge")
-    if nodes[2].parents != (nodes[1].sha256,):
-        raise ValueError("invalid split to benchmark edge")
+    if nodes[2].parents != (nodes[1].sha256,) or nodes[3].parents != (nodes[2].sha256,):
+        raise ValueError("invalid model/benchmark edges")
 
 
-def make_chain(source: Mapping[str, Any], split: Mapping[str, Any], benchmark: Mapping[str, Any]) -> tuple[Node, ...]:
+def make_chain(source: Mapping[str, Any], split: Mapping[str, Any], model: Mapping[str, Any], benchmark: Mapping[str, Any]) -> tuple[Node, ...]:
     a = node("source", (), source)
     b = node("split", (a.sha256,), split)
-    c = node("benchmark", (b.sha256,), benchmark)
-    chain = (a, b, c)
-    verify(chain, c.sha256)
+    c = node("model", (b.sha256,), model)
+    d = node("benchmark", (c.sha256,), benchmark)
+    chain = (a, b, c, d)
+    verify(chain, d.sha256)
     return chain
 
 
@@ -73,7 +74,7 @@ def portable_chain(nodes: Sequence[Node]) -> list[dict[str, object]]:
 
 
 def verify_serialized(raw: object, root: str) -> None:
-    if not isinstance(raw, list) or len(raw) != 3:
+    if not isinstance(raw, list) or len(raw) != 4:
         raise ValueError("malformed provenance index")
     converted: list[Node] = []
     for entry in raw:
