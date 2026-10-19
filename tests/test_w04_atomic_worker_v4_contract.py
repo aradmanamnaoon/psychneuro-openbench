@@ -358,3 +358,31 @@ def test_migration_denied_and_default_predictor_allowlist(env):
         type(a)(database=db,policy=p,queue=q,
                                 registry_path=Path("registry"),execute=a.execute,
                                 source_preflight=lambda *_: make_record()["result"]["source_sha256"])
+
+
+def test_atomic_rollback_if_audit_insert_fails_after_artifact_insert(env):
+    """Crash/injected SQLite ABORT cannot orphan a successful report/queue state."""
+    a,p,q,db,calls = env
+    item = submit(a,key="abort-test")
+    with sqlite3.connect(db) as con:
+        con.execute("CREATE TRIGGER stop_publish BEFORE INSERT ON w04_v2_audit "
+                    "WHEN NEW.event='published_v4' BEGIN SELECT RAISE(ABORT,'fault injected'); END")
+    with pytest.raises(sqlite3.IntegrityError, match="fault injected"):
+        run(a,item.id)
+    with sqlite3.connect(db) as con:
+        assert con.execute("SELECT count(*) FROM w04_v4_artifacts").fetchone()[0] == 0
+        row = con.execute("SELECT state,checkpoint_stage,result_sha FROM w04_v2_jobs "
+                          "WHERE id=?",(item.id,)).fetchone()
+        assert row == ("queued",None,None)
+    assert len(calls) == 1  # fitting occurred; publication rolled back
+
+
+def test_immutable_artifact_checksum_checked_on_read(env):
+    a,p,q,db,calls = env
+    item = submit(a,key="tamper-test")
+    run(a,item.id)
+    with sqlite3.connect(db) as con:
+        con.execute("UPDATE w04_v4_artifacts SET payload='{}' WHERE id=?",(item.id,))
+    with pytest.raises(ValueError, match="corrupted"):
+        a.read(tenant="tenant-A",subject="researcher",role="researcher",
+               job_id=item.id,correlation="tamper",now_ns=400)
