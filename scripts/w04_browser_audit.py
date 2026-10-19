@@ -27,6 +27,9 @@ from playwright.sync_api import sync_playwright
 from psychneuro.w03.contracts import ExperimentRequest
 from psychneuro.w04.durable_bridge import source_sha256
 from psychneuro.w04.policy_v2 import PolicyRecord, PolicyStore
+from psychneuro.w04.private_worker_v4 import AtomicWorker
+from psychneuro.w04.queue_v2 import QueueStore
+from psychneuro.w04.receipt_v3 import P13P25Receipt, verify_receipt
 
 
 def free_loopback_port() -> int:
@@ -35,7 +38,7 @@ def free_loopback_port() -> int:
         return int(sock.getsockname()[1])
 
 
-def audit(output: Path) -> dict[str, Any]:
+def audit(output: Path, *, screenshots: bool = False) -> dict[str, Any]:
     root = Path(__file__).resolve().parents[1]
     registry = root / "data" / "registry.json"
     token = secrets.token_urlsafe(48)
@@ -143,6 +146,54 @@ def audit(output: Path) -> dict[str, Any]:
                     page.get_by_text("Request rejected (422)", exact=False).wait_for(timeout=20000)
                     results["tampered_receipt"] = "rejected HTTP 422"
 
+
+                    # Actual v3 P25-scoped persistent queue, cancellation/resume,
+                    # trusted operator computation and P13/P25 result read.
+                    page.get_by_role("button", name="Queue synthetic experiment").click()
+                    for _ in range(150):
+                        if len(page.locator("#job-id").input_value()) == 64:
+                            break
+                        time.sleep(0.15)
+                    else:
+                        raise AssertionError("job enqueue failed: " + page.locator("#alert").inner_text())
+                    job_id = page.locator("#job-id").input_value()
+                    page.get_by_role("button", name="Get durable status").click()
+                    page.get_by_text("State: queued", exact=False).wait_for(timeout=20000)
+                    page.get_by_role("button", name="Cancel queued/running job").click()
+                    page.get_by_text("State: cancelled", exact=False).wait_for(timeout=20000)
+                    page.get_by_role("button", name="Resume cancelled job").click()
+                    page.get_by_text("State: queued", exact=False).wait_for(timeout=20000)
+                    worker = AtomicWorker(
+                        database=db, policy=store, queue=QueueStore(db), registry_path=registry
+                    )
+                    outcome = worker.run_one(
+                        tenant="local", job_id=job_id, worker="private-audit-worker",
+                        correlation="private-browser-real-compute",
+                    )
+                    assert outcome.state == "succeeded"
+                    page.get_by_role("button", name="Get durable status").click()
+                    page.get_by_text("State: succeeded", exact=False).wait_for(timeout=20000)
+                    with page.expect_download(timeout=20000) as request:
+                        page.get_by_role("button", name="Download verified worker receipt").click()
+                    worker_receipt_file = Path(work) / "worker.json"
+                    request.value.save_as(str(worker_receipt_file))
+                    worker_receipt = P13P25Receipt.model_validate_json(
+                        worker_receipt_file.read_text(encoding="utf-8")
+                    )
+                    import sqlite3
+                    with sqlite3.connect(db) as connection:
+                        stored_policy_sha = connection.execute(
+                            "SELECT sha FROM p25_v2_policy WHERE tenant=? AND dataset=?",
+                            ("local", "w03-original-synthetic")
+                        ).fetchone()[0]
+                    verified_worker_record = verify_receipt(
+                        worker_receipt, tenant="local",
+                        expected_policy_sha256=stored_policy_sha,
+                    )
+                    assert verified_worker_record["run_id"] == worker_receipt.run_id
+                    results["real_worker_lifecycle"] = "queued / cancelled / resumed / succeeded"
+                    results["worker_receipt"] = "W03 real synthetic fit + P13/P25 integrity; no external signature"
+
                     axe_file = root / "apps/web/node_modules/axe-core/axe.min.js"
                     if not axe_file.is_file():
                         raise RuntimeError("axe-core missing; install with npm ci --prefix apps/web")
@@ -155,13 +206,15 @@ def audit(output: Path) -> dict[str, Any]:
                     results["desktop_document_overflow"] = page.evaluate(
                         "document.documentElement.scrollWidth > document.documentElement.clientWidth"
                     )
-                    page.screenshot(path=str(output / "desktop.png"), full_page=True)
+                    if screenshots:
+                        page.screenshot(path=str(output / "desktop.png"), full_page=False)
                     page.set_viewport_size({"width": 375, "height": 812})
                     results["mobile_document_width"] = page.evaluate("document.documentElement.scrollWidth")
                     results["mobile_document_overflow"] = page.evaluate(
                         "document.documentElement.scrollWidth > document.documentElement.clientWidth"
                     )
-                    page.screenshot(path=str(output / "mobile.png"), full_page=True)
+                    if screenshots:
+                        page.screenshot(path=str(output / "mobile.png"), full_page=False)
                     results["page_script_errors"] = len(errors)
                     if (results["axe_violations"] or results["desktop_document_overflow"]
                             or results["mobile_document_overflow"] or errors):
@@ -187,8 +240,10 @@ def main() -> None:
         "--output-dir", type=Path, default=Path("artifacts/w04-browser-private"),
         help="Ignored local evidence directory; never paste test tokens into a repo",
     )
+    parser.add_argument("--screenshots", action="store_true",
+                        help="Explicit opt-in; screenshots increase CPU/memory usage")
     args = parser.parse_args()
-    print(json.dumps(audit(args.output_dir), indent=2, sort_keys=True))
+    print(json.dumps(audit(args.output_dir, screenshots=args.screenshots), indent=2, sort_keys=True))
 
 
 if __name__ == "__main__":
