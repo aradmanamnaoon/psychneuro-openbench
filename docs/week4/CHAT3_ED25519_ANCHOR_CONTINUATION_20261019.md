@@ -43,3 +43,17 @@ This **proves only** the local isolated 17-test Ed25519 verifier result on that 
 - Complete latest-HEAD CI and independent human scientific/security/accessibility reviews.
 
 A successful local signature fixture is **not** a legal or scientific authorization. Keep PR DRAFT, the repository PRIVATE, no merge/release/deployment/outreach/human datasets, and W04 Notion Status In Progress, Done unchecked.
+
+## Subsequent local scoped signed-import run (2026-10-19)
+
+Reconstructed the newly integrated `receipt_guard_v3.py` deterministically from the archived Chat1 source and the committed additions and checked that its local Git blob SHA exactly matches GitHub `0529490b1c3fe96e9891c9cac4a4133d9ffa5fbc`. The added test module also matches its GitHub blob `53d60a989d972481e4250d79efda2fe3c154111b`. The anchor verifier source/test exact hashes and original `receipt_v3.py` module SHA also matched the GitHub private sources.
+
+Executed on **Python 3.13.5**, local `cryptography 46.0.4`, Pydantic 2.13.5:
+
+```text
+PYTHONPATH=src python -m pytest -q tests/test_w04_anchor_v1.py tests/test_w04_anchored_receipt_guard_v6.py
+.....................                                                    [100%]
+21 passed in 0.11s
+```
+
+**Scoped evidence limitation:** the local `test_w04_receipt_v3.py` helper supplying synthetic `make_receipt` came from the Chat1 archive, while the current PR has a later version of that test helper. The 21-pass outcome is independently observed for the reconstructed source/test pair and synthetic helper, **not an exact-current-HEAD whole-repo 21-test rerun, nor pinned cryptography 50.0.2 validation**. The newly added four guarded-import checks are part of this 21 count (not an extra 21). All previously listed external key-custody/rights/release blockers remain.
