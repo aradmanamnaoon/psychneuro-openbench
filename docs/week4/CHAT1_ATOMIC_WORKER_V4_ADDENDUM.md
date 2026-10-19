@@ -31,7 +31,7 @@ private ACL read -> fresh P25 READ permit -> same-transaction integrity
 ```
 
 - `src/psychneuro/w04/private_worker_v4.py`: strict `Request` (`w04-worker-request-4`), `InMemorySink`, actual W03 preflight source digest, `AtomicWorker` with transactional request enqueue, due discovery, claim/retry/lease-fenced promotion and authorization-checked receipt read. It connects the **actual** `psychneuro.w03.service.execute` by default rather than injecting a metric. Its only on-disk scientific output is immutable aggregate v4 artifacts, not a raw participant dataset. The optional injected runner/preflight exist for deliberate isolated test doubles.
-- `tests/test_w04_atomic_worker_v4_contract.py`: explicitly labeled local **test-double** policy/queue/W03 fixture and nine isolated SQLite contract tests. It must not be counted as a real P1 model-run test. The monkeypatch fixture scopes all fake modules to its test lifetime rather than contaminating other suite modules.
+- `tests/test_w04_atomic_worker_v4_contract.py`: explicitly labeled local **test-double** policy/queue/W03 fixture and eleven isolated SQLite contract tests. It must not be counted as a real P1 model-run test. The monkeypatch fixture scopes all fake modules to its test lifetime rather than contaminating other suite modules.
 - `tests/test_w04_worker_v4_real_w03_integration.py`: source-authored end-to-end test requiring **actual** repository files and dependencies, registry, source digest, P25/queue and real nested grouped CV on two synthetic seeds. It uses **no supplied model metrics**. **Not executed here** because the full repository is not available in this runtime and git clone failed DNS resolution.
 
 ## DB schema, transaction and migration
@@ -62,7 +62,7 @@ PYTHONPATH=/mnt/data/w04_chat1_patch/src python -m pytest -q \
   /mnt/data/w04_chat1_patch/tests/test_w04_receipt_v3.py \
   /mnt/data/w04_chat1_patch/tests/test_w04_receipt_guard_v3.py \
   /mnt/data/w04_chat1_patch/tests/test_w04_atomic_worker_v4_contract.py
-# 36 passed in 0.35 seconds (includes 9 v4 mocked-integration tests)
+# 38 passed in 0.32 seconds (includes 11 v4 mocked-integration tests)
 python -m compileall -q /mnt/data/w04_chat1_patch/src /mnt/data/w04_chat1_patch/tests
 # exit 0
 python -m pip check
@@ -76,7 +76,7 @@ SHA-256 exact local source bytes:
 | File | SHA256 |
 |---|---|
 | `private_worker_v4.py` | `919434d07ae7e5841274fd03560d13114a1c5ff75bfd34fcfeebdc90f4b05863` |
-| `test_w04_atomic_worker_v4_contract.py` | `1ca46884c66b0580d9da520c91e86452dd5de4c40d3c28a2c060ea7fd54499f1` |
+| `test_w04_atomic_worker_v4_contract.py` | `dbe43257edc7a73ea6d72272c651c28cc6fb2023ee7ddf16acc319f2913a1812` |
 | `test_w04_worker_v4_real_w03_integration.py` | `3c0266787eee94125fd50c2a1a58723561dc5e445eb72d6917b87a52b88f1c40` |
 
 The previously committed receipt and guard v3 remain unchanged. File blobs were independently fetched back from GitHub and compared byte-for-byte to the transferred local code.
@@ -97,9 +97,9 @@ The previously committed receipt and guard v3 remain unchanged. File blobs were 
 | E2 P13 export/import | PARTIAL | Versioned v3 portable receipt + v4 atomic aggregate artifact storage and live reauthorization; full real P13 import/graph UI untested |
 | E3 jobs and permission | PARTIAL | v4 real-worker adapter + v2 fenced cancel/retry hooks with isolated tests; real mid-fit and resume equivalence untested |
 | E5 P25 rights | PARTIAL | Inherited v2 strict HMAC permit and DB ledger integrated before preflight/fit/publish/read; no legal attestation or audited key service |
-| E6 scientific oracle/negative | PARTIAL | Historical W03 and 36 isolated tests, no new verified W03 model-run metrics |
+| E6 scientific oracle/negative | PARTIAL | Historical W03 and 38 isolated tests, no new verified W03 model-run metrics |
 | E7 durable schema | PARTIAL | Transactional v4 immutable requests/artifacts, version check, SHA/revocation; actual migration and recover proof outstanding |
-| E8 concurrent durable queue | PARTIAL | End-to-end atomic queue/artifact code, local 15-thread duplicate-key test, fenced cancellation and recovery using doubles; actual v2 concurrent E2E not run |
+| E8 concurrent durable queue | PARTIAL | End-to-end atomic queue/artifact code, local 15-thread duplicate-key, audit-trigger rollback and artifact corruption tests, fenced cancellation and recovery using doubles; actual v2 concurrent E2E not run |
 | E11 adversarial security | PARTIAL | Tenant, replay, hash/source corruption, cancel, revocation, stale lease tests; no real IAM, signer or independent review |
 | E13 P1/P13/P25 actual flow | PARTIAL | Actual W03 import path and 2-seed full-repo test **authored**, not run; no fitted result claimed |
 
