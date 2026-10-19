@@ -225,3 +225,29 @@ def test_sqlite_concurrent_safe_atomic_conflict(tmp_path: Path) -> None:
     assert RunStore(path).get(original["run_id"]) == original
     with sqlite3.connect(path) as conn:
         assert conn.execute("SELECT COUNT(*) FROM provenance_index").fetchone()[0] == 4
+
+def test_actual_api_and_provenance_sqlite_roundtrip(tmp_path: Path) -> None:
+    """Full repository: API->registry->nested CV->vault->SQLite->GET."""
+    registry = Path(__file__).resolve().parents[1] / "data" / "registry.json"
+    if not registry.exists():
+        pytest.skip("full rights-checked original repository not available here")
+    token = "fixture-only-private-token-123456"
+    db = tmp_path / "actual-api.sqlite3"
+    client = TestClient(create_app(db_path=db, registry_path=registry, internal_token=token))
+    headers = {"X-Internal-Token": token}
+    response = client.post("/v1/runs", headers=headers, json={})
+    assert response.status_code == 200, response.text
+    payload = response.json()
+    rid = payload["run_id"]
+    assert client.post("/v1/runs", headers=headers, json={}).json() == payload
+    reopened = TestClient(create_app(db_path=db, registry_path=registry, internal_token=token))
+    assert reopened.get(f"/v1/runs/{rid}", headers=headers).json() == payload
+    provenance = reopened.get(f"/v1/runs/{rid}/provenance", headers=headers)
+    assert provenance.status_code == 200
+    assert provenance.json()["root"] == payload["provenance_root"]
+    verify_serialized(provenance.json()["nodes"], payload["provenance_root"])
+    with sqlite3.connect(db) as conn:
+        assert conn.execute(
+            "SELECT COUNT(*) FROM provenance_index WHERE run_id=?", (rid,)
+        ).fetchone()[0] == 4
+    assert reopened.get(f"/v1/runs/{rid}").status_code == 403
