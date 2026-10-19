@@ -28,7 +28,7 @@ from .ui import PAGE
 class Catalog(BaseModel):
     model_config = ConfigDict(extra="forbid")
     schema_version: Literal["w04-strict-catalog-1"] = "w04-strict-catalog-1"
-    dataset_id: Literal["w03-original-synthetic"] = "w03-original-synthetic"
+    datasets: list[dict[str, str]] = [{"id": "w03-original-synthetic"}]
     limitation: str = "Synthetic-only, one attested fixture per tenant; no human-data claims"
 
 
