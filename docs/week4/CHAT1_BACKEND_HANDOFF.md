@@ -99,3 +99,15 @@ Compute budget: use existing free local/sandbox permitted CPU for bounded synthe
 No new schema tables or migrations introduced by this v3 patch. The inherited `p25_v2_meta` and `w04_v2_meta` require migration review and transaction-safe backup before future schema upgrades. Rollback v3 code by removing its additive imports; do not delete W03 SQLite records or silently downgrade policy revisions. Maintain event anchors outside the SQLite path. Do not redact failure evidence.
 
 **Notion scope:** Update only original W04 Thursday Career page, date `2026-11-05`; leave `Done=__NO__` and do not touch Academy or add calendar days.
+
+---
+
+## 2026-10-19 Chat 1 continuation: atomic W03 worker v4 (additive; new evidence)
+
+**Latest focused source+tests commits:** `97195f42244861f74397fd025646e5e0eb0fc3b4`, `173fa2e7f1ef7f6605958dc4264380aabefc9ccf`, `cd0f5d8c94a04bb2cfb8591ba17c15f615410def`. The documentation addendum commit is `ae408d9f9155ff41616e2ea4ca0e8665f5b0cd4d`; refer to the live branch HEAD for current tree. See the full [W04 v4 worker architecture, migration, security, real-run test and evidence](CHAT1_ATOMIC_WORKER_V4_ADDENDUM.md).
+
+**Implemented:** `src/psychneuro/w04/private_worker_v4.py` and two new test files. P25 scoped authorization BEFORE original W03 dataset preflight, pre-fit registered source SHA check, actual W03 nested-CV service adapter, in-memory-only fitting reports, single-SQLite-transaction job completion/immutable aggregate receipt/rights revision/fence and read-time P25 reauthorization. Original W03 and prior W04 modules were not modified. Restart retries recompute after fit interruption; mid-fit checkpoint/resume is NOT implemented.
+
+**Observed scoped tests only:** 36 passed (0.35s, Python 3.13.5); nine new v4 tests use explicit W03/P25/queue doubles; `compileall` exit 0. `pip check` exit 1 due unrelated MoviePy/Pillow conflict. `tests/test_w04_worker_v4_real_w03_integration.py` is WRITTEN but **NOT RUN** against actual original source: full repository checkout unavailable in this container. Full repo pytest, Ruff, mypy, hosted CI, Docker/browser and independent attestation/signature all **NOT RUN/BLOCKED**. No fitted W04 numeric outcomes are claimed.
+
+**Security/release:** permit HMAC authenticates only the narrow v2 permit, not a signed receipt or legal rights. The v4 worker is trusted internal Python code without public privileged endpoints; external authentication, attestation, key rotation, model-run production proof and third-party audit remain release blockers. All E2/E3/E5–E8/E11/E13 remain **PARTIAL**, W04 **NO-GO**. Keep the sole original W04 Notion card dated 2026-11-05, Done false, Academy untouched.
