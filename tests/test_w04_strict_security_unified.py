@@ -5,13 +5,18 @@ Synthetic fixtures only; no network services, keys, clinical or human data.
 from __future__ import annotations
 
 import sqlite3
+
+import pytest
 from pathlib import Path
 
 from fastapi.testclient import TestClient
 
 from psychneuro.w03.contracts import ExperimentRequest
-from psychneuro.w04.durable_bridge import source_sha256
-from psychneuro.w04.policy_v2 import PolicyRecord, PolicyStore
+from psychneuro.w03.service import execute
+from psychneuro.w03.store import RunStore
+from psychneuro.w04.durable_bridge import DurableRightsBridge, source_sha256
+from psychneuro.w04.policy_v2 import PolicyError, PolicyRecord, PolicyStore
+from psychneuro.w04.product import OwnerBoundRunStore, TenantRunACL
 from psychneuro.w04.rights import Principal
 from psychneuro.w04.strict_facade import create_strict_app
 
@@ -111,3 +116,58 @@ def test_strict_csp_same_origin_assets_and_no_token_storage(tmp_path: Path) -> N
     assert B not in page.text + js.text + css.text
     assert M not in page.text + js.text + css.text
     assert client.get("/w04/v2/catalog", headers={"X-Internal-Token": A}).json()["datasets"][0]["scope"] == "original-fictional-only"
+
+def test_revoke_between_fit_and_atomic_writer_lock_denies_publication(tmp_path: Path) -> None:
+    """The earlier pre-persist permit check alone must not authorize a later write."""
+    _client, database = _app(tmp_path)
+    registry = Path(__file__).resolve().parents[1] / "data" / "registry.json"
+    policy = PolicyStore(database, permit_key=KEY)
+    principal = Principal(tenant="local", subject="alice", role="researcher")
+    request = ExperimentRequest(**REQ)
+    bridge = DurableRightsBridge(policy, registry)
+    before_persist, locked_check = bridge.prepare_atomic_run(principal, request)
+
+    class Buffer:
+        record: dict | None = None
+
+        def put(self, record: dict) -> None:
+            self.record = record
+
+    buffer = Buffer()
+    execute(request, registry, buffer)  # actual W03 grouped fit, no SQLite publication
+    assert buffer.record is not None
+    before_persist()  # valid grant at the end of fitting
+
+    # Revocation happens BEFORE the actual SQLite BEGIN IMMEDIATE publication.
+    policy.revoke(
+        tenant="local", dataset="w03-original-synthetic", operator="test-private-operator",
+    )
+    owned = OwnerBoundRunStore(
+        RunStore(database), TenantRunACL(database), principal, before_commit=locked_check,
+    )
+    with pytest.raises(PolicyError, match="stale|revoked"):
+        owned.put(buffer.record)
+
+    # The failed transaction must leave neither a run nor an owner claim.
+    with sqlite3.connect(database) as conn:
+        assert conn.execute("SELECT COUNT(*) FROM runs").fetchone()[0] == 0
+        assert conn.execute("SELECT COUNT(*) FROM w04_run_acl").fetchone()[0] == 0
+
+
+def test_swapped_source_sha_rejected_at_atomic_boundary(tmp_path: Path) -> None:
+    """A valid authorization cannot publish an unrelated source claim."""
+    _client, database = _app(tmp_path)
+    registry = Path(__file__).resolve().parents[1] / "data" / "registry.json"
+    policy = PolicyStore(database, permit_key=KEY)
+    principal = Principal(tenant="local", subject="alice", role="researcher")
+    _, locked_check = DurableRightsBridge(policy, registry).prepare_atomic_run(
+        principal, ExperimentRequest(**REQ),
+    )
+    with sqlite3.connect(database, isolation_level=None) as conn:
+        conn.execute("BEGIN IMMEDIATE")
+        with pytest.raises(PolicyError, match="mismatched"):
+            locked_check(
+                conn, {"rights": "internal-synthetic-only",
+                       "result": {"source_sha256": "f" * 64}},
+            )
+        conn.rollback()
