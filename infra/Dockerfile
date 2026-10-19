@@ -7,4 +7,4 @@ RUN python -m pip install --no-cache-dir -e '.[w03]' 'uvicorn==0.34.0'
 RUN useradd --create-home --uid 10001 reviewer && mkdir -p /tmp/w04 /var/lib/psychneuro && chown -R reviewer:reviewer /tmp/w04 /var/lib/psychneuro
 USER reviewer
 EXPOSE 8000
-CMD ["python", "-m", "uvicorn", "psychneuro.w04.server:app_factory", "--factory", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["python", "-m", "uvicorn", "psychneuro.w04.server_strict:app_factory", "--factory", "--host", "0.0.0.0", "--port", "8000"]
