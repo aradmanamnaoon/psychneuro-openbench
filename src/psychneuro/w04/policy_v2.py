@@ -29,7 +29,7 @@ def digest(value: object) -> str:
     return hashlib.sha256(canonical(value).encode("utf-8")).hexdigest()
 
 
-def policy_payload(policy: "PolicyRecord") -> dict[str, object]:
+def policy_payload(policy: PolicyRecord) -> dict[str, object]:
     record: dict[str, object] = policy.model_dump(mode="json")
     record["actions"] = sorted(policy.actions)
     return record

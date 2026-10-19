@@ -13,8 +13,8 @@ from pathlib import Path
 import pytest
 
 from psychneuro.w04.policy_v2 import PolicyError, PolicyRecord, PolicyStore
-from psychneuro.w04.queue_v2 import JobConflict, QueueStore
 from psychneuro.w04.private_worker_v4 import AtomicWorker, Request, preflight_source
+from psychneuro.w04.queue_v2 import JobConflict, QueueStore
 
 ROOT = Path(__file__).resolve().parents[1]
 REGISTRY = ROOT / "data/registry.json"

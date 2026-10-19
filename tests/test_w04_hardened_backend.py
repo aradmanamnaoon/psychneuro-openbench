@@ -10,7 +10,13 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from psychneuro.w04.policy_v2 import IntegrityError, Permit, PolicyError, PolicyRecord, PolicyStore
+from psychneuro.w04.policy_v2 import (
+    IntegrityError,
+    Permit,
+    PolicyError,
+    PolicyRecord,
+    PolicyStore,
+)
 from psychneuro.w04.queue_v2 import JobConflict, QueueStore
 
 TEST_PERMIT_KEY = b"synthetic-only-test-hmac-key-never-use-in-production"
@@ -53,13 +59,13 @@ def test_unknown_foreign_or_unattested_denied(policy):
                      attestation_ref="fake-proof", retention_until_ns=10**20)
 
 
-@pytest.mark.parametrize("change", [dict(action="export_data"), dict(purpose="clinical-diagnosis"),
-                                     dict(role="viewer"), dict(action="export_aggregate")])
+@pytest.mark.parametrize("change", [{"action": "export_data"}, {"purpose": "clinical-diagnosis"},
+                                     {"role": "viewer"}, {"action": "export_aggregate"}])
 def test_scope_denial_is_audited(policy, change):
     store, _ = policy
-    kwargs = dict(tenant="tenant-A", dataset="w03-original-synthetic", subject="researcher",
-                  role="researcher", action="run", purpose="internal-method-validation",
-                  correlation_id="deny-1", now_ns=100)
+    kwargs = {"tenant": "tenant-A", "dataset": "w03-original-synthetic", "subject": "researcher",
+                  "role": "researcher", "action": "run", "purpose": "internal-method-validation",
+                  "correlation_id": "deny-1", "now_ns": 100}
     kwargs.update(change)
     before, _ = store.verify()
     with pytest.raises(PolicyError):

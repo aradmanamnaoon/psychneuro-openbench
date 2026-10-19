@@ -6,7 +6,7 @@ Callers own execution and must cooperate with cancellation at checkpoints.
 from __future__ import annotations
 
 import sqlite3
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Literal
 
@@ -61,7 +61,7 @@ class JobStore:
             if existing is None or existing[0] != actor:
                 raise RevisionConflict("job identity belongs to another actor")
             db.execute("INSERT INTO w04_audit(job_id,revision,actor,event,at_utc,correlation) "
-                       "SELECT ?,0,?,'created',?,? WHERE changes()=1", (job_id, actor, datetime.now(timezone.utc).isoformat(), correlation))
+                       "SELECT ?,0,?,'created',?,? WHERE changes()=1", (job_id, actor, datetime.now(UTC).isoformat(), correlation))
         result = self.get(job_id)
         assert result is not None
         return result
@@ -95,7 +95,7 @@ class JobStore:
             if cursor.rowcount != 1:
                 raise RevisionConflict("concurrent modification")
             db.execute("INSERT INTO w04_audit(job_id,revision,actor,event,at_utc,correlation) VALUES(?,?,?,?,?,?)",
-                       (job_id, expected_revision + 1, actor, target, datetime.now(timezone.utc).isoformat(), correlation))
+                       (job_id, expected_revision + 1, actor, target, datetime.now(UTC).isoformat(), correlation))
         result = self.get(job_id)
         assert result is not None
         return result

@@ -13,8 +13,8 @@ import re
 import sqlite3
 import stat
 import sys
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Sequence
 
 _ID = re.compile(r"[A-Za-z0-9_.-]{1,80}\Z")
 _KEY_HEX = re.compile(r"[a-fA-F0-9]{64,512}\Z")
@@ -54,8 +54,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         db, registry, key = _configuration(args)
         # All privileged modules are imported *after* configuration validation.
         from .policy_v2 import PolicyStore
-        from .queue_v2 import QueueStore
         from .private_worker_v4 import AtomicWorker
+        from .queue_v2 import QueueStore
 
         policy = PolicyStore(db, permit_key=key)
         queue = QueueStore(db)

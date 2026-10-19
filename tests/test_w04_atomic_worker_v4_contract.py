@@ -19,7 +19,8 @@ from pydantic import BaseModel, ConfigDict
 
 SRC = Path(__file__).resolve().parents[1] / "src"
 sys.path.insert(0, str(SRC))
-from test_w04_receipt_v3 import make_record, v as receipt  # synthetic graph fixture only
+from test_w04_receipt_v3 import make_record  # synthetic graph fixture only
+from test_w04_receipt_v3 import v as receipt
 
 pmod = types.ModuleType("psychneuro.w04.policy_v2")
 qmod = types.ModuleType("psychneuro.w04.queue_v2")
@@ -259,7 +260,7 @@ def test_atomic_commit_restart_read_and_duplicate_delivery(env):
 
 
 def test_cancel_during_fit_never_publishes(env):
-    a,p,q,db,calls=env
+    a,_p,q,db,_calls=env
     item=submit(a)
     def cancelling(*args):
         q.cancel(item.id)
@@ -275,7 +276,7 @@ def test_cancel_during_fit_never_publishes(env):
 
 
 def test_revocation_while_fitting_denies_publication(env):
-    a,p,q,db,calls=env
+    a,p,_q,db,_calls=env
     item=submit(a)
     def revoking(*args):
         p.revoke()
@@ -292,7 +293,7 @@ def test_revocation_while_fitting_denies_publication(env):
 
 
 def test_source_sha_wrong_denied_rollback(env):
-    a,p,q,db,calls=env
+    a,_p,_q,db,_calls=env
     item=submit(a)
     with sqlite3.connect(db) as c:
         row=c.execute("SELECT payload FROM p25_v2_policy WHERE tenant='tenant-A'").fetchone()
@@ -305,7 +306,7 @@ def test_source_sha_wrong_denied_rollback(env):
 
 
 def test_cross_user_and_tenant_denied(env):
-    a,p,q,db,calls=env
+    a,_p,_q,_db,_calls=env
     item=submit(a)
     run(a,item.id)
     with pytest.raises(JobConflict):
@@ -315,7 +316,7 @@ def test_cross_user_and_tenant_denied(env):
 
 
 def test_corrupt_immutable_request_prevents_fitting(env):
-    a,p,q,db,calls=env
+    a,_p,_q,db,calls=env
     item=submit(a)
     with sqlite3.connect(db) as c:
         c.execute("UPDATE w04_v4_requests SET payload='{}' WHERE id=?",(item.id,))
@@ -325,7 +326,7 @@ def test_corrupt_immutable_request_prevents_fitting(env):
 
 
 def test_concurrent_submit_returns_one_job(env):
-    a,p,q,db,calls=env
+    a,_p,_q,db,_calls=env
     with ThreadPoolExecutor(max_workers=6) as pool:
         submitted=list(pool.map(lambda _: submit(a),range(15)))
     assert len({x.id for x in submitted})==1
@@ -336,7 +337,7 @@ def test_concurrent_submit_returns_one_job(env):
 
 
 def test_expired_lease_fences_old_worker(env):
-    a,p,q,db,calls=env
+    a,_p,q,_db,calls=env
     item=submit(a)
     original=q.claim(tenant="tenant-A",job_id=item.id,worker="old",correlation="a",lease_ns=1000,now_ns=200)
     recovered=run(a,item.id,now=2000,worker="new")
@@ -346,7 +347,7 @@ def test_expired_lease_fences_old_worker(env):
 
 
 def test_migration_denied_and_default_predictor_allowlist(env):
-    a,p,q,db,calls=env
+    a,p,q,db,_calls=env
     req_module = sys.modules[a.__class__.__module__]
     with pytest.raises(ValueError):
         req_module.Request(version="w04-worker-request-4",generator_seed=73,split_seed=42,
@@ -362,7 +363,7 @@ def test_migration_denied_and_default_predictor_allowlist(env):
 
 def test_atomic_rollback_if_audit_insert_fails_after_artifact_insert(env):
     """Crash/injected SQLite ABORT cannot orphan a successful report/queue state."""
-    a,p,q,db,calls = env
+    a,_p,_q,db,calls = env
     item = submit(a,key="abort-test")
     with sqlite3.connect(db) as con:
         con.execute("CREATE TRIGGER stop_publish BEFORE INSERT ON w04_v2_audit "
@@ -378,7 +379,7 @@ def test_atomic_rollback_if_audit_insert_fails_after_artifact_insert(env):
 
 
 def test_immutable_artifact_checksum_checked_on_read(env):
-    a,p,q,db,calls = env
+    a,_p,_q,db,_calls = env
     item = submit(a,key="tamper-test")
     run(a,item.id)
     with sqlite3.connect(db) as con:

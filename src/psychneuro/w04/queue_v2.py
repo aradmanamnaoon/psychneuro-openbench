@@ -10,8 +10,7 @@ import re
 import sqlite3
 import time
 from pathlib import Path
-from typing import Any, cast
-from typing import Literal
+from typing import Any, Literal, cast
 
 from pydantic import BaseModel, ConfigDict, Field
 

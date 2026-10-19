@@ -6,8 +6,8 @@ No browser cookies, permissive CORS, public deployment, or dataset upload.
 from __future__ import annotations
 
 import hmac
-from pathlib import Path
 import secrets
+from pathlib import Path
 from typing import Literal
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Response
@@ -16,10 +16,11 @@ from pydantic import BaseModel, ConfigDict, Field
 from psychneuro.w03.contracts import ExperimentRequest, RunResult
 from psychneuro.w03.service import execute
 from psychneuro.w03.store import ConflictError, RunStore
+
 from .interop import Envelope, export_record, verify_envelope
 from .jobs import Job, JobStore, RevisionConflict, State
 from .ledger import LedgerStore
-from .rights import Action, DatasetRights, Decision, Principal, W03_INTERNAL, decide
+from .rights import W03_INTERNAL, Action, DatasetRights, Decision, Principal, decide
 from .ui import PAGE
 
 

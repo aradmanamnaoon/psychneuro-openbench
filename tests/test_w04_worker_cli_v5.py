@@ -3,13 +3,10 @@ from __future__ import annotations
 
 import importlib.util
 import json
-import os
 import sys
 import types
 from pathlib import Path
 from types import SimpleNamespace
-
-import pytest
 
 P = Path(__file__).parents[1] / "src/psychneuro/w04/worker_cli_v5.py"
 SPEC = importlib.util.spec_from_file_location("psychneuro.w04._worker_cli_v5_tests", P)

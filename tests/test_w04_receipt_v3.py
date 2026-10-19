@@ -96,7 +96,7 @@ def test_corrupted_graph_denied(mutation):
 
 def test_cross_tenant_stale_policy_external_anchor_and_replay():
     receipt = make_receipt()
-    check = dict(tenant="tenant-A", expected_policy_sha256=receipt.policy_sha256)
+    check = {"tenant": "tenant-A", "expected_policy_sha256": receipt.policy_sha256}
     with pytest.raises(v.ReceiptError):
         v.verify_receipt(receipt, **{**check, "tenant": "tenant-B"})
     with pytest.raises(v.ReceiptError):
