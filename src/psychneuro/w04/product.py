@@ -75,7 +75,10 @@ class TenantRunACL:
         ):
             raise PermissionError("run not accessible")
 
-    def put_owned(self, runs: RunStore, record: dict[str, Any], principal: Principal) -> None:
+    def put_owned(
+        self, runs: RunStore, record: dict[str, Any], principal: Principal,
+        before_commit: Callable[[sqlite3.Connection, dict[str, Any]], None] | None = None,
+    ) -> None:
         """Atomically bind an immutable W03 record and its W04 tenant owner.
 
         A preexisting run without an owner requires explicit audited migration.
@@ -88,6 +91,10 @@ class TenantRunACL:
             raise TypeError("invalid run identity")
         with runs._connect() as conn:
             conn.execute("BEGIN IMMEDIATE")
+            # The P25 grant check must share the exact writer transaction with
+            # the P13/run and ACL writes; no revoke can slip between them.
+            if before_commit is not None:
+                before_commit(conn, record)
             owner = conn.execute(
                 "SELECT tenant, owner FROM w04_run_acl WHERE run_id=?", (run_id,)
             ).fetchone()
@@ -110,13 +117,17 @@ class TenantRunACL:
 class OwnerBoundRunStore(RunStore):
     """Only the authorized request principal can persist the W03 output."""
 
-    def __init__(self, runs: RunStore, acl: TenantRunACL, principal: Principal) -> None:
+    def __init__(
+        self, runs: RunStore, acl: TenantRunACL, principal: Principal,
+        before_commit: Callable[[sqlite3.Connection, dict[str, Any]], None] | None = None,
+    ) -> None:
         self.path = runs.path
         self._acl = acl
         self._principal = principal
+        self._before_commit = before_commit
 
     def put(self, record: dict[str, Any]) -> None:
-        self._acl.put_owned(self, record, self._principal)
+        self._acl.put_owned(self, record, self._principal, self._before_commit)
 
 
 def _deny(code: str, message: str, status: int) -> NoReturn:
