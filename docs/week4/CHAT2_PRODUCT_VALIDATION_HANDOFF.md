@@ -99,3 +99,13 @@ After the original handoff was recorded at commit `285569d7e265c704810669ae1b210
 - The private PR is still a draft, all external release and hosted-run safety gates remain NO-GO.
 
 **Reviewer note:** The previous independent Chat 3 report in the W04 card predates these Chat 2 code changes. That report cannot serve as independent validation of this branch. A separate exact-code review and no-spend authorization are needed before any hosted action.
+
+
+## Final Chat 2 browser-patch correction (source SHA `b34e2b122e2a8e49cd4d5e4b4924a072a87f93ba`)
+
+Two subsequent browser fixes refine the earlier audit ledger but are **not** new hosted or accessibility proof:
+- Committed `b98b8477750cc81bb878dba75130d9b78df7fc34`: adds explicit start/acknowledge-cancellation controls for *metadata-only* jobs, and safely prints P13 graph node metadata using DOM `textContent` rather than raw HTML. No model worker was added.
+- Committed `b34e2b122e2a8e49cd4d5e4b4924a072a87f93ba`: binds the only currently authorized original-synthetic dataset selector to the server's live P25 catalog, instead of presenting fake additional data sources.
+- The fetched latest committed HTML inline JavaScript parsed through `new Function` in the connector environment: **syntax-only PASS**. No keyboard walkthrough, browser E2E, axe, screen reader, visual screenshot or real W03 run was executed.
+- The latest executable source SHA prior to this handoff-documentation commit is `b34e2b122e2a8e49cd4d5e4b4924a072a87f93ba`. The PR HEAD following this documentation commit is a later SHA with no code edits.
+- Release gates remain **NO-GO**, and the note above regarding Chat 3's pre-existing independent audit being stale relative to this branch still applies.
