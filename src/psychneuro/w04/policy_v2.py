@@ -222,8 +222,8 @@ class PolicyStore:
                 raise PolicyError("unknown policy")
             old = self._checked(tenant, dataset, *row)
             if old.revoked:
-                return row[0]
-            return_revision = row[0] + 1
+                return int(row[0])
+            return_revision = int(row[0]) + 1
             updated = old.model_copy(update={"revoked": True})
             payload = policy_payload(updated)
             db.execute("UPDATE p25_v2_policy SET revision=?,payload=?,sha=? WHERE tenant=? AND dataset=?", (
