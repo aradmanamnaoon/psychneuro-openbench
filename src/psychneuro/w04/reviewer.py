@@ -11,9 +11,10 @@ import json
 import os
 import re
 import sys
+from collections.abc import Sequence
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any
 
 from psychneuro.w03.contracts import RunResult
 from psychneuro.w04.receipt_v3 import ReceiptError, verify_record
