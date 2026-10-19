@@ -174,7 +174,7 @@ def test_claim_lease_fence_crash_recovery_and_stale_completion(tmp_path):
 
 def test_cancel_then_resume_requires_fresh_policy_and_rejects_old_worker(policy, tmp_path):
     store, _ = policy
-    q = QueueStore(tmp_path / "jobs.sqlite")
+    q = QueueStore(store.path)
     job = create_job(q)
     running = q.claim(tenant="tenant-A", job_id=job.id, worker="worker", correlation="go",
                       lease_ns=50_000_000, now_ns=2_000_000_000)
