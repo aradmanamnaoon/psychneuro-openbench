@@ -261,12 +261,15 @@ class QueueStore:
     def resume_cancelled(self, *, tenant: str, job_id: str, subject: str,
                          correlation: str, permit: Permit, policy_store: PolicyStore,
                          now_ns: int | None = None) -> QueueItem:
+        if policy_store.path.resolve() != self.path.resolve():
+            raise JobConflict("cancelled-job resume requires an atomic shared policy database")
         policy_store.validate_permit(permit, now_ns=now_ns)
         if (permit.tenant != tenant or permit.subject != subject or permit.action != "run"):
             raise JobConflict("fresh scoped RUN permit required")
         now = time.time_ns() if now_ns is None else now_ns
         with self._db() as db:
             db.execute("BEGIN IMMEDIATE")
+            policy_store.validate_permit(permit, now_ns=now)
             row = self._row(db, tenant, job_id)
             if row is None or row[2] != subject or row[3] != permit.dataset or row[6] != "cancelled":
                 raise JobConflict("invalid resume")
