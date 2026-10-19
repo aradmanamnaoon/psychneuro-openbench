@@ -1,0 +1,18 @@
+# W03 paper-appraisal and academic portfolio evidence
+
+Prepared 2026-10-19 before scheduled W03. This is only a preregistration-style QUESTION/PROTOCOL OUTLINE and literature appraisal. Not a manuscript (W05 earliest), registered protocol, study with people, publication or external scholarly endorsement.
+
+## Research question
+On invented behavioral correctness trials, does GROUP-NESTED CV evaluation of a regularized logistic model differ from a dummy-prior baseline while preserving verifiable dataset / participant split / model-result SHA-256 linkage? Intended goal: demonstrate reproducible software and leakage avoidance, NOT demonstrate a behavioral/neuroscience effect.
+
+Sampling unit fictional participant. Prespecified generator seed 73, split seed 42, synthetic 36 participants x12 rows, 3 outer participant-disjoint folds, 2 inner training-only grouped folds, C options 0.1 and 1.0, stronger regularization tie C=0.1. Only difficulty and stimulus_condition before response. Primary unitless balanced accuracy; report all outer folds, dummy comparator, frozen final C and one heldout score. Negative control injects train/test group overlap and demands a failure before model fit. If a fold has a single truth class, declare ineligible; no silent resplit, hidden failures, best-seed picking, inferential p values or population CIs. Future work: genuine sources/consent and independent group-level uncertainty.
+
+## Checked scientific sources (source review 19 Oct 2026)
+- Varoquaux G. Cross-validation failure: Small sample sizes lead to large error bars. NeuroImage 180 (2018):68–77. DOI https://doi.org/10.1016/j.neuroimage.2017.06.061; PubMed 28655633. Methodological risk: CV fold variability can underestimate error bars for brain-model generalization; not evidence about generated behavior.
+- Varoquaux G, Raamana PR, Engemann DA et al. Assessing and tuning brain decoders: Cross-validation, caveats, and guidelines. NeuroImage 145 (2017):166–179. DOI https://doi.org/10.1016/j.neuroimage.2016.10.038; PubMed 27989847. This informs grouping and tuning cautions, not a direct replication.
+- Cawley GC, Talbot NLC. On Over-Fitting in Model Selection and Subsequent Selection Bias in Performance Evaluation. JMLR 11 (2010):2079–2107. Primary publisher https://www.jmlr.org/papers/v11/cawley10a.html . Selection bias motivates nested CV; no DOI invented or figures copied.
+
+## Upstream / real-career evidence
+An existing private repo issue https://github.com/aradmanamnaoon/psychneuro-openbench/issues/7 proposes a narrow offline-only Markdown relative-link checker. Before submitting an upstream contribution, inspect its earlier work on branch pm01-pm16/unverified-gates-remediation; avoid duplication. Future patch gates: failing missing-target with source/line, passing local targets, ignore code fences/external links, no network access; no external PR, outreach or maintainer review claimed. External MNE-Python/MOABB contribution suggestions require human compliance with each current contributor policy.
+
+Academic portfolio evidence is the PRIVATE W03 branch, module paths, tests, source dates, seed/rights ledger, not recognized scholarship, collaborator, citation or university offer. Degree/funding eligibility UNKNOWN without volunteered credentials and programmes. Academy 40h/week Sunday recovery; W03 Career Lab 24 focused hours suggested across the week and combined human focus maximum 10h/day. R saved course position not verified. Up to three original educational videos/week optional, no automatic posting. W05 starts actual manuscript drafting; no fake results or paper submissions.
