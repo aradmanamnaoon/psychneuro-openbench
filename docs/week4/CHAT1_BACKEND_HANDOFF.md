@@ -1,6 +1,6 @@
 # W04 Chat 1 — PRIVATE backend/scientific foundation handoff
 
-**Prepared 2026-10-19; W04 calendar date remains 2026-11-05.** No merge, release, deployment, external invitations, real-person data or paid CI. The sole W04 Career Notion card must remain **Planned / Done unchecked** until all release gates pass. The separate Academy is read-only.
+**Prepared 2026-10-19; W04 calendar date remains 2026-11-05.** No merge, release, deployment, external invitations, real-person data or paid CI. The sole W04 Career Notion card must keep **Done unchecked** until all release gates pass; its observed current **In Progress** status was changed elsewhere, not by Chat 1. Do not modify its status or date. The separate Academy is read-only.
 
 ## Verified source and decision record
 
@@ -94,4 +94,4 @@ SHA-256 of final source and fixture files should be calculated from the exact PR
 | E11 adversarial security | **PARTIAL** | Cross-tenant, forgery, tamper, stale-fence/permit sentinels; no independent audit/key custody/root anchor. |
 | E13 actual P1/P13/P25 interoperability | **BLOCKED** | API admits jobs but cannot dispatch W03 scientific execution; integrated real registry→P1→P13→P25 verification NOT RUN. |
 
-**Release decision: NO-GO.** Maintain Planned + Done unchecked on the single W04 Career calendar card (Nov 5, 2026). Respect 10 combined focused hours/day alongside separate Academy 40 h/week and the existing R reminder. No software-completion dependency on optional videos.
+**Release decision: NO-GO.** Maintain Done unchecked and preserve the currently observed In Progress status on the single W04 Career calendar card (Nov 5, 2026). Respect 10 combined focused hours/day alongside separate Academy 40 h/week and the existing R reminder. No software-completion dependency on optional videos.
