@@ -124,3 +124,35 @@ def synthetic_spectral(req: JobRequest, tenant: str = Depends(_authorize)) -> di
             "unit": "V^2/Hz", "segments": estimator.segments,
             "frequencies_hz": frequencies.tolist(), "power_v2_per_hz": density.tolist(),
             "channels": [c.name for c in reader.metadata.channels]}
+
+
+@app.post("/v1/artifacts/synthetic")
+def synthetic_artifacts(req: JobRequest, tenant: str = Depends(_authorize)) -> dict[str, object]:
+    """Tenant-gated synthetic-only QC, ERP and bounded one-channel trace."""
+    from .artifacts_w07 import event_locked_erp, minmax_downsample
+    from .fixtures import SyntheticReader
+
+    if req.samples > 8192:
+        raise HTTPException(status_code=422, detail="preview capped at 8192 samples")
+    reader = SyntheticReader(seed=req.seed, samples=req.samples)
+    signal = reader.read(0, req.samples).as_array()
+    events = [int(event.sample) for event in reader.metadata.events]
+    trace = minmax_downsample(signal[0], max_bins=128)
+    try:
+        result = event_locked_erp(signal, events, reader.sample_rate_hz,
+                                  pre_samples=64, post_samples=128)
+        erp = {"retained": result.retained, "rejected": result.rejected,
+               "out_of_bounds": result.out_of_bounds,
+               "time_seconds": result.time_seconds.tolist(),
+               "mean_volts": result.mean_volts.tolist(),
+               "sem_volts": result.sem_volts.tolist(),
+               "rejected_event_indices": list(result.rejected_event_indices)}
+    except ValueError as exc:
+        # A zero-epoch result is explicit, not silently converted into a mean.
+        erp = {"error": str(exc)}
+    return {"schema_version": "1.0", "synthetic_only": True, "seed": req.seed,
+            "license": "CC0-1.0-synthetic", "unit": "V",
+            "channel": reader.metadata.channels[0].name,
+            "trace_volts_minmax": trace.tolist(),
+            "artifact_absolute_uv": 120, "artifact_peak_to_peak_uv": 180,
+            "erp": erp}
