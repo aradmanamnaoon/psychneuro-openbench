@@ -41,8 +41,8 @@ function drawSpectrum(){
     return (i===0?'M':'L')+x.toFixed(2)+','+y.toFixed(2);
   }).join(' ');
   document.getElementById('psd-line').setAttribute('d',points);
-  const peakIndex=power.indexOf(Math.max(...power.slice(1)));
-  const peak=hz[Math.max(1,peakIndex)];
+  const peakIndex=1+power.slice(1).indexOf(Math.max(...power.slice(1)));
+  const peak=hz[peakIndex];
   psdCaption.textContent='Synthetic channel '+spectralResult.channels[idx]+
     ', approximate peak '+peak.toFixed(1)+' Hz; '+spectralResult.segments+
     ' overlapping windows. Vertical axis: log10(V²/Hz).';
