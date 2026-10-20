@@ -145,7 +145,7 @@ def synthetic_artifacts(req: JobRequest, tenant: str = Depends(_authorize)) -> d
                "out_of_bounds": result.out_of_bounds,
                "time_seconds": result.time_seconds.tolist(),
                "mean_volts": result.mean_volts.tolist(),
-               "sem_volts": result.sem_volts.tolist(),
+               "sem_volts": (result.sem_volts.tolist() if result.retained >= 2 else None),
                "rejected_event_indices": list(result.rejected_event_indices)}
     except ValueError as exc:
         # A zero-epoch result is explicit, not silently converted into a mean.
