@@ -16,6 +16,10 @@ def main() -> None:
     demo.add_argument("--seed", type=int, default=42)
     demo.add_argument("--samples", type=int, default=4096)
     demo.add_argument("--chunk-size", type=int, default=333)
+    validation = sub.add_parser("validate", help="W08 independent synthetic numerical oracle")
+    validation.add_argument("--seed", type=int, default=42)
+    validation.add_argument("--samples", type=int, default=4096)
+    validation.add_argument("--chunk-size", type=int, default=127)
     worker = sub.add_parser("worker", help="Single local job execution; never open to public")
     worker.add_argument("--db", type=Path, required=True)
     worker.add_argument("--tenant", required=True)
@@ -23,6 +27,14 @@ def main() -> None:
     args = parser.parse_args()
     if args.cmd == "demo":
         print(json.dumps(run_synthetic(args.seed, args.samples, args.chunk_size), indent=2))
+    elif args.cmd == "validate":
+        from .validation_w08 import validate_synthetic
+
+        result = validate_synthetic(seed=args.seed, samples=args.samples,
+                                    chunk_size=args.chunk_size)
+        print(result.json())
+        if not result.accepted:
+            raise SystemExit(1)
     else:
         store = JobStore(args.db)
         claimed = store.claim(args.tenant, args.job)
