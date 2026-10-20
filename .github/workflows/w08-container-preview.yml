@@ -23,6 +23,11 @@ jobs:
         env:
           NEUROSIGNAL_LOCAL_TOKEN: ci-synthetic-only-strong-secret-not-for-deployment
         run: docker compose -f infra/compose.w08.yml up --build --abort-on-container-exit --exit-code-from smoke
+      - name: Exercise installed numerical validation CLI inside image
+        working-directory: incubators/w05-neurosignal
+        env:
+          NEUROSIGNAL_LOCAL_TOKEN: ci-synthetic-only-strong-secret-not-for-deployment
+        run: docker compose -f infra/compose.w08.yml run --rm --no-deps api neurosignal validate --seed 42 --samples 1024 --chunk-size 107
       - name: Tear down preview state
         if: always()
         working-directory: incubators/w05-neurosignal
