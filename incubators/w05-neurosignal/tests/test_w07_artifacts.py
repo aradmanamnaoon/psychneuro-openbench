@@ -65,6 +65,12 @@ def test_synthetic_artifact_api_security_and_provenance(monkeypatch):
     assert result["license"] == "CC0-1.0-synthetic"
     assert len(result["trace_volts_minmax"]) == 256
     assert result["erp"]["retained"] >= 1
+    export = client.post(route + "/export", json=payload, headers=headers)
+    assert export.status_code == 200
+    assert 'attachment;' in export.headers["content-disposition"]
+    envelope = export.json()
+    assert envelope["payload"]["license"] == "CC0-1.0-synthetic"
+    assert len(envelope["sha256"]) == 64
     assert client.post(route, json={**payload, "samples": 8193}, headers=headers).status_code == 422
 
 
