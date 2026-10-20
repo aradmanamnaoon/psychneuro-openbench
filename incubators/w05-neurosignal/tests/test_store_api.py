@@ -63,6 +63,7 @@ def test_fail_retry_then_succeed(tmp_path):
 
 def test_api_auth_idempotency_and_negative(monkeypatch, tmp_path):
     monkeypatch.setenv("NEUROSIGNAL_LOCAL_TOKEN", "a-long-test-token")
+    monkeypatch.setenv("NEUROSIGNAL_LOCAL_TENANT", "lab-A")
     monkeypatch.setenv("NEUROSIGNAL_DB_PATH", str(tmp_path / "job.sqlite"))
     client = TestClient(app)
     req = {"seed": 3, "samples": 1024, "chunk_size": 80, "idempotency_key": "test-12345"}
