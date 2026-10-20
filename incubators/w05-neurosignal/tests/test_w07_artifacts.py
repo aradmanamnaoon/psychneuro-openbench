@@ -66,3 +66,27 @@ def test_synthetic_artifact_api_security_and_provenance(monkeypatch):
     assert len(result["trace_volts_minmax"]) == 256
     assert result["erp"]["retained"] >= 1
     assert client.post(route, json={**payload, "samples": 8193}, headers=headers).status_code == 422
+
+
+def test_recording_qc_differences_and_manifest():
+    import hashlib
+    import json
+
+    from neurosignal.qc_w07 import compare_recording_qc, deterministic_json_manifest
+
+    rows, spread = compare_recording_qc(
+        [("syntheticA", "r1", 10, 0), ("syntheticB", "r2", 10, 10)],
+        thresholds={"syntheticA": 0.1, "syntheticB": 0.2})
+    assert spread == 1
+    assert rows[0].above_threshold is False
+    assert rows[1].above_threshold is True
+    assert 0 <= rows[0].wilson_low <= rows[0].wilson_high <= 1
+    assert 0 <= rows[1].wilson_low <= rows[1].wilson_high <= 1
+    manifest = json.loads(deterministic_json_manifest({"seed": 42, "license": "CC0"}))
+    body = json.dumps(manifest["payload"], sort_keys=True,
+                      separators=(",", ":")).encode()
+    assert manifest["sha256"] == hashlib.sha256(body).hexdigest()
+    with pytest.raises(ValueError):
+        compare_recording_qc([("A", "x", 1, 2)], thresholds={"A": 0.5})
+    with pytest.raises(ValueError):
+        deterministic_json_manifest({"invalid": float("nan")})
