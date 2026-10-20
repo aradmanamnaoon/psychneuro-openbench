@@ -20,7 +20,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install isolated package
         working-directory: incubators/w05-neurosignal
-        run: python -m pip install -e '.[dev,eeg]'
+        run: python -m pip install -e '.[dev,eeg,nwb]'
       - name: Unit integration and scientific oracle
         working-directory: incubators/w05-neurosignal
         run: python -m pytest -q
