@@ -66,3 +66,30 @@ def test_stratified_pairing_reproducible_and_null():
         paired_stratified_ci(left, {**right,"extra":("a",.5)})
     with pytest.raises(ValueError):
         paired_stratified_ci(left,{k:("wrong",v) for k,(_,v) in right.items()})
+
+
+def test_synthetic_psd_api_tenant_and_peak(monkeypatch):
+    from fastapi.testclient import TestClient
+
+    from neurosignal.service import app
+
+    monkeypatch.setenv("NEUROSIGNAL_LOCAL_TOKEN", "w06-test-token")
+    monkeypatch.setenv("NEUROSIGNAL_LOCAL_TENANT", "w06-lab")
+    client = TestClient(app)
+    req = {"seed": 42, "samples": 2048, "chunk_size": 77,
+           "idempotency_key": "w06-psd-key"}
+    url = "/v1/spectral/synthetic"
+    assert client.post(url, json=req).status_code == 401
+    good = {"Authorization": "Bearer w06-test-token", "X-Tenant": "w06-lab"}
+    assert client.post(url, json=req, headers={**good, "X-Tenant": "evil"}).status_code == 403
+    response = client.post(url, json=req, headers=good)
+    assert response.status_code == 200
+    result = response.json()
+    assert result["synthetic_only"] is True
+    assert result["unit"] == "V^2/Hz"
+    assert len(result["channels"]) == 4
+    power = result["power_v2_per_hz"][0]
+    assert result["frequencies_hz"][int(np.argmax(power))] == pytest.approx(10.0)
+    assert client.post(url, json={**req, "samples": 9000}, headers=good).status_code == 422
+    page = client.get("/").text
+    assert 'id="psd-channel"' in page and 'id="psd-plot"' in page
