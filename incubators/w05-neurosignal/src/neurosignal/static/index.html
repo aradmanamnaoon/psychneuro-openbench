@@ -12,4 +12,17 @@
 <button type="submit">Run synthetic pipeline</button></form>
 <p role="status" aria-live="polite" id="status">No run started.</p><h2>Reproducibility report</h2>
 <pre id="result" tabindex="0">Results will appear here.</pre>
+<section aria-labelledby="psd-heading">
+<h2 id="psd-heading">Synthetic PSD explorer</h2>
+<p>One-sided Welch spectral density in V²/Hz. These synthetic peaks are not biological findings.</p>
+<button id="psd-run" type="button">Explore synthetic PSD</button>
+<label for="psd-channel">Channel</label>
+<select id="psd-channel" aria-label="Spectrum channel"></select>
+<svg id="psd-plot" viewBox="0 0 640 260" role="img"
+ aria-label="Synthetic channel power spectral density from zero to Nyquist">
+ <title>Welch spectral density of synthetic signal</title>
+ <path id="psd-line" fill="none" stroke="currentColor" stroke-width="2"></path>
+</svg>
+<p id="psd-caption" role="status" aria-live="polite">No PSD calculated.</p>
+</section>
 </main><script src="/static/site.js" defer></script></body></html>
