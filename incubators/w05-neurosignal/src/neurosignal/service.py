@@ -156,3 +156,25 @@ def synthetic_artifacts(req: JobRequest, tenant: str = Depends(_authorize)) -> d
             "trace_volts_minmax": trace.tolist(),
             "artifact_absolute_uv": 120, "artifact_peak_to_peak_uv": 180,
             "erp": erp}
+
+
+@app.post("/v1/artifacts/synthetic/export")
+def export_synthetic_artifacts(req: JobRequest, tenant: str = Depends(_authorize)):
+    """Authenticated deterministic provenance JSON download, synthetic fixtures only."""
+    import json
+
+    from fastapi.responses import Response
+
+    from .qc_w07 import deterministic_json_manifest
+
+    record = synthetic_artifacts(req, tenant)
+    payload = {"schema_version": "1.0", "kind": "synthetic-artifact-erp",
+               "source": "generated:seeded-sine", "license": "CC0-1.0-synthetic",
+               "threshold_absolute_uv": 120, "threshold_peak_to_peak_uv": 180,
+               "seed": req.seed, "samples": req.samples,
+               "channel": record["channel"], "erp": record["erp"]}
+    encoded = deterministic_json_manifest(payload)
+    # Never place caller-controlled keys in filenames or response headers.
+    return Response(content=encoded, media_type="application/json",
+                    headers={"Content-Disposition": 'attachment; filename="synthetic-qc-manifest.json"',
+                             "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff"})
