@@ -1,6 +1,6 @@
 """Synthetic PyNWB regression for per-channel scaling; no participant data."""
-from datetime import datetime, timezone
 import hashlib
+from datetime import UTC, datetime
 
 import numpy as np
 import pytest
@@ -16,7 +16,7 @@ def test_nwb_channel_conversion_and_offset(tmp_path):
     nwb = pynwb.NWBFile(
         session_description="synthetic numerical units test",
         identifier="synthetic-nwb-channel-gains",
-        session_start_time=datetime(2025, 1, 1, tzinfo=timezone.utc),
+        session_start_time=datetime(2025, 1, 1, tzinfo=UTC),
     )
     device = nwb.create_device(name="simulator")
     group = nwb.create_electrode_group(
