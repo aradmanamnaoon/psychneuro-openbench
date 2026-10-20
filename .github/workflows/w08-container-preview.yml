@@ -1,0 +1,31 @@
+name: W08 synthetic preview container smoke
+on:
+  pull_request:
+    paths:
+      - 'incubators/w05-neurosignal/**'
+      - '.github/workflows/w08-container-preview.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  preview-smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate Compose syntax
+        working-directory: incubators/w05-neurosignal
+        env:
+          NEUROSIGNAL_LOCAL_TOKEN: ci-synthetic-only-strong-secret-not-for-deployment
+        run: docker compose -f infra/compose.w08.yml config --quiet
+      - name: Build and exercise loopback-only preview
+        working-directory: incubators/w05-neurosignal
+        env:
+          NEUROSIGNAL_LOCAL_TOKEN: ci-synthetic-only-strong-secret-not-for-deployment
+        run: docker compose -f infra/compose.w08.yml up --build --abort-on-container-exit --exit-code-from smoke
+      - name: Tear down preview state
+        if: always()
+        working-directory: incubators/w05-neurosignal
+        env:
+          NEUROSIGNAL_LOCAL_TOKEN: ci-synthetic-only-strong-secret-not-for-deployment
+        run: docker compose -f infra/compose.w08.yml down -v --remove-orphans
