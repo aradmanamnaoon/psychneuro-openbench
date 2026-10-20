@@ -1,0 +1,25 @@
+{
+  "contract_version": "1.0",
+  "synthetic_only": true,
+  "seed": 42,
+  "source_sha256": "76ca2decbf32a61cc57772be96266973c11859ce3d38ac2ff44eaee6a00cc87f",
+  "sample_rate_hz": 256.0,
+  "samples": 4096,
+  "chunk_size": 333,
+  "channels": 4,
+  "dominant_frequency_hz": 10.0,
+  "stream_oracle_max_abs_error_volts": 2.0328790734103208e-20,
+  "confidence_interval_fictional": {
+    "slice_name": "overall",
+    "mean": 0.595,
+    "lower": 0.5742812500000001,
+    "upper": 0.6175,
+    "n_groups": 8,
+    "repetitions": 500
+  },
+  "transforms_sha256": "cdc1b079624b4f8b758c8dbabd84e43ebbc6d4bde49570c267a1093cf2c3c460",
+  "spectrum_sha256": "5e997d8012fe5ccb46108ae04caef4a06a515170cea4e72b37d19389d79338eb",
+  "spectrum_quantized_sha256": "3ff3b129f879976b7f54a59d51175513c27b69cc5b0af07122892b8b159ec73d",
+  "QC": [],
+  "disclaimer": "Synthetic signal and fictional score CI; no claims about humans or generalization"
+}
