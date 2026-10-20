@@ -26,7 +26,7 @@ Methodological reference leads (verification of complete bibliography and versio
 - Gramfort et al. (2013), MNE, https://doi.org/10.3389/fnins.2013.00267
 - Pernet et al. (2019), EEG-BIDS, https://doi.org/10.1038/s41597-019-0104-8
 - Bigdely-Shamlo et al. (2015), PREP, https://doi.org/10.3389/fninf.2015.00016
-- Jas et al. (2017), autoreject, https://doi.org/10.1016/j.neuroimage.2017.06.013
+- Jas et al. (2017), autoreject, https://doi.org/10.1016/j.neuroimage.2017.06.030
 - Winkler et al. (2014), permutation inference, https://doi.org/10.1016/j.neuroimage.2014.01.060
 - Maris & Oostenveld (2007), cluster permutation, https://doi.org/10.1016/j.jneumeth.2007.03.024
 - Varoquaux (2018), CV instability, https://doi.org/10.1016/j.neuroimage.2017.06.061
