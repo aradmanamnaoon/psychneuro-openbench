@@ -42,3 +42,27 @@ def test_null_guard_and_minmax_preserves_spike():
     assert reduced.size <= 64
     assert max(reduced) == 4
     assert min(reduced) == -3
+
+
+def test_synthetic_artifact_api_security_and_provenance(monkeypatch):
+    from fastapi.testclient import TestClient
+
+    from neurosignal.service import app
+
+    monkeypatch.setenv("NEUROSIGNAL_LOCAL_TOKEN", "w07-secure-test")
+    monkeypatch.setenv("NEUROSIGNAL_LOCAL_TENANT", "lab")
+    client = TestClient(app)
+    payload = {"seed": 42, "samples": 2048, "chunk_size": 128,
+               "idempotency_key": "w07-test-key"}
+    route = "/v1/artifacts/synthetic"
+    assert client.post(route, json=payload).status_code == 401
+    headers = {"Authorization": "Bearer w07-secure-test", "X-Tenant": "lab"}
+    assert client.post(route, json=payload, headers={**headers, "X-Tenant": "other"}).status_code == 403
+    response = client.post(route, json=payload, headers=headers)
+    assert response.status_code == 200
+    result = response.json()
+    assert result["synthetic_only"] is True
+    assert result["license"] == "CC0-1.0-synthetic"
+    assert len(result["trace_volts_minmax"]) == 256
+    assert result["erp"]["retained"] >= 1
+    assert client.post(route, json={**payload, "samples": 8193}, headers=headers).status_code == 422
