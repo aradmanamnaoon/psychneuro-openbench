@@ -35,7 +35,7 @@ services:
       api:
         condition: service_healthy
     entrypoint: ["/bin/sh", "-c"]
-    command: ["curl --fail --silent http://api:8010/healthz"]
+    command: ["curl --fail --silent http://127.0.0.1:8010/healthz"]
     network_mode: "service:api"
     restart: "no"
     mem_limit: 64m
