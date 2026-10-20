@@ -34,7 +34,12 @@ def _authorize(authorization: str | None = Header(default=None),
         raise HTTPException(status_code=401, detail="local API token required")
     if not x_tenant or not x_tenant.isascii() or not x_tenant.replace("-", "").isalnum() or len(x_tenant) > 64:
         raise HTTPException(status_code=400, detail="valid tenant required")
-    return x_tenant
+    # Single configured tenant only: a shared credential must never authorize
+    # arbitrary caller-selected tenant namespaces.
+    configured = os.getenv("NEUROSIGNAL_LOCAL_TENANT", "")
+    if not configured or not hmac.compare_digest(x_tenant, configured):
+        raise HTTPException(status_code=403, detail="tenant not authorized")
+    return configured
 
 
 def _store() -> JobStore:
