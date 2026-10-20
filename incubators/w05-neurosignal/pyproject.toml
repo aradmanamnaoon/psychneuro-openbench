@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=70", "wheel"]
+build-backend = "setuptools.build_meta"
+[project]
+name = "neurosignal-atlas-w05"
+version = "0.1.0"
+description = "Private, synthetic-first EEG ingestion, streaming DSP and group-safe evaluation research prototype"
+requires-python = ">=3.11"
+dependencies = ["numpy>=1.26,<3", "scipy>=1.12,<2", "pydantic>=2.8,<3", "fastapi>=0.110,<1"]
+[project.optional-dependencies]
+eeg = ["mne>=1.7,<2"]
+nwb = ["pynwb>=2.7,<4"]
+api = ["uvicorn>=0.30,<1"]
+dev = ["pytest>=8,<10", "httpx>=0.27,<1", "ruff>=0.8,<1", "mypy>=1.12,<2"]
+[project.scripts]
+neurosignal = "neurosignal.cli:main"
+[tool.setuptools.packages.find]
+where = ["src"]
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+[tool.ruff]
+line-length = 100
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I", "B", "UP"]
+[tool.setuptools.package-data]
+neurosignal = ["static/*.html", "static/*.js", "static/*.css"]

@@ -1,0 +1,145 @@
+{
+  "platform": "Linux-6.18.55-x86_64-with-glibc2.41",
+  "python": "3.13.5",
+  "numpy": "2.3.5",
+  "measurements": [
+    {
+      "seed": 0,
+      "samples": 1024,
+      "chunk_size": 64,
+      "latency_ms": 113.93184700000347,
+      "tracemalloc_peak_bytes": 715159,
+      "oracle_error_volts": 1.6940658945086007e-20
+    },
+    {
+      "seed": 1,
+      "samples": 1024,
+      "chunk_size": 64,
+      "latency_ms": 114.23183099998369,
+      "tracemalloc_peak_bytes": 703066,
+      "oracle_error_volts": 1.3552527156068805e-20
+    },
+    {
+      "seed": 2,
+      "samples": 1024,
+      "chunk_size": 64,
+      "latency_ms": 114.7076959999822,
+      "tracemalloc_peak_bytes": 702566,
+      "oracle_error_volts": 1.6940658945086007e-20
+    },
+    {
+      "seed": 3,
+      "samples": 1024,
+      "chunk_size": 64,
+      "latency_ms": 114.7390919999225,
+      "tracemalloc_peak_bytes": 701790,
+      "oracle_error_volts": 1.6940658945086007e-20
+    },
+    {
+      "seed": 4,
+      "samples": 1024,
+      "chunk_size": 64,
+      "latency_ms": 137.570832999927,
+      "tracemalloc_peak_bytes": 701566,
+      "oracle_error_volts": 1.6940658945086007e-20
+    },
+    {
+      "seed": 0,
+      "samples": 4096,
+      "chunk_size": 256,
+      "latency_ms": 427.82745500005603,
+      "tracemalloc_peak_bytes": 2733136,
+      "oracle_error_volts": 2.0328790734103208e-20
+    },
+    {
+      "seed": 1,
+      "samples": 4096,
+      "chunk_size": 256,
+      "latency_ms": 427.44132299992543,
+      "tracemalloc_peak_bytes": 2732913,
+      "oracle_error_volts": 2.0328790734103208e-20
+    },
+    {
+      "seed": 2,
+      "samples": 4096,
+      "chunk_size": 256,
+      "latency_ms": 436.7015419999234,
+      "tracemalloc_peak_bytes": 2732970,
+      "oracle_error_volts": 2.0328790734103208e-20
+    },
+    {
+      "seed": 3,
+      "samples": 4096,
+      "chunk_size": 256,
+      "latency_ms": 457.70809600003304,
+      "tracemalloc_peak_bytes": 2732930,
+      "oracle_error_volts": 1.6940658945086007e-20
+    },
+    {
+      "seed": 4,
+      "samples": 4096,
+      "chunk_size": 256,
+      "latency_ms": 447.2141260000626,
+      "tracemalloc_peak_bytes": 2732752,
+      "oracle_error_volts": 1.6940658945086007e-20
+    },
+    {
+      "seed": 0,
+      "samples": 8192,
+      "chunk_size": 512,
+      "latency_ms": 870.4708409999284,
+      "tracemalloc_peak_bytes": 5441087,
+      "oracle_error_volts": 2.0328790734103208e-20
+    },
+    {
+      "seed": 1,
+      "samples": 8192,
+      "chunk_size": 512,
+      "latency_ms": 907.7999969999837,
+      "tracemalloc_peak_bytes": 5440914,
+      "oracle_error_volts": 2.0328790734103208e-20
+    },
+    {
+      "seed": 2,
+      "samples": 8192,
+      "chunk_size": 512,
+      "latency_ms": 846.2324829999943,
+      "tracemalloc_peak_bytes": 5440506,
+      "oracle_error_volts": 2.0328790734103208e-20
+    },
+    {
+      "seed": 3,
+      "samples": 8192,
+      "chunk_size": 512,
+      "latency_ms": 830.6748359999574,
+      "tracemalloc_peak_bytes": 5440645,
+      "oracle_error_volts": 2.0328790734103208e-20
+    },
+    {
+      "seed": 4,
+      "samples": 8192,
+      "chunk_size": 512,
+      "latency_ms": 860.3221490000124,
+      "tracemalloc_peak_bytes": 5440294,
+      "oracle_error_volts": 2.0328790734103208e-20
+    }
+  ],
+  "summary": [
+    {
+      "samples": 1024,
+      "median_latency_ms": 114.7076959999822,
+      "max_tracemalloc_peak_bytes": 715159
+    },
+    {
+      "samples": 4096,
+      "median_latency_ms": 436.7015419999234,
+      "max_tracemalloc_peak_bytes": 2733136
+    },
+    {
+      "samples": 8192,
+      "median_latency_ms": 860.3221490000124,
+      "max_tracemalloc_peak_bytes": 5441087
+    }
+  ],
+  "limits": "tracemalloc excludes native NumPy allocations and does not equal peak RSS; warm process, n=5"
+}

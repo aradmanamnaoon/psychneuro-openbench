@@ -1,0 +1,1 @@
+{"version":"1.0","outcome":"bounded_accuracy","unit_of_independence":"group_id","seed":42,"bootstrap_reps":500,"confidence":0.95,"slices":[{"name":"overall","stratum":"all","min_groups":3}]}

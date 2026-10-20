@@ -1,0 +1,32 @@
+name: W05 isolated scientific contract CI
+on:
+  pull_request:
+    paths:
+      - 'incubators/w05-neurosignal/**'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.11', '3.12']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install isolated package
+        working-directory: incubators/w05-neurosignal
+        run: python -m pip install -e '.[dev,eeg]'
+      - name: Unit integration and scientific oracle
+        working-directory: incubators/w05-neurosignal
+        run: python -m pytest -q
+      - name: Static checks
+        working-directory: incubators/w05-neurosignal
+        run: python -m ruff check src tests
+      - name: Run synthetic CLI
+        working-directory: incubators/w05-neurosignal
+        run: neurosignal demo --seed 42 --samples 1024 --chunk-size 107
