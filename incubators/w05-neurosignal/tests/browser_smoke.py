@@ -52,8 +52,11 @@ def smoke() -> None:
                 browser.close()
     finally:
         process.terminate()
-        try: process.communicate(timeout=5)
-        except subprocess.TimeoutExpired: process.kill(); process.communicate()
+        try:
+            process.communicate(timeout=5)
+        except subprocess.TimeoutExpired:
+            process.kill()
+            process.communicate()
 
 
 if __name__ == "__main__":

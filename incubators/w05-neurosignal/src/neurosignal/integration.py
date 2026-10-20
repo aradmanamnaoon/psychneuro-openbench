@@ -6,7 +6,7 @@ from typing import Any
 import numpy as np
 
 from .contracts import canonical_sha
-from .dsp import CausalFIR, direct_fir_oracle, fir_lowpass
+from .dsp import direct_fir_oracle, fir_lowpass
 from .evalops import BenchmarkSpec, Segment, bootstrap_ci
 from .evaluation import WelchPSD
 from .fixtures import SyntheticReader

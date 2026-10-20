@@ -1,5 +1,7 @@
 # W05 implementation and evidence ledger — 2026-10-20 (pre-week work)
 
+**Private GitHub review:** [draft PR #26](https://github.com/aradmanamnaoon/psychneuro-openbench/pull/26), original head `1092a541c0a63e5522c6f9d815d5ccff46faa8d2`; GitHub Actions first run [#39388959792](https://github.com/aradmanamnaoon/psychneuro-openbench/actions/runs/39388959792): **Python 3.11 and 3.12 pytest steps passed, overall both jobs FAILED Ruff (15 style/import findings)**. Patch corrects the logged 15 issues in isolated source/tests; exact patched commit has NOT yet been rechecked on host as of this text. Preserve failed run in evidence history. No merge/release.
+
 **Status language:** DONE = narrowly completed and locally observed, PARTIAL = useful implemented component but missing epic-level gates, BLOCKED = no validated execution; no full W05 release GO. Scheduled W05 remains 2026-11-12–18; original Notion Done must remain unchecked. All data are explicitly synthetic, including generated FIF; source record rights declarations are caller-provided and are **not independent legal evidence**.
 
 ## Observed environment and commands
@@ -16,7 +18,7 @@ PYTHONPATH=src python tests/browser_smoke.py  # failed: Chromium ERR_BLOCKED_BY_
 python -m ruff check src tests                # BLOCKED: No module named ruff
 ```
 
-Local dependency observations: NumPy 2.3.5, SciPy 1.17.0, MNE 1.11.0, pytest 9.0.2, FastAPI 0.128.2; PyNWB and Ruff absent. The dependency ranges in pyproject.toml are NOT a complete reproducible lockfile; CI clean Python 3.11/3.12 installs have NOT yet been observed. Installation of Ruff failed in the network-isolated sandbox: DNS failure. The pytest log, portable JSON integration report, observed bench log, failed Chromium trace, and repository tree SHA manifest are in this evidence pack. The source and this snapshot are private and unreviewed.
+Local dependency observations: NumPy 2.3.5, SciPy 1.17.0, MNE 1.11.0, pytest 9.0.2, FastAPI 0.128.2; PyNWB and Ruff absent. The dependency ranges in pyproject.toml are NOT a complete reproducible lockfile; CI hosted Python 3.11/3.12 installations and pytest steps were observed on original W05 head, but full CI failed Ruff. Installation of Ruff failed in the network-isolated sandbox: DNS failure. The pytest log, portable JSON integration report, observed bench log, failed Chromium trace, and repository tree SHA manifest are in this evidence pack. The source and this snapshot are private and unreviewed.
 
 ### Synthetic trace with seed 42
 
@@ -54,7 +56,7 @@ This is not distributed throughput, representative EDF/NWB decode speed, true RS
 | E9 API/SDK/UI | PARTIAL | Versioned OpenAPI, bearer+tenant local demo, TS SDK and keyboard-intended static browser; HTTP tests PASS, TypeScript typecheck PASS. Headless Chromium real page navigation BLOCKED_BY_ADMINISTRATOR; no AT/manual review. |
 | E10 performance | PARTIAL | Local seeded tracemalloc and monotonic latency measurements for 3 sizes ×5; no load/stress, RSS, external deployment regression gate. |
 | E11 security/privacy | PARTIAL | Rights root traversal, unauthorized tenant, bearer token, malformed schemas, idempotency conflicts, stale workers and no data import by URL. No independent pentest/TOCTOU, auth provider or formal property-based random adversary. |
-| E12 hosted release | BLOCKED | GitHub workflow prepared for isolated subtree; actual hosted exact-head CI, lock, rollback and deploy not observed. No merges, release or deployment. |
+| E12 hosted release | PARTIAL | First exact-head private CI run observed: Python 3.11/3.12 installed and pytest PASS, Ruff FAIL (15 findings). Corrections prepared; no new-head hosted pass yet, lock, rollback, or deployment. |
 | E13 three-system E2E | PARTIAL | Actual `run_synthetic()` integrates P2→P26→P2 spectrum→P14 and returns JSON SHA/provenance with negative leak tests; no actual distributed cross-repo E2E. |
 | E14 reviewer pack | PARTIAL | ADR, reproducible script, protocol, skeptical memo, scientific/career outputs, benchmark/CI spec, evidence JSON. Independent human reviews and production release runbook remain open. |
 
@@ -75,7 +77,7 @@ This is not distributed throughput, representative EDF/NWB decode speed, true RS
 
 - **Public independent:** DOI source pages, university program pages and MNE contributor/issues information. No code public release claimed.
 - **Private locally observed:** files packaged in this release candidate; `local_pytest.log`, `evidence_synthetic.json`, `bench_observed.json`, `browser_log.txt` and isolated source tree. SHA manifest generated at pack time.
-- **Unverified:** hosted exact-SHA CI, locked clean installs Python 3.11/3.12, dataset rights sign-off, EDF/NWB runs, real browser assistive use, independent review, qualified manuscript findings, jobs/funding availability and production recovery.
+- **Unverified:** successful all-gates exact-SHA CI, fully locked transitive installs Python 3.11/3.12, dataset rights sign-off, EDF/NWB runs, real browser assistive use, independent review, qualified manuscript findings, jobs/funding availability and production recovery.
 
 ## Immediate independent review sequence (ordered)
 

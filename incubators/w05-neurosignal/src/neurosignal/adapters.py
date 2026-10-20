@@ -6,7 +6,7 @@ from typing import Protocol
 
 import numpy as np
 
-from .contracts import Channel, Chunk, Event, Recording, Rights, SignalUnit
+from .contracts import Channel, Chunk, Event, Recording, Rights
 
 
 class SignalReader(Protocol):

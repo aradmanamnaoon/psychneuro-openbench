@@ -36,9 +36,12 @@ def test_fif_lazy_units_events_license_checksum(tmp_path):
 
 
 def test_root_escape_denied(tmp_path):
-    outside = tmp_path / "outside"; outside.mkdir()
-    safe = tmp_path / "safe"; safe.mkdir()
-    badfile = outside / "x.edf"; badfile.write_text("not an EDF")
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    safe = tmp_path / "safe"
+    safe.mkdir()
+    badfile = outside / "x.edf"
+    badfile.write_text("not an EDF")
     rights = Rights(source_uri="generated:bad", data_license="synthetic", is_synthetic=False,
                     permission_verified=True, allow_analysis=True,
                     content_sha256=hashlib.sha256(badfile.read_bytes()).hexdigest())

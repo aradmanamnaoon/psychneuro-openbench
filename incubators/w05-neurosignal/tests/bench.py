@@ -6,7 +6,6 @@ import platform
 import statistics
 import time
 import tracemalloc
-from pathlib import Path
 
 import numpy as np
 

@@ -6,6 +6,8 @@ import os
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, Header, HTTPException
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from .integration import run_synthetic
@@ -83,8 +85,6 @@ def demo(req: JobRequest, tenant: str = Depends(_authorize)) -> dict[str, object
     return run_synthetic(seed=req.seed, samples=req.samples, chunk_size=req.chunk_size)
 
 # Locally hosted, keyboard-operable basic browser. Same-origin static assets, no external CDNs.
-from fastapi.responses import FileResponse
-from fastapi.staticfiles import StaticFiles
 _STATIC = Path(__file__).with_name("static")
 app.mount("/static", StaticFiles(directory=_STATIC), name="static")
 
