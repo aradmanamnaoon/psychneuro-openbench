@@ -73,7 +73,7 @@ def test_api_auth_idempotency_and_negative(monkeypatch, tmp_path):
     first = client.post("/v1/jobs", json=req, headers=headers)
     second = client.post("/v1/jobs", json=req, headers=headers)
     assert first.status_code == 202 and first.json()["id"] == second.json()["id"]
-    assert client.get(f"/v1/jobs/{first.json()['id']}", headers={**headers, "X-Tenant": "other"}).status_code == 404
+    assert client.get(f"/v1/jobs/{first.json()['id']}", headers={**headers, "X-Tenant": "other"}).status_code == 403
     altered = client.post("/v1/jobs", json={**req, "seed": 4}, headers=headers)
     assert altered.status_code == 409
     assert client.post(f"/v1/jobs/{first.json()['id']}/cancel", headers=headers).json()["status"] == "cancelled"
