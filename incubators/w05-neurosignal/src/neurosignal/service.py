@@ -98,3 +98,29 @@ def homepage() -> FileResponse:
     return FileResponse(_STATIC / "index.html", headers={
         "Content-Security-Policy": "default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'",
         "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff"})
+
+
+@app.post("/v1/spectral/synthetic")
+def synthetic_spectral(req: JobRequest, tenant: str = Depends(_authorize)) -> dict[str, object]:
+    """Bounded, synthetic-only, one-sided Welch PSD; no file uploads or human data."""
+    import numpy as np
+
+    from .fixtures import SyntheticReader
+    from .spectral_w06 import StreamingWelch
+
+    if req.samples > 8192:
+        raise HTTPException(status_code=422, detail="spectral preview capped at 8192 samples")
+    reader = SyntheticReader(samples=req.samples, seed=req.seed)
+    estimator = StreamingWelch(reader.metadata.sample_rate_hz,
+                               len(reader.metadata.channels), 256)
+    for start in range(0, req.samples, req.chunk_size):
+        end = min(start + req.chunk_size, req.samples)
+        estimator.update(reader.read(start, end).as_array(), start)
+    frequencies, density = estimator.result()
+    if not np.isfinite(density).all():
+        raise HTTPException(status_code=422, detail="invalid spectrum")
+    return {"schema_version": "1.0", "synthetic_only": True, "seed": req.seed,
+            "sample_rate_hz": reader.metadata.sample_rate_hz,
+            "unit": "V^2/Hz", "segments": estimator.segments,
+            "frequencies_hz": frequencies.tolist(), "power_v2_per_hz": density.tolist(),
+            "channels": [c.name for c in reader.metadata.channels]}
