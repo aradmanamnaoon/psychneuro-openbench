@@ -54,7 +54,6 @@ def event_locked_erp(volts: np.ndarray, events: list[int], fs: float, *,
     valid = [(i, e) for i, e in enumerate(events)
              if e - pre_samples >= 0 and e + post_samples <= x.shape[1]]
     out_of_bounds = len(events) - len(valid)
-    length = pre_samples + post_samples
     rejected_ids: list[int] = []
     kept: list[np.ndarray] = []
     for i, event in valid:
