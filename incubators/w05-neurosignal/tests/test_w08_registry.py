@@ -34,3 +34,29 @@ def test_registry_missing_metric_rejected(tmp_path):
     h = reg.register("team", p)
     with pytest.raises(ValueError):
         reg.compare("team", h, h, metric="does_not_exist")
+
+
+def test_comparison_api_auth_and_missing(monkeypatch, tmp_path):
+    from fastapi.testclient import TestClient
+
+    from neurosignal.service import app
+
+    monkeypatch.setenv("NEUROSIGNAL_LOCAL_TOKEN", "w08-test-token")
+    monkeypatch.setenv("NEUROSIGNAL_LOCAL_TENANT", "review-lab")
+    monkeypatch.setenv("NEUROSIGNAL_DB_PATH", str(tmp_path / "jobs.sqlite3"))
+    reg = EvidenceRegistry(tmp_path / "evidence.sqlite3")
+    a = {"schema_version": "1.0", "synthetic_only": True,
+         "cohort": "cc0-seed42", "metric_units": "ms", "latency_ms": 10.}
+    baseline = reg.register("review-lab", a)
+    candidate = reg.register("review-lab", {**a, "latency_ms": 12.})
+    req = {"baseline_sha256": baseline, "candidate_sha256": candidate,
+           "metric": "latency_ms", "max_relative_regression": .05}
+    client = TestClient(app)
+    url = "/v1/evalops/compare"
+    assert client.post(url, json=req).status_code == 401
+    head = {"Authorization": "Bearer w08-test-token", "X-Tenant": "review-lab"}
+    assert client.post(url, json=req, headers={**head, "X-Tenant": "other"}).status_code == 403
+    response = client.post(url, json=req, headers=head)
+    assert response.status_code == 200 and response.json()["regressed"] is True
+    assert client.post(url, json={**req, "candidate_sha256": "0"*64},
+                       headers=head).status_code == 404
