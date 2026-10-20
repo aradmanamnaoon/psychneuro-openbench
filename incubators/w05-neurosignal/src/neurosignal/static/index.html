@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>NeuroSignal W05 Synthetic Lab</title><link rel="stylesheet" href="/static/site.css"/></head>
+<body><main><h1>NeuroSignal synthetic lab</h1>
+<p>Research development preview only. No human EEG, medical decisions, or remote uploads.</p>
+<form id="experiment">
+<label for="token">Local API token (not stored)</label><input id="token" type="password" autocomplete="off" required/>
+<label for="tenant">Tenant ID</label><input id="tenant" value="demo-lab" required pattern="[A-Za-z0-9-]+" />
+<label for="seed">Synthetic random seed</label><input id="seed" type="number" value="42" min="0" max="4294967295" required/>
+<label for="samples">Total samples (512–8192)</label><input id="samples" type="number" value="1024" min="512" max="8192" required/>
+<label for="chunk">Samples per chunk</label><input id="chunk" type="number" value="107" min="1" max="2048" required/>
+<button type="submit">Run synthetic pipeline</button></form>
+<p role="status" aria-live="polite" id="status">No run started.</p><h2>Reproducibility report</h2>
+<pre id="result" tabindex="0">Results will appear here.</pre>
+</main><script src="/static/site.js" defer></script></body></html>
