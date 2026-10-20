@@ -133,7 +133,18 @@ class NWBReader:
         series = self._series
         # NWB convention: stored values * conversion + offset, in declared unit (V).
         samples = np.asarray(series.data[start:stop, :], dtype=np.float64)
-        volts = (samples * float(series.conversion) + float(series.offset)).T
+        channel_factors = series.channel_conversion
+        if channel_factors is None:
+            gains = np.ones((1, samples.shape[1]), dtype=np.float64)
+        else:
+            gains = np.asarray(channel_factors[:], dtype=np.float64).reshape(1, -1)
+            if gains.shape[1] != samples.shape[1]:
+                raise ValueError("NWB channel_conversion length mismatch")
+        if not np.isfinite(gains).all() or not np.isfinite(samples).all():
+            raise ValueError("NWB samples/channel conversions contain nonfinite values")
+        volts = (samples * float(series.conversion) * gains + float(series.offset)).T
+        if not np.isfinite(volts).all():
+            raise ValueError("NWB volts overflow/nonfinite")
         return Chunk(recording_id=self.metadata.recording_id, start=start,
                      sample_rate_hz=self.metadata.sample_rate_hz,
                      channel_names=tuple(c.name for c in self.metadata.channels),
