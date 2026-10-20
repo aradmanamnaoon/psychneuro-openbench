@@ -1,0 +1,45 @@
+# Local demonstration only. No Internet ingress except explicit loopback binding.
+# Use: NEUROSIGNAL_LOCAL_TOKEN=<strong secret> docker compose -f infra/compose.w08.yml up --build
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile.w08
+    environment:
+      NEUROSIGNAL_LOCAL_TOKEN: ${NEUROSIGNAL_LOCAL_TOKEN:?Set strong local token}
+      NEUROSIGNAL_LOCAL_TENANT: demo-lab
+      NEUROSIGNAL_DB_PATH: /state/jobs.sqlite3
+    ports:
+      - "127.0.0.1:8010:8010"
+    volumes:
+      - jobs:/state
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=16m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 128
+    mem_limit: 512m
+    cpus: 1.0
+    restart: "no"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8010/healthz',timeout=3)"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+  smoke:
+    image: curlimages/curl:8.12.1
+    depends_on:
+      api:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "-c"]
+    command: ["curl --fail --silent http://api:8010/healthz"]
+    network_mode: "service:api"
+    restart: "no"
+    mem_limit: 64m
+    cap_drop:
+      - ALL
+volumes:
+  jobs:
