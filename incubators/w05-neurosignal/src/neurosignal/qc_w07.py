@@ -1,7 +1,6 @@
 """W07 P14: recording-level QC disparity without pseudo-replicated epoch intervals."""
 from __future__ import annotations
 
-from collections import defaultdict
 from dataclasses import dataclass
 from math import sqrt
 
@@ -17,6 +16,7 @@ class RecordingQC:
     rejection_rate: float
     wilson_low: float
     wilson_high: float
+    above_threshold: bool
 
 
 def _wilson(count: int, total: int, z: float = 1.95996398454) -> tuple[float, float]:
@@ -53,7 +53,7 @@ def compare_recording_qc(records: list[tuple[str, str, int, int]], *,
             raise ValueError("invalid trial counts")
         rate = rejected / total
         low, high = _wilson(rejected, total)
-        out.append(RecordingQC(identifier, dataset, total, rejected, rate, low, high))
+        out.append(RecordingQC(identifier, dataset, total, rejected, rate, low, high, rate > thresholds[dataset]))
     disparity = max(v.rejection_rate for v in out)-min(v.rejection_rate for v in out)
     return out, disparity
 
