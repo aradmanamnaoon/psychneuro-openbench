@@ -176,3 +176,27 @@ def export_synthetic_artifacts(req: JobRequest, tenant: str = Depends(_authorize
     return Response(content=encoded, media_type="application/json",
                     headers={"Content-Disposition": 'attachment; filename="synthetic-qc-manifest.json"',
                              "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff"})
+
+
+class ComparisonRequest(BaseModel):
+    baseline_sha256: str = Field(pattern="^[a-f0-9]{64}$")
+    candidate_sha256: str = Field(pattern="^[a-f0-9]{64}$")
+    metric: str = Field(min_length=1, max_length=64, pattern="^[a-zA-Z0-9_]+$")
+    max_relative_regression: float = Field(default=0.05, ge=0, le=1)
+
+
+@app.post("/v1/evalops/compare")
+def compare_registered_runs(req: ComparisonRequest, tenant: str = Depends(_authorize)):
+    """Tenant-scoped synthetic registry comparisons; no public upload endpoint."""
+    from .registry_w08 import EvidenceRegistry
+
+    root = Path(os.environ.get("NEUROSIGNAL_DB_PATH", "./.private_w05/jobs.sqlite3"))
+    registry = EvidenceRegistry(root.with_name("evidence.sqlite3"))
+    try:
+        return registry.compare(tenant, req.baseline_sha256, req.candidate_sha256,
+                                metric=req.metric,
+                                max_relative_regression=req.max_relative_regression)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail="no such registered run") from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
