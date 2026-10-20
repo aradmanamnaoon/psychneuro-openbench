@@ -23,6 +23,7 @@ Optional format adapters require `pip install -e '.[eeg,nwb]'`. Only manually ap
 ```bash
 export NEUROSIGNAL_LOCAL_TOKEN="$(python -c 'import secrets; print(secrets.token_urlsafe(32))')"
 export NEUROSIGNAL_DB_PATH='./.private_w05/jobs.sqlite3'
+export NEUROSIGNAL_LOCAL_TENANT='lab-A'
 uvicorn neurosignal.service:app --host 127.0.0.1 --port 8010
 ```
 
