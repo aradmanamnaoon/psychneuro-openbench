@@ -161,8 +161,6 @@ def synthetic_artifacts(req: JobRequest, tenant: str = Depends(_authorize)) -> d
 @app.post("/v1/artifacts/synthetic/export")
 def export_synthetic_artifacts(req: JobRequest, tenant: str = Depends(_authorize)):
     """Authenticated deterministic provenance JSON download, synthetic fixtures only."""
-    import json
-
     from fastapi.responses import Response
 
     from .qc_w07 import deterministic_json_manifest
