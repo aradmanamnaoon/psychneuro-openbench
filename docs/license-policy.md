@@ -2,7 +2,7 @@
 
 **Decision recorded 2026-10-16:** The project owner delegated the final PM-02 decision and accepted the prior recommendation: **Apache License, Version 2.0 (Apache-2.0)** for the project's original source code and documentation. The repository's top-level [LICENSE](../LICENSE) contains the complete license; [NOTICE](../NOTICE) records initial attribution. This is a **software license grant** to recipients of the licensed work, including anyone later given repository access. It is not merely a proposed license.
 
-**Privacy and publication are separate:** The repository remains **PRIVATE** during development. Having an Apache-2.0 license does not make the repository public, authorize package distribution, permit outreach, or trigger a release. Making the repository public remains conditional on [release readiness checks](release-gates.md) **and a new, separate explicit owner approval**.
+**Source visibility and release readiness are separate:** The repository is currently **public** and its original source code is licensed under Apache-2.0. Public source availability does not establish that the integrated software has passed [release acceptance](release-gates.md), received third-party data redistribution clearance or been packaged as a stable release.
 
 ## Why Apache-2.0
 
@@ -19,6 +19,6 @@ Apache-2.0 allows broad academic and commercial research-software reuse while in
 
 ## Decision trail
 
-The earlier PM-02 draft proposed Apache-2.0 while waiting for owner authorization. The owner then instructed: **“do what's best. just finish the task”**, following the explicit offer to choose Apache-2.0 and accept PM-02. This instruction resolves the **software-license selection for the private PM-02 foundation only**, not the separate *make public* gate. [ADR-0001](decisions/pm02-reconciliation.md) freezes the canonical synthetic v0 schema and records the technical review. [Hosted quality run](https://github.com/aradmanamnaoon/psychneuro-openbench/actions/runs/38864568384) confirmed the previous pinned synthetic generator/test blobs on Python 3.11 and 3.12, with 46 tests per environment and passing Ruff/mypy; no fresh CI is attributed to this documentation/license commit.
+The earlier PM-02 licensing review compared permissive licensing approaches and selected Apache-2.0 for the original code and documentation. This decision is documented through [ADR-0001](decisions/pm02-reconciliation.md) and the [LICENSE](../LICENSE) and [NOTICE](../NOTICE) files. The decision does not certify downstream dependencies, bundled assets or external datasets. [Hosted quality run](https://github.com/aradmanamnaoon/psychneuro-openbench/actions/runs/38864568384) confirmed the previous pinned synthetic generator/test blobs on Python 3.11 and 3.12, with 46 tests per environment and passing Ruff/mypy; no fresh CI is attributed to this documentation/license commit.
 
-**Release remains blocked** until the full platform, end-to-end group-safe benchmark, genuine release-candidate CI, dataset/dependency rights, security, documentation, external review and explicit publication authorization are complete.
+**Release readiness:** Additional integration, methodology, security, dependency and usability checks remain necessary before declaring the entire research workbench a verified release. See the [release checklist](release-gates.md).
