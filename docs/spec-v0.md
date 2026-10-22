@@ -31,14 +31,14 @@ Canonical JSON uses stable key order, stable float serialization/version policy,
 ## 7. Rights, nonclinical boundary and security
 First milestone uses original **synthetic** fixtures only. Real datasets later require per-dataset license or explicit permission, immutable version/DOI where possible, meaningful consent/ethics assessment, privacy audit, and authorization to download/process/share. A software license does not grant data usage rights. Do not copy GPL tool code without an explicit dependency/license review. Refuse identifiable patient data, clinical labels intended for diagnosis or PHI; v0 has no actual participants, diagnosis, prognosis, or treatment guidance. Guard against filename traversal, unbounded uploads, formula injection in exported tabular files, dependency risks and report HTML injection when engineering begins. No medical-device or clinical-use representations.
 ## 8. Implementation boundary and gates (not evidence of execution)
-G0 **Repo**: `psychneuro-openbench` exists with approved visibility and protected main; `docs/spec-v0.md` committed. Present status BLOCKED — authenticated connector lacks repo creation.
+G0 **Repository**: the project repository and this contract exist. Release preparation must verify branch policies, required files and the exact revision independently.
 G1 **Schema**: valid 24-subject × 20-trial synthetic fixture (\~480 rows) loads with deterministic card, duplicate/missing/invalid fixtures fail closed; subject/session/trial semantics validated. This is a planned fixture size, **not generated measurements**.
 G2 **Leakage**: at least 4 intentionally contaminated fixtures rejected; cross-partition subject intersection exactly zero and prefit/post-response feature checks fail.
 G3 **Baselines**: both models use identical fold manifest, dummy result present, class counts and metric ranges checked, insufficient-group/single-class fixtures handled.
 G4 **Rerun**: two actual hosted runs on a pinned runtime reproduce fold/manifest digests, numeric tolerance documented, changed hash rejected.
 G5 **Rights**: synthetic-only dataset card complete and no real data or PII present; future real adapter denied by default.
 G6 **Hosted CI**: verified GitHub Actions logs for schema/leakage/metric/reproducibility tests on a repository commit; report run URL, SHA, conclusion and failures; never infer pass from a workflow file alone.
-G7 **GO/NO-GO**: GO for code implementation after dedicated repo and v0 rights+schema review. NO-GO for public release, real-data ingestion or scientific performance claims until tested, approved and explicitly authorized.
+G7 **Release decision**: code development proceeds with the synthetic-only rights/schema contract. Stable software release, real-data ingestion and empirical performance claims require separate verification and approval.
 ## 9. Risks and assumptions
 - User demand and proposed task success rates are **hypotheses**, not interviews or market validation.
 - Synthetic random data demonstrates software mechanics, not cognitive neuroscience predictive usefulness or out-of-distribution performance.
