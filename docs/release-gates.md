@@ -1,29 +1,29 @@
-# PsychNeuro OpenBench — private development and public-release gates
+# Research-software release criteria
 
-**Decision recorded 2026-10-16:** Keep this GitHub repository **PRIVATE while the research-software platform is incomplete**. Visibility changes are *never* automatic. Once development and quality gates pass, the owner reviews the evidence and separately authorizes making it public.
+**Repository visibility:** Public source repository. **Packaged research-software release:** Not yet certified.
 
-## Mandatory release conditions
+Publishing source code on GitHub is distinct from publishing a stable software release or authorizing deployment. This document records the checks required before offering the integrated platform as a supported research tool. Earlier internal planning discussions treated the repository as private; that is historical context, not its current visibility.
 
-- [ ] **Functional research product:** the approved v0 user workflow works end-to-end on a lawful/synthetic dataset, not just a generator. Frozen participant-group splits, no post-response predictor leakage, DummyClassifier/logistic baselines, reproducibility manifest, reports and usable reviewer documentation all implemented.
-- [ ] **Engineering evidence:** hosted CI jobs succeed on release candidate commit(s), including reproducibility/negative/leakage tests, static analysis, packaging/install checks, and actual log links. CI passing on an older branch is not release-candidate validation.
-- [ ] **Scientific integrity:** no empirical claims inferred from toy fixtures; split policy and uncertainty/undefined metrics are scrutinized; source/rights ledger and known limitations are clear.
-- [ ] **Data, security, privacy:** only licensed or original synthetic sources; no PHI or secrets; risk audit for ingestion/report rendering, dependency issues and artifact provenance.
-- [ ] **Documentation and usability:** comprehensive README, install/reviewer pathways, changelog, architecture, examples, reproducibility instructions and release notes match the ACTUAL implemented state; screenshots/demo only if really captured/hosted.
-- [ ] **Legal:** Apache-2.0 has been selected and added for project code. **Before public release**, finish dependency, asset, contribution, and third-party dataset-rights reviews separately.
-- [ ] **External review:** owner reviews exact links, tests, sample results and unresolved blockers. If outreach/feedback is desired, it needs specific approval; no invented reviewers or endorsements.
-- [ ] **Explicit publication authorization:** owner approves a specific action to switch repository visibility to public and any tag, release, website/profile update, package publication or external announcement separately.
+## Release acceptance checklist
 
-## What is allowed before the gate
+- [ ] **Complete research workflow.** Validate a lawful/synthetic dataset, apply participant-group-safe splits and training-only preprocessing, compare transparent baselines, and export a reproducible run record.
+- [ ] **Exact-revision verification.** Execute tests, linting, typing, packaging and realistic integration checks on the proposed release SHA, with reproducible logs. Passing runs on a different revision do not certify the candidate.
+- [ ] **Scientific methodology.** Audit feature availability, split definitions, undefined metrics, uncertainty treatment, baseline comparisons and differences between synthetic and empirical claims.
+- [ ] **Privacy and security.** Review permitted data sources, confidentiality, authentication, source validation, service isolation, input parsing and report rendering. No unapproved clinical or participant data.
+- [ ] **Licensing.** Verify package dependencies, bundled assets, generated-data permissions and applicable third-party dataset rights independently of the project's Apache-2.0 code license.
+- [ ] **Usability.** Validate onboarding, installation, examples, documentation, browser/accessibility routes and failure messages across supported environments.
+- [ ] **Maintainer release review.** Confirm user benefit, maintainability, scope, outstanding issues and accurately described limitations before tagging or promoting a release.
 
-Private GitHub commits, branches, issues, Notion evidence, rights research, independent hosted test runs within authorized budget, and internal documentation. No visibility modification is required for any of these.
+## Available engineering evidence
 
-## Current known limitations
+- The default branch includes synthetic generators, schema/rights validation and focused regressions.
+- A previous [Python 3.11 PM-04 verification run](https://github.com/aradmanamnaoon/psychneuro-openbench/actions/runs/38874446677) completed with 80 passing tests, Ruff and strict mypy for the source revision checked in that run.
+- Additional grouped-evaluation, provenance and service integrations are under separate draft review. Their existence does not imply complete release-candidate acceptance.
 
-- The validated main-line artifact is a bounded, wholly fictional trial generator/validator—not an end-to-end ML benchmark.
-- Hosted verification on 2026-10-16: [31 pytest passes + Ruff + strict mypy](https://github.com/aradmanamnaoon/psychneuro-openbench/actions/runs/38863471313) for the specific verified code state; this is not a release validation.
-- The former `pm-02/synthetic-foundation` conflicting API is **resolved for engineering**: [ADR-0001](decisions/pm02-reconciliation.md) adopts the CI-verified `main` v0 schema and preserves the alternate branch only as historical experimental code. It was not merged. Any later multi-session or congruency feature requires a versioned migration and hosted test evidence.
-- `pm03-quality-foundation` contains independent supplemental tests/documentation whose integration needs real verification.
-- **PM-02 software license selected:** Apache-2.0 applies to the original source and documentation; see [LICENSE](../LICENSE), [NOTICE](../NOTICE), and [rights log](license-policy.md). This does **not** complete the separate dependency/asset/real-dataset rights audit and **does not authorize publication**.
-- Private-repository GitHub Actions minutes can be limited or billable; never enable expensive recurring tasks or overages without the owner's approval.
+## Usage boundaries
 
-**Decision rule:** a schedule, a completed README, or a passing toy test suite cannot by itself flip the repository public. Only a completed quality review **plus explicit owner authorization** may do so.
+This project is **nonclinical**. Test data is invented unless and until a future source has an independently documented lawful processing and reuse basis. No performance figure from fictional datasets should be represented as observed human behavioral accuracy.
+
+The release checklist must be met before presenting the entire integrated system as production-ready, independently validated or clinically appropriate. No automatic merge, package publication or external deployment is authorized by documentation or partial passing tests.
+
+See the [README](../README.md), [scientific scope](spec-v0.md) and [dataset licensing policy](license-policy.md).
