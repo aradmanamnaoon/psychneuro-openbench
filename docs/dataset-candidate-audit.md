@@ -35,4 +35,4 @@
 
 Primary source: the six versioned [OpenNeuro](https://openneuro.org/) pages above, plus [OpenNeuro access documentation](https://docs.openneuro.org/api.html) and [BIDS specification](https://bids-specification.readthedocs.io/). Snapshot page figures were independently checked, but event files, sample-level consent attestations and exact downloaded bytes were **not** reviewed. No human participant records are stored in the repo. CI of these new registry changes is not implied by older PM-02/PM-03 runs.
 
-**Review gate:** synthetic-only development is authorized in the private repository; external data, clinical applicability and public release remain NO-GO.
+**Current scope:** The publicly accessible code uses original synthetic fixtures only. The six external dataset candidates are disabled; real-data ingestion, clinical interpretation and external dataset redistribution require separate independent review and authorization.
