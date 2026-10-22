@@ -1,12 +1,20 @@
 <div align="center">
 
+<img src="assets/readme/psychneuro-hero.svg" alt="Conceptual research illustration of fictional participant groups and a traceable evaluation graph; not actual scientific results." width="100%" />
+
 # PsychNeuro OpenBench
 
 ### Reproducible behavioral machine learning, from data validation to defensible evaluation.
 
 **Know your data. Protect the holdout. Trace every result.**
 
-[Get started](#quickstart) · [Research design](#research-design) · [Roadmap](#development-roadmap) · [Contributing](#contributing)
+![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-596FA7?style=flat-square)
+![Apache 2.0](https://img.shields.io/badge/License-Apache--2.0-477D91?style=flat-square)
+![Synthetic-first](https://img.shields.io/badge/Data-Synthetic--first-7774B4?style=flat-square)
+![Research software](https://img.shields.io/badge/Scope-Nonclinical-538F88?style=flat-square)
+![Development](https://img.shields.io/badge/Stage-Research%20preview-727A8F?style=flat-square)
+
+[Get started](#quickstart) · [Research design](#research-design) · [Evaluation](#verification-and-reproducibility) · [Roadmap](#development-roadmap) · [Contributing](#contributing)
 
 </div>
 
@@ -22,6 +30,12 @@ In behavioral research, multiple rows often come from the same participant. If t
 
 The initial foundation is **nonclinical and synthetic-data-only**. It is useful for exploring methodological safeguards and engineering practices; it is not a validated neuroscience prediction system or a clinical product.
 
+### A reproducibility-minded research workflow
+
+![Illustration of a research protocol, from data validation to separated participant groups, matched model comparison and documented provenance.](assets/readme/psychneuro-workflow.svg)
+
+*This is a methodological blueprint, not a claim that every stage is integrated or scientifically validated on the default branch.*
+
 ## What you can explore
 
 | Area | Available on \`main\` | Further development |
@@ -35,6 +49,20 @@ The initial foundation is **nonclinical and synthetic-data-only**. It is useful 
 | Research workbench | Python package and tests | More complete services, reporting and interface integration |
 
 **Branch distinction:** This table describes the default branch. Additional evaluation, provenance and web/service components are under review in separate branches and pull requests. A development branch is not automatically part of the released or default-branch API.
+
+<details>
+<summary><strong>🔬 What each layer of the project is intended to answer</strong></summary>
+
+| Layer | Question | Evidence expected |
+| --- | --- | --- |
+| **Data contract** | Are these records valid and permitted? | Schema, dataset card, negative cases |
+| **Evaluation design** | Did the same participant appear in both training and test? | Group identities, disjoint split checks |
+| **Model comparison** | Does a model improve on a simple baseline? | Identical folds, reported metrics and support |
+| **Reproducibility** | Can someone trace what produced the result? | Sources, configuration, versions and digests |
+
+Stages beyond the current default-branch foundation remain subject to implementation and evaluation.
+
+</details>
 
 ## The research principles
 
@@ -59,6 +87,22 @@ A dataset card should identify the generator or permitted source, schema revisio
 Synthetic cases can demonstrate that validators, splits and storage contracts behave as intended. They cannot establish that a trained model predicts real human behavior, generalizes between laboratories or has clinical utility.
 
 For the normative methodology and acceptance criteria, see the [v0 research specification](docs/spec-v0.md) and [data schema](docs/data-schema.md).
+
+<details>
+<summary><strong>🧪 Why participant-level splitting matters (conceptual diagram)</strong></summary>
+
+```mermaid
+flowchart TB
+    A["Repeated trials from participants"] --> B{"How should data be split?"}
+    B -->|Row-random splitting| C["Risk: the same participant appears in train and test"]
+    B -->|Participant-group splitting| D["Train groups and test groups remain disjoint"]
+    C --> E["Inflated or misleading generalization estimate"]
+    D --> F["More defensible test of generalization to unseen groups"]
+```
+
+The diagram explains the intended evaluation rule. The actual model, metric, sample-size, and cross-study validity still require appropriate tests.
+
+</details>
 
 ## Quickstart
 
