@@ -1,7 +1,6 @@
 # PM-05 — synthetic-only local loader, quality gate and provenance
 
-**Status:** private implementation, pending hosted CI on the exact PM-05 commit. This
-is a software-only fixture loader, not permission to process human participant data.
+**Status:** experimental synthetic-data loader. The original PM-05 commit's hosted test record requires separate verification. This is a software-only fixture loader, not permission to process human participant data.
 
 ## Scope and trust boundary
 
