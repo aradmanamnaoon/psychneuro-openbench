@@ -2,103 +2,83 @@
 
 # PsychNeuro OpenBench
 
-### From behavioral trials to defensible research evidence.
+### Reproducible behavioral machine learning, from data validation to defensible evaluation.
 
-**A reproducibility-first research-software project for behavioral psychology and computational neuroscience ML.**
+**Know your data. Protect the holdout. Trace every result.**
 
-*Know the data. Protect the holdout. Explain every score.*
+[Get started](#quickstart) · [Research design](#research-design) · [Roadmap](#development-roadmap) · [Contributing](#contributing)
 
 </div>
 
-> [!IMPORTANT]
-> **Private development — not publicly released.** This repository must remain private until the **full product is completed**, its [release gates](docs/release-gates.md) are verified, and the owner **explicitly authorizes making it public**. A polished README, prototype, or passing fixture tests do not authorize publication.
-
-
-> **What if a behavioral ML benchmark could explain not just *how well* a model scored, but also exactly *what it was allowed to learn from*?**
-
-PsychNeuro OpenBench is an emerging **nonclinical, reproducibility-first benchmarking workbench** for behavioral psychology and computational neuroscience research. It is being built for people who want to move from trial tables to defensible model comparisons—without leaking the same participant across training and test data, mistaking post-response measurements for predictors, or losing track of dataset rights.
-
-**Current stage: private engineering preview, not a finished benchmark, published package, or usable browser app.** The available code generates and validates fully fictional behavioral trials. It does **not** yet train or compare ML models.
-
-[Start with the synthetic example](#try-the-current-synthetic-foundation) · [What works today](#what-works-today) · [Scientific contract](docs/spec-v0.md) · [Research and engineering roadmap](#roadmap-with-real-issue-tracking) · [Release requirements](docs/release-gates.md)
-
 ---
 
-## The problem worth solving
+## Why this project exists
 
-Imagine two labs publish models that predict trial correctness. One lab makes row-random train/test splits while participants each contribute dozens of trials; another uses a group-held-out split. One lab includes reaction time—the response has already happened—as a feature. Both report strong accuracy.
+A machine learning score is only as trustworthy as the experiment that produced it.
 
-**Those results are not directly comparable.** A score alone cannot reveal whether the evaluation used independent participants, whether predictors existed at decision time, or whether the exact data and configuration can be reconstructed.
+In behavioral research, multiple rows often come from the same participant. If those rows cross training and test boundaries, a model can appear to generalize while mostly recognizing participants it has already encountered. Similarly, a predictor measured *after* a response may quietly leak information that would not be available at prediction time.
 
-The intended OpenBench workflow makes those decisions inspectable: identify what the dataset is, reject invalid or unauthorized inputs, freeze the participant-level split, run transparent baselines, report uncertainty and limitations, and export a replayable evidence record.
+**PsychNeuro OpenBench** explores how to make those choices explicit and reproducible. The project builds tools for validating trial-level datasets, documenting provenance, protecting participant-level evaluation boundaries, comparing transparent baselines, and preserving the evidence needed to reproduce results.
 
-This is a *research-software problem*, not a clinical prediction product. The initial milestone uses synthetic fixtures to test the software contract before considering lawful real research datasets.
+The initial foundation is **nonclinical and synthetic-data-only**. It is useful for exploring methodological safeguards and engineering practices; it is not a validated neuroscience prediction system or a clinical product.
 
-## Who it is for
+## What you can explore
 
-| Research role | What they should eventually be able to do |
-| --- | --- |
-| **Psychology methods student** | Understand why a good-looking score can be wrong; compare baselines on identical held-out groups |
-| **Research assistant / data steward** | Check trial identifiers, source rights, missingness and transformation history before analysis |
-| **Computational neuroscience analyst** | Stress-test participant-level generalization and trace the provenance of derived behavioral features |
-| **ML reproducibility reviewer** | Inspect exact split identities, versions, metrics, warnings and hosted test evidence without trusting a notebook screenshot |
-
-These are **intended users**, not evidence of interviews, adoption or institutional partnerships.
-
-## What works today
-
-| Component | Current reality | Evidence |
+| Area | Available on \`main\` | Further development |
 | --- | --- | --- |
-| Synthetic two-choice trial generator | **Implemented** — local seeded RNG, invented participants, bounded trial count | [Source](src/psychneuro/synthetic.py) |
-| Structural checks | **Implemented** — duplicate keys, trial order, finite values, binary labels and response consistency | [Tests](tests/test_synthetic.py) |
-| Portable tabular export | **Implemented** — stable-column UTF-8 CSV and SHA-256 of exact serialized bytes | [Schema](docs/data-schema.md) |
-| Dataset card | **Implemented** — synthetic origin, seed, rights declaration, row/group counts and feature availability | [Source](src/psychneuro/synthetic.py) |
-| Fail-closed synthetic registry and rights-aware validation | **Implemented** — only synthetic source enabled; six public-study entries disabled, with versioned metadata, loader provenance checks, source SHA-256 and feature-timing safeguards | [Schema](src/psychneuro/schema.py), [registry loader](src/psychneuro/registry.py), [registry metadata](data/registry.json) |
-| PM-05 local CSV / optional Parquet ingestion | **Code added, CI not yet run on PM-05 commit** — only exact replays of original synthetic fixtures, fail-closed quality diagnostics and machine-readable raw/canonical SHA-256 provenance | [Loader](src/psychneuro/loaders.py), [quality gate](src/psychneuro/quality.py), [negative tests](tests/test_pm05_loaders.py), [scope & limitations](docs/pm05-data-ingestion.md) |
-| Engineering verification | **PM-03 verified:** 46 tests passed on both Python 3.11 and 3.12; **PM-04 final verified:** 80 tests passed on Python 3.11, Ruff passed and strict mypy passed on 4 source files | [PM-03 log](https://github.com/aradmanamnaoon/psychneuro-openbench/actions/runs/38864568384), [PM-04 final log](https://github.com/aradmanamnaoon/psychneuro-openbench/actions/runs/38874446677) |
-| Group-held-out baseline benchmarking | **Not implemented** | [Leakage issue #3](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/3), [baseline issue #4](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/4) |
-| Real dataset **ingestion**, browser UI, third-party reproducibility study | **Not implemented / not validated** | [Rights issue #5](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/5), [manifest issue #6](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/6) |
+| Synthetic trial generation | Deterministic, configurable fictional participant/trial records | Richer simulation and controlled signal fixtures |
+| Trial data contracts | Structural checks for IDs, types, outcomes and predictor timing | Extended ingestion and schema interoperability |
+| Source provenance | Dataset cards, rights metadata, stable CSV export and SHA-256 hashes | End-to-end run and artifact traceability |
+| Rights-aware registry | Only the original synthetic source is enabled by default | Individually reviewed third-party data sources |
+| Data loading | Synthetic CSV replay and validation modules | Broader validated input formats |
+| Participant-held-out evaluation | Scientific specification and reviewable design | Independent grouped-CV and baseline implementations on development branches |
+| Research workbench | Python package and tests | More complete services, reporting and interface integration |
 
-**Important distinction:** passing unit tests on invented records validates specific engineering behaviors, **not** research impact, statistical generalizability or brain/behavior modeling accuracy.
+**Branch distinction:** This table describes the default branch. Additional evaluation, provenance and web/service components are under review in separate branches and pull requests. A development branch is not automatically part of the released or default-branch API.
 
-## From trials to trustworthy comparisons
+## The research principles
 
-```mermaid
-flowchart TD
-    A["Synthetic-only trial source (implemented)"] --> B["Schema + provenance checks (implemented)"]
-    B --> C["Participant-group split (planned)"]
-    C --> D["Training-only preprocessing (planned)"]
-    D --> E["Dummy vs logistic baseline (planned)"]
-    E --> F["Metrics, uncertainty + failure review (planned)"]
-    F --> G["Versioned reproducibility manifest (planned)"]
-```
+### 1. Treat participants—not rows—as independent observations
 
-**Design commitments**
+When the scientific objective is generalization to unseen participants, every split should be constructed around participant identity. The same person must not appear in both training and held-out test sets.
 
-1. **Participants are the unit of independence.** Repeated trials from the same synthetic participant must not cross training, validation and test boundaries when participant generalization is claimed.
-2. **No tomorrow's information in today's prediction.** For correctness predicted before a response, `response`, `response_time_ms`, outcome-derived summaries and identifiers are not permissible predictors.
-3. **A dummy model belongs in the report.** A classifier should not be called useful merely because it beats no baseline.
-4. **Rights are part of the experiment.** A software license does not grant permission to use a dataset; unverified real datasets are denied by default.
-5. **A failure is evidence.** An invalid input, insufficient group count, undefined metric or unreproducible run should produce an explicit failure—not a fabricated number.
+### 2. Use only features available at prediction time
 
-The normative research and reproducibility proposal lives in [`docs/spec-v0.md`](docs/spec-v0.md). That document remains subject to review and is **not** proof that the planned benchmark engine already exists.
+A model predicting trial correctness before a response must not be trained on reaction time, the response itself, identifiers or outcome-derived summaries. Predictor availability is part of the dataset contract.
 
-## Try the current synthetic foundation
+### 3. Always compare against a meaningful baseline
 
-The public-facing browser experience is **not available yet**. These steps are for future technical contributors using an independently authorized development environment; the project owner is not expected to install or run anything locally.
+Accuracy without class prevalence, a dummy classifier, fold composition and suitable metrics is difficult to interpret. Honest baselines make otherwise impressive-looking results easier to assess.
 
-**Requirements:** Python 3.11+; no model API, GPU, patient dataset or paid cloud endpoint. The current generator uses only the Python standard library at runtime.
+### 4. Preserve a reproducible chain of evidence
 
-```sh
-python -m pip install -e '.[dev]'
-python -m pytest -q
-python -m ruff check .
-python -m mypy src
-```
+A dataset card should identify the generator or permitted source, schema revision, seed, row/group counts, rights basis and exact source digest. Later experiment records should connect splits, preprocessing, models and scores without claiming integrity checks prove independent authenticity.
 
-In Python:
+### 5. Distinguish software tests from scientific validation
 
-```python
+Synthetic cases can demonstrate that validators, splits and storage contracts behave as intended. They cannot establish that a trained model predicts real human behavior, generalizes between laboratories or has clinical utility.
+
+For the normative methodology and acceptance criteria, see the [v0 research specification](docs/spec-v0.md) and [data schema](docs/data-schema.md).
+
+## Quickstart
+
+### Requirements
+
+- Python **3.11 or newer**
+- Git
+- No GPU, paid API, cloud account or human participant data
+
+Clone the repository and install the development dependencies:
+
+~~~bash
+git clone https://github.com/aradmanamnaoon/psychneuro-openbench.git
+cd psychneuro-openbench
+python -m pip install -e ".[dev]"
+~~~
+
+Generate a deterministic synthetic trial dataset:
+
+~~~python
 from psychneuro.synthetic import (
     SyntheticConfig,
     dataset_card,
@@ -115,102 +95,117 @@ trials = generate_trials(config)
 csv_text = to_csv_text(trials)
 card = dataset_card(config, trials)
 
-print(f"Rows: {len(trials)}")
-print(f"Fictional participants: {card['n_participants']}")
-print(f"Synthetic: {card['synthetic']}")
-print(f"Input SHA-256: {card['source_sha256']}")
-```
+print("Trials:", len(trials))
+print("Fictional participants:", card["n_participants"])
+print("Synthetic dataset:", card["synthetic"])
+print("SHA-256:", card["source_sha256"])
+~~~
 
-With this configuration, the **record-count contract is 24 × 20 = 480 synthetic trials**, subject to successful generation. Each record includes a fictional participant, a session and trial key, pre-response condition/difficulty, synthetic correctness, a generated response, and reaction time in **milliseconds**. The exact digest depends on the code, configuration and runtime; it is calculated instead of hard-coded in this README.
+The configuration requests **24 fictional participants × 20 trials = 480 rows**, subject to successful validation. Every participant is invented; the data does not represent empirical human behavior.
 
-### What a dataset card means
+Run the repository checks:
 
-A card records the dataset ID, schema/generator version, seed, row counts, rights basis, raw-export SHA-256, feature definitions and limitations. The current card says `synthetic-original`; it does **not** authorize use of any future real dataset and does **not** establish a software source-code license.
+~~~bash
+python -m pytest -q
+python -m ruff check .
+python -m mypy src
+~~~
 
-[Read the full field contract](docs/data-schema.md) for keys, units, missing/invalid-value rules and predictor restrictions.
+Use the output from your own checkout as the test evidence for its exact commit. Earlier [verified checks](https://github.com/aradmanamnaoon/psychneuro-openbench/actions/runs/38874446677) demonstrate specific synthetic-foundation tests, not completion of the full research platform.
 
-## Reproducibility: what is demonstrated vs still to prove
+### What the generated dataset contains
 
-**Demonstrated in hosted CI for the current generator and supplemental PM-03 tests:** [run #38864568384](https://github.com/aradmanamnaoon/psychneuro-openbench/actions/runs/38864568384) completed successfully on **Python 3.11 and 3.12**: **46 pytest cases passed per version**, Ruff passed, and strict mypy reported no issues in two source files. The audited test file was integrated onto `main` using its exact Git blob. The earlier [31-pass PM-02 run](https://github.com/aradmanamnaoon/psychneuro-openbench/actions/runs/38863471313) remains available as history. These are engineering test results, **not** evidence of ML benchmark validity.
+The synthetic task produces trial records with participant, session and trial identifiers, pre-response task conditions, binary correctness, response details and reaction-time values. Fields not available until after the response are retained for inspection but excluded from the prespecified predictor set.
 
-**Not yet demonstrated:** out-of-group ML generalization, train-only preprocessing, baseline score comparison, participant bootstrap intervals, cross-platform replay, real participant privacy controls, or the complete v0 reproducibility manifest. The planned contract calls for repeat runs, explicit input checksums, frozen folds and environment information before those claims become appropriate.
+The accompanying **dataset card** captures origin, versioning, sample counts, feature metadata, usage limitations and a checksum. See [dataset-card and schema documentation](docs/data-schema.md).
 
-The default-branch [Actions workflow](.github/workflows/ci.yml) is manual-only to avoid recurring private-repository runner use. The verification branch exists separately and is not an automatic release pipeline.
+## Research design
 
-## Project structure
+~~~mermaid
+flowchart TD
+    A["Synthetic trial data"] --> B["Schema and rights checks"]
+    B --> C["Participant-aware data partition"]
+    C --> D["Training-only preprocessing"]
+    D --> E["Transparent baseline comparison"]
+    E --> F["Evaluation and uncertainty review"]
+    F --> G["Reproducible research record"]
+~~~
 
-```text
-.
-├── docs/
-│   ├── spec-v0.md           # Scientific scope and acceptance gates
-│   ├── data-schema.md       # Trial-level fields, types, units and restrictions
-│   ├── dataset-candidate-audit.md # Six real-source candidates, none enabled
-│   ├── license-policy.md    # Software vs dataset rights
-│   ├── release-gates.md     # Privacy, verification and publication requirements
-│   └── decisions/week1.md   # Engineering choices and actual CI evidence
-├── src/psychneuro/
-│   ├── __init__.py
-│   ├── synthetic.py         # RNG, validation, CSV and dataset card
-│   ├── schema.py            # Fail-closed rights and predictor validation
-│   ├── registry.py          # Typed source registry and synthetic-only safe loader
-│   └── py.typed
-├── tests/
-│   ├── test_synthetic.py    # Base generator contract tests
-│   ├── test_synthetic_pm03.py # Additional validated edge cases
-│   ├── test_schema.py       # Synthetic provenance and leakage-field gates
-│   └── test_registry.py     # Source-rights deny-by-default regression tests
-├── data/registry.json      # Only the synthetic generator is enabled
-├── .github/workflows/ci.yml
-├── pyproject.toml
-└── README.md
-```
+*This diagram presents the intended end-to-end methodology. Not all stages are available as integrated, default-branch commands.*
 
-The tree above describes the **main** branch. An alternative multi-session design on `pm-02/synthetic-foundation` is **preserved for history, not merged**: [PM-02 ADR-0001](docs/decisions/pm02-reconciliation.md) selects the hosted-tested `main` API and documents the incompatible fields and versioning rules.
+**Evaluation design matters as much as implementation.** Group-respecting splitting, fixed test identities, train-fold-only preprocessing and matched evaluation of classifiers are central requirements. When there are too few groups or undefined metrics, the pipeline should explain why the experiment is ineligible rather than inventing a score.
 
-## Data-source selection: synthetic first, rights before ingestion
+For researchers, the [methodological specification](docs/spec-v0.md) describes the data contract, model baselines, metrics and leakage rules in detail.
 
-Six actual public neuroscience/behavioral dataset candidates have been documented in the [PM-04 primary-source rights and suitability audit](docs/dataset-candidate-audit.md), including fixed version links, published licenses, reported participant counts, modality differences and exclusions. **None has been loaded or approved for v0.** Open licensing does not by itself establish complete ethical, privacy, model-feature, or task-suitability clearance.
+## Data sources and responsible use
 
-The [typed fail-closed registry loader](src/psychneuro/registry.py) and [synthetic-only registry](data/registry.json) permit **only** the project's original invented trial generator; [`validate_synthetic_dataset`](src/psychneuro/schema.py) rejects external/unauthorized cards, bad checksums, incompatible generator metadata, inconsistent counts, and missing feature-timing declarations. [`validate_predictor_columns`](src/psychneuro/schema.py) permits only `difficulty` and `stimulus_condition` as pre-response predictors. The [final hosted PM-04 CI](https://github.com/aradmanamnaoon/psychneuro-openbench/actions/runs/38874446677) recorded **80 passing tests**, Ruff success and strict mypy success on Python 3.11. This is engineering evidence, **not approval for real research data ingestion**.
+The default registry accepts the project's **original synthetic generator**. External neuroscience and behavioral dataset entries are recorded for research and suitability assessment, but remain disabled unless independently approved for the intended processing and redistribution.
 
-## Roadmap with real issue tracking
+A permissive-looking dataset license does not automatically resolve consent, ethical clearance, privacy, modality compatibility or downstream artifact rights. The [dataset candidate audit](docs/dataset-candidate-audit.md) and [licensing policy](docs/license-policy.md) describe these distinctions.
 
-This is intentionally a sequence of acceptance gates, not a feature wish list dressed up as delivered software.
+**No clinical or patient-level prediction is claimed.** The project must not be used to diagnose, treat or make decisions about individuals.
 
-| Milestone | Evidence needed | Issue |
+## Repository structure
+
+~~~text
+src/psychneuro/       Synthetic generation, schema and registry utilities
+tests/                Data, validation and regression checks
+data/registry.json    Versioned source availability and rights metadata
+docs/data-schema.md   Field-level trial and dataset-card contract
+docs/spec-v0.md       Scientific objective and evaluation protocol
+docs/license-policy.md Data and software licensing distinctions
+docs/release-gates.md Release-readiness checklist
+pyproject.toml        Python package and development configuration
+~~~
+
+Further work is developed and reviewed through topic branches and pull requests. The default branch is deliberately kept distinct from experimental integrations.
+
+## Development roadmap
+
+- [x] Reproducible synthetic trial records and machine-readable dataset cards
+- [x] Deterministic serialized dataset checksums and schema validation
+- [x] Rights-aware source registry with synthetic-only default policy
+- [x] Negative tests for malformed records and prohibited predictors
+- [ ] Finish integrating participant-group splitting and leakage-safe baselines into the supported default workflow
+- [ ] Validate complete experiment-to-report reproducibility across supported environments
+- [ ] Establish an approved import path for additional data formats and sources
+- [ ] Independently verify UI, security, accessibility and deployment behavior
+- [ ] Prepare a reviewed, versioned research-software release
+
+Progress is tracked through [issues](https://github.com/aradmanamnaoon/psychneuro-openbench/issues) and [pull requests](https://github.com/aradmanamnaoon/psychneuro-openbench/pulls). The [release criteria](docs/release-gates.md) explain which checks are required before describing the integrated workbench as ready for broader use.
+
+## Verification and reproducibility
+
+The repository includes pytest checks, Ruff linting and strict mypy configuration. Test logs, pinned implementations and research methods are more informative than a success badge without a known commit.
+
+For scientific results, distinguish:
+
+| Verification | What it can support | What it cannot support |
 | --- | --- | --- |
-| Foundation | Complete schema and rights card validation for synthetic trials | [#1](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/1) |
-| Repeatability | Seed, key, edge-case and CSV/hash tests with hosted logs | [#2](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/2) |
-| Evaluation integrity | Pairwise-disjoint subject groups, deterministic split digests, negative leakage fixtures | [#3](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/3) |
-| Meaningful modeling | Matched held-out folds for DummyClassifier and LogisticRegression, transparent metrics | [#4](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/4) |
-| Lawful sources | Deny-by-default permitted-source registry and complete provenance cards | [#5](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/5) |
-| Audit-ready replay | Canonical manifest, failure warnings, identical controlled reruns and actual CI logs | [#6](https://github.com/aradmanamnaoon/psychneuro-openbench/issues/6) |
+| Synthetic generator tests | Determinism and contract behavior for tested fixtures | Realistic human behavior |
+| Leakage negative tests | Rejection of known contaminated splits or predictor sets | Universal absence of leakage |
+| Grouped-CV checks | Independence under the tested grouping contract | Cross-population generalization |
+| Provenance checksums | Byte-level identity and recorded dependency relationships | Independent truth or cryptographic authorship |
+| Benchmark scores | Results under a specific validated protocol | Clinical, causal or real-world usefulness |
 
-The full envisioned platform may later add an accessible browser workbench, real datasets with verified rights, and external review. **None of those should be described as available before implementation and direct validation.**
+Every reported model result should include dataset and split identity, experiment configuration, exact code/version context, warnings and the appropriate baseline.
 
-## Browser-only reviewer route
+## Contributing
 
-For reviewers with access to this **private** repository:
+Focused improvements are especially welcome in **data validation**, **leakage-resistant evaluation**, **reproducibility**, **statistical reporting**, **security** and **reviewer documentation**.
 
-1. Start with the [v0 scientific contract](docs/spec-v0.md), [schema](docs/data-schema.md), and [implementation decision ledger](docs/decisions/week1.md).
-2. Check the actual [generator implementation](src/psychneuro/synthetic.py), [base tests](tests/test_synthetic.py), [additional PM-03 tests](tests/test_synthetic_pm03.py), and the [verified two-version hosted run](https://github.com/aradmanamnaoon/psychneuro-openbench/actions/runs/38864568384).
-3. Inspect the [PM-02 canonical schema decision](docs/decisions/pm02-reconciliation.md), [rights decisions](docs/license-policy.md), the [development issues](https://github.com/aradmanamnaoon/psychneuro-openbench/issues), and the [release gates](docs/release-gates.md).
-4. Treat a missing run, incomplete dataset permission, or missing split/metric evidence as **not verified**.
+A good change should have a clear use case, a small reviewable diff, regression coverage and an explicit explanation of its maintenance cost. Prefer strengthening an existing module over adding a new abstraction or dependency without demonstrated benefit. For data or methodology changes, include negative and boundary cases—not only a successful example.
 
-No login-free interactive browser demo has been deployed. Browser inspection is a **review workflow**, not an actual web-based experiment runner.
+When reporting issues, provide a minimal reproducible example using invented data. Do not upload real participant records, credentials or confidential research documents.
 
-## Research ethics, privacy and limitations
+## License and acknowledgments
 
-- **Synthetic only:** no real psychological-study participant data, clinical records, patient identifiers, diagnosis, treatment, or personalized neuroscience inference are processed in this milestone.
-- **No science claims from toy parameters:** accuracy and reaction-time distributions were chosen for software testing, not fitted to human cognitive behavior or externally validated.
-- **No claim of BIDS compatibility:** BIDS is an interoperability reference, not a certification of this initial CSV schema.
-- **Apache-2.0 code license:** the original project source and documentation are licensed under [Apache License 2.0](LICENSE), with attribution in [NOTICE](NOTICE). **The repository remains private** until the entire platform passes the [release gates](docs/release-gates.md) and the owner separately authorizes publication. Software licensing does not grant rights to any third-party research dataset.
-- **No public release or publicity:** do not change repository visibility, publish a release/package/demo, recruit users, or update professional profiles without a finished technical review and explicit owner approval.
+The repository's original code is distributed under the [Apache License 2.0](LICENSE), subject to the specific notices in [NOTICE](NOTICE). The software license does **not** grant rights to third-party datasets or independently exported research material.
 
-See [the release gate checklist](docs/release-gates.md) and [rights policy](docs/license-policy.md).
+The project draws on established principles from statistical learning, reproducible research and leakage-aware neuroimaging evaluation. Attribution for methods should refer to the relevant scholarly literature, not to the project as independent scientific validation.
 
-## Why build this openly *after* verification?
+**Maintained by [aradmanamnaoon](https://github.com/aradmanamnaoon).**
 
-Reproducibility software earns trust from decisions another lab can inspect: the data we were allowed to use, the subjects the model never saw, the baselines it had to beat, and the exact record of what ran. That is the objective of PsychNeuro OpenBench—not a leaderboard of attractive but unauditable scores.
+---
 
-**Development stays private until the agreed acceptance gates pass and the owner explicitly approves publication.** A polished README is preparation for that review, not evidence that the platform is finished.
+*PsychNeuro OpenBench aims to make behavioral ML experiments easier to inspect, reproduce and challenge—because trustworthy research needs more than a single score.*
